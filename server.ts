@@ -1005,7 +1005,7 @@ app.get('/api/sync/closing/:storeId/:date', (req: Request, res: Response) => {
 // ==================== STATIC FILES ====================
 // Serve static files from dist/client in production
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, 'dist', 'client');
+  const distPath = path.join(__dirname, 'public');
   app.use(express.static(distPath));
   app.get('*', (_req: Request, res: Response) => {
     res.sendFile(path.join(distPath, 'index.html'));
