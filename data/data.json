@@ -1,0 +1,239 @@
+{
+  "stores": {
+    "loja1": {
+      "storeId": "loja1",
+      "storeName": "Loja 1",
+      "cnpj": "09.545.637/0001/38",
+      "months": [],
+      "categories": [
+        {
+          "id": "dinheiro",
+          "name": "Dinheiro",
+          "operation": "add",
+          "order": 1
+        },
+        {
+          "id": "pix",
+          "name": "PIX",
+          "operation": "add",
+          "order": 2
+        },
+        {
+          "id": "sobra",
+          "name": "Sobra",
+          "operation": "add",
+          "order": 3
+        },
+        {
+          "id": "cartao",
+          "name": "Cartão",
+          "operation": "add",
+          "order": 4
+        },
+        {
+          "id": "duplicata",
+          "name": "Duplicata",
+          "operation": "add",
+          "order": 5
+        },
+        {
+          "id": "cart_jb",
+          "name": "Cart/JB",
+          "operation": "add",
+          "order": 6
+        },
+        {
+          "id": "est_desp",
+          "name": "Est/Desp",
+          "operation": "subtract",
+          "order": 7
+        },
+        {
+          "id": "sangria",
+          "name": "Sangria",
+          "operation": "null",
+          "order": 8
+        }
+      ]
+    },
+    "loja2": {
+      "storeId": "loja2",
+      "storeName": "Loja 2",
+      "cnpj": "42.016.151/0001-88",
+      "months": [],
+      "categories": [
+        {
+          "id": "dinheiro",
+          "name": "Dinheiro",
+          "operation": "add",
+          "order": 1
+        },
+        {
+          "id": "pix",
+          "name": "PIX",
+          "operation": "add",
+          "order": 2
+        },
+        {
+          "id": "sobra",
+          "name": "Sobra",
+          "operation": "add",
+          "order": 3
+        },
+        {
+          "id": "cartao",
+          "name": "Cartão",
+          "operation": "add",
+          "order": 4
+        },
+        {
+          "id": "duplicata",
+          "name": "Duplicata",
+          "operation": "add",
+          "order": 5
+        },
+        {
+          "id": "cart_jb",
+          "name": "Cart/JB",
+          "operation": "add",
+          "order": 6
+        },
+        {
+          "id": "est_desp",
+          "name": "Est/Desp",
+          "operation": "subtract",
+          "order": 7
+        },
+        {
+          "id": "sangria",
+          "name": "Sangria",
+          "operation": "null",
+          "order": 8
+        }
+      ]
+    }
+  },
+  "categories": [],
+  "entries": [],
+  "debts": [],
+  "settings": {
+    "password": "2512",
+    "syncPreference": "program",
+    "caixaCategories": [
+      {
+        "id": "dinheiro",
+        "name": "Dinheiro"
+      },
+      {
+        "id": "pix",
+        "name": "PIX"
+      },
+      {
+        "id": "cartao",
+        "name": "Cartão"
+      },
+      {
+        "id": "boleto",
+        "name": "Boleto"
+      }
+    ],
+    "fechamentoCategories": [
+      {
+        "id": "dinheiro",
+        "name": "Dinheiro"
+      },
+      {
+        "id": "pix",
+        "name": "PIX"
+      },
+      {
+        "id": "sobra",
+        "name": "Sobra"
+      },
+      {
+        "id": "cartao",
+        "name": "Cartão"
+      },
+      {
+        "id": "boleto",
+        "name": "Boleto"
+      },
+      {
+        "id": "sangria",
+        "name": "Sangria"
+      }
+    ],
+    "fieldMappingLan1": [
+      {
+        "fechamento_field": "dinheiro",
+        "lancamento_field": "dinheiro"
+      },
+      {
+        "fechamento_field": "pix",
+        "lancamento_field": "pix"
+      },
+      {
+        "fechamento_field": "sobra",
+        "lancamento_field": "sobra"
+      },
+      {
+        "fechamento_field": "cartao",
+        "lancamento_field": "cartao"
+      },
+      {
+        "fechamento_field": "boleto",
+        "lancamento_field": "boleto"
+      },
+      {
+        "fechamento_field": "sangria",
+        "lancamento_field": "sangria"
+      },
+      {
+        "fechamento_field": "despesa",
+        "lancamento_field": "est_desp"
+      }
+    ],
+    "fieldMappingLan2": [
+      {
+        "fechamento_field": "dinheiro",
+        "lancamento_field": "dinheiro"
+      },
+      {
+        "fechamento_field": "pix",
+        "lancamento_field": "pix"
+      },
+      {
+        "fechamento_field": "sobra",
+        "lancamento_field": "sobra"
+      },
+      {
+        "fechamento_field": "cartao",
+        "lancamento_field": "cartao"
+      },
+      {
+        "fechamento_field": "boleto",
+        "lancamento_field": "boleto"
+      },
+      {
+        "fechamento_field": "sangria",
+        "lancamento_field": "sangria"
+      },
+      {
+        "fechamento_field": "despesa",
+        "lancamento_field": "est_desp"
+      }
+    ],
+    "accessLogs": [],
+    "timeline": [],
+    "purchaseEntries": {},
+    "purchaseOptions": {
+      "groups": [],
+      "suppliers": [],
+      "institutions": []
+    }
+  },
+  "saldoDia": 0,
+  "caixa": {},
+  "fechamento": {},
+  "lancamentos": {}
+}

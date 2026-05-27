@@ -1,0 +1,17 @@
+{
+  "name": "financeiro-android-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App Android com Dashboard e Fechamento Compacto",
+  "scripts": {
+    "cap:init": "npx cap init FinanceiroDashboard com.financeiro.dashboard --web-dir=www",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0"
+  }
+}

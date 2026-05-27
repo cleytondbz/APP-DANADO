@@ -1,0 +1,3368 @@
+{
+  "stores": {
+    "loja1": {
+      "storeId": "loja1",
+      "storeName": "Loja 1",
+      "cnpj": "09.545.637/0001/38",
+      "months": [
+        {
+          "year": 2026,
+          "month": 5,
+          "entries": [
+            {
+              "date": "2026-05-20",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-19",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-21",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-23",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-24",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-25",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-26",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-22",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-17",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-16",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-15",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-01",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-03",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-14",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-13",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-12",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-11",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-10",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-09",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-08",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-07",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-06",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-05",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-02",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-18",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-27",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-28",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-29",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-30",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-31",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-04",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            }
+          ]
+        }
+      ],
+      "categories": [
+        {
+          "id": "dinheiro",
+          "name": "Dinheiro",
+          "operation": "add",
+          "order": 1
+        },
+        {
+          "id": "pix",
+          "name": "PIX",
+          "operation": "add",
+          "order": 2
+        },
+        {
+          "id": "sobra",
+          "name": "Sobra",
+          "operation": "add",
+          "order": 3
+        },
+        {
+          "id": "cartao",
+          "name": "Cartão",
+          "operation": "add",
+          "order": 4
+        },
+        {
+          "id": "duplicata",
+          "name": "Duplicata",
+          "operation": "add",
+          "order": 5
+        },
+        {
+          "id": "cart_jb",
+          "name": "Cart/JB",
+          "operation": "add",
+          "order": 6
+        },
+        {
+          "id": "est_desp",
+          "name": "Est/Desp",
+          "operation": "subtract",
+          "order": 7
+        },
+        {
+          "id": "sangria",
+          "name": "Sangria",
+          "operation": "null",
+          "order": 8
+        }
+      ]
+    },
+    "loja2": {
+      "storeId": "loja2",
+      "storeName": "Loja 2",
+      "cnpj": "42.016.151/0001-88",
+      "months": [
+        {
+          "year": 2026,
+          "month": 5,
+          "entries": [
+            {
+              "date": "2026-05-24",
+              "values": {
+                "dinheiro": 480,
+                "pix": 2904,
+                "sobra": 24,
+                "cartao": 3384,
+                "duplicata": 2904,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-14",
+              "values": {
+                "dinheiro": 200,
+                "pix": 200,
+                "sobra": 2,
+                "cartao": 200,
+                "duplicata": 200,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-13",
+              "values": {
+                "dinheiro": 200,
+                "pix": 200,
+                "sobra": 200,
+                "cartao": 200,
+                "duplicata": 200,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-15",
+              "values": {
+                "dinheiro": 4000,
+                "pix": 4000,
+                "sobra": 40,
+                "cartao": 4000,
+                "duplicata": 4000,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-18",
+              "values": {
+                "dinheiro": 249.25,
+                "pix": 0,
+                "sobra": 35,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-23",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-22",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-21",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-20",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-19",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-17",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-16",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-12",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-11",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-10",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-09",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-08",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            },
+            {
+              "date": "2026-05-07",
+              "values": {
+                "dinheiro": 0,
+                "pix": 0,
+                "sobra": 0,
+                "cartao": 0,
+                "duplicata": 0,
+                "sangria": 0,
+                "est_desp": 0
+              },
+              "manualFields": []
+            }
+          ]
+        }
+      ],
+      "categories": [
+        {
+          "id": "dinheiro",
+          "name": "Dinheiro",
+          "operation": "add",
+          "order": 1
+        },
+        {
+          "id": "pix",
+          "name": "PIX",
+          "operation": "add",
+          "order": 2
+        },
+        {
+          "id": "sobra",
+          "name": "Sobra",
+          "operation": "add",
+          "order": 3
+        },
+        {
+          "id": "cartao",
+          "name": "Cartão",
+          "operation": "add",
+          "order": 4
+        },
+        {
+          "id": "duplicata",
+          "name": "Duplicata",
+          "operation": "add",
+          "order": 5
+        },
+        {
+          "id": "cart_jb",
+          "name": "Cart/JB",
+          "operation": "add",
+          "order": 6
+        },
+        {
+          "id": "est_desp",
+          "name": "Est/Desp",
+          "operation": "subtract",
+          "order": 7
+        },
+        {
+          "id": "sangria",
+          "name": "Sangria",
+          "operation": "null",
+          "order": 8
+        }
+      ]
+    }
+  },
+  "categories": [],
+  "entries": [],
+  "debts": [],
+  "settings": {
+    "password": "2512",
+    "syncPreference": "program",
+    "caixaCategories": [
+      {
+        "id": "dinheiro",
+        "name": "Dinheiro"
+      },
+      {
+        "id": "pix",
+        "name": "PIX"
+      },
+      {
+        "id": "cartao",
+        "name": "Cartão"
+      },
+      {
+        "id": "boleto",
+        "name": "Boleto"
+      }
+    ],
+    "fechamentoCategories": [
+      {
+        "id": "dinheiro",
+        "name": "Dinheiro"
+      },
+      {
+        "id": "pix",
+        "name": "PIX"
+      },
+      {
+        "id": "sobra",
+        "name": "Sobra"
+      },
+      {
+        "id": "cartao",
+        "name": "Cartão"
+      },
+      {
+        "id": "boleto",
+        "name": "Boleto"
+      },
+      {
+        "id": "sangria",
+        "name": "Sangria"
+      }
+    ],
+    "fieldMappingLan1": [
+      {
+        "fechamento_field": "dinheiro",
+        "lancamento_field": "dinheiro"
+      },
+      {
+        "fechamento_field": "pix",
+        "lancamento_field": "pix"
+      },
+      {
+        "fechamento_field": "sobra",
+        "lancamento_field": "sobra"
+      },
+      {
+        "fechamento_field": "cartao",
+        "lancamento_field": "cartao"
+      },
+      {
+        "fechamento_field": "boleto",
+        "lancamento_field": "duplicata"
+      },
+      {
+        "fechamento_field": "sangria",
+        "lancamento_field": "sangria"
+      },
+      {
+        "fechamento_field": "despesa",
+        "lancamento_field": "est_desp"
+      }
+    ],
+    "fieldMappingLan2": [
+      {
+        "fechamento_field": "dinheiro",
+        "lancamento_field": "dinheiro"
+      },
+      {
+        "fechamento_field": "pix",
+        "lancamento_field": "pix"
+      },
+      {
+        "fechamento_field": "sobra",
+        "lancamento_field": "sobra"
+      },
+      {
+        "fechamento_field": "cartao",
+        "lancamento_field": "cartao"
+      },
+      {
+        "fechamento_field": "boleto",
+        "lancamento_field": "duplicata"
+      },
+      {
+        "fechamento_field": "sangria",
+        "lancamento_field": "sangria"
+      },
+      {
+        "fechamento_field": "despesa",
+        "lancamento_field": "est_desp"
+      }
+    ],
+    "timeline": [
+      {
+        "id": "program_timeline_1779840506337_l0szpc",
+        "timestamp": 1779840506337,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 25.25,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: nm,  Valor: R 25.25",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840506334_sc3ao1j_t",
+        "timestamp": 1779840506334,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 25.25,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: nm,  Valor: R 25.25",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840499472_4jztfr",
+        "timestamp": 1779840499472,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 36,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: gfhfgh  Valor: R 36.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840499470_6t7fqfs_t",
+        "timestamp": 1779840499470,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 36,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: gfhfgh  Valor: R 36.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840495544_kskg3v",
+        "timestamp": 1779840495544,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 68,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: fghfgh  Valor: R 68.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840495541_aelqa91_t",
+        "timestamp": 1779840495541,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 68,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: fghfgh  Valor: R 68.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840480080_rw9p8q",
+        "timestamp": 1779840480080,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "pix",
+        "oldValue": 250,
+        "description": "LOJA1 2026-05-26 excluiu item em PIX  descricao: dfgdfg  Valor: R 250.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840480077_5kb2vgp_t",
+        "timestamp": 1779840480077,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "pix",
+        "oldValue": 250,
+        "description": "LOJA1 2026-05-26 excluiu item em PIX  descricao: dfgdfg  Valor: R 250.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840474012_sujlzm",
+        "timestamp": 1779840474012,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 36.25,
+        "newValue": 36.15,
+        "description": "LOJA1 2026-05-26 editou item em Dinheiro  descricao: ghjgh - ghjgh  Valor: R 36.25 - R 36.15",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840474010_ianm2eh_t",
+        "timestamp": 1779840474010,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 36.25,
+        "newValue": 36.15,
+        "description": "LOJA1 2026-05-26 editou item em Dinheiro  descricao: ghjgh - ghjgh  Valor: R 36.25 - R 36.15",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840460997_8q7l1j",
+        "timestamp": 1779840460997,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 25.36,
+        "newValue": 25.25,
+        "description": "LOJA1 2026-05-26 editou item em Dinheiro  descricao: nm, - nm,  Valor: R 25.36 - R 25.25",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840460995_xivo7f4_t",
+        "timestamp": 1779840460995,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 25.36,
+        "newValue": 25.25,
+        "description": "LOJA1 2026-05-26 editou item em Dinheiro  descricao: nm, - nm,  Valor: R 25.36 - R 25.25",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840418247_z2f1ou",
+        "timestamp": 1779840418247,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 250,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: gdfgdfg  Valor: R 250.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779840418243_3eml808_t",
+        "timestamp": 1779840418243,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 250,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: gdfgdfg  Valor: R 250.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840068915_h5279j",
+        "timestamp": 1779840068915,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 200,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: rtyrty  Valor: R 200.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840061363_749tva",
+        "timestamp": 1779840061363,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 153,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: yrtyrt  Valor: R 153.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840053635_wihbya",
+        "timestamp": 1779840053635,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "pix",
+        "oldValue": 2.36,
+        "description": "LOJA1 2026-05-26 excluiu item em PIX  descricao: tyuytu  Valor: R 2.36",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840051051_53b0ti",
+        "timestamp": 1779840051051,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "pix",
+        "oldValue": 256,
+        "description": "LOJA1 2026-05-26 excluiu item em PIX  descricao: jghj  Valor: R 256.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840048219_1hfcuq",
+        "timestamp": 1779840048219,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 750,
+        "description": "LOJA1 2026-05-26 excluiu item em Cartao  descricao: yt  Valor: R 750.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779840037722_dmvmu3",
+        "timestamp": 1779840037722,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 14100,
+        "description": "LOJA1 2026-05-26 excluiu item em Boleto  descricao: fg  Valor: R 14100.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839974736_30ujaa",
+        "timestamp": 1779839974736,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 4700,
+        "newValue": 14100,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: fg - fg  Valor: R 4700.00 - R 14100.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839939028_b6vp0y",
+        "timestamp": 1779839939028,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 22,
+        "newValue": 3500,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: fghkui - fghkui  Valor: R 22.00 - R 3500.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839919535_zvawv4",
+        "timestamp": 1779839919535,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 5000,
+        "description": "LOJA1 2026-05-26 excluiu item em Cartao  descricao: hfghfg  Valor: R 5000.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839911319_ebxugo",
+        "timestamp": 1779839911319,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 500,
+        "newValue": 5000,
+        "description": "LOJA1 2026-05-26 editou item em Cartao  descricao: hfghfg - hfghfg  Valor: R 500.00 - R 5000.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839882380_7j7ccn",
+        "timestamp": 1779839882380,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 2356,
+        "newValue": 22,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: fghkui - fghkui  Valor: R 2356.00 - R 22.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839859331_194bsa",
+        "timestamp": 1779839859331,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 400,
+        "newValue": 4000,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: t - t  Valor: R 400.00 - R 4000.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839844458_pkyn9b",
+        "timestamp": 1779839844458,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 400,
+        "newValue": 400,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: uyi - t  Valor: R 400.00 - R 400.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839788573_1q07da",
+        "timestamp": 1779839788573,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 700,
+        "newValue": 750,
+        "description": "LOJA1 2026-05-26 editou item em Cartao  descricao: werwe - yt  Valor: R 700.00 - R 750.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839757797_ina2o3",
+        "timestamp": 1779839757797,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 899.01,
+        "newValue": 500,
+        "description": "LOJA1 2026-05-26 editou item em Cartao  descricao: hfghfg - hfghfg  Valor: R 899.01 - R 500.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839735836_bgga0n",
+        "timestamp": 1779839735836,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 256,
+        "newValue": 999,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: ertyt - ertyt  Valor: R 256.00 - R 999.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839706909_1v8mvm",
+        "timestamp": 1779839706909,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 52,
+        "newValue": 899,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: yuiuyi - yuiuyi  Valor: R 52.00 - R 899.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839655030_btct9m",
+        "timestamp": 1779839655030,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 4000,
+        "newValue": 3300,
+        "description": "LOJA1 2026-05-26 editou item em Cartao  descricao: hfghfg - hfghfg  Valor: R 4000.00 - R 3300.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839634107_avtu71",
+        "timestamp": 1779839634107,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 29000,
+        "newValue": 3000,
+        "description": "LOJA1 2026-05-26 editou item em Cartao  descricao: hfghfg - hfghfg  Valor: R 29000.00 - R 3000.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839607310_empxy5",
+        "timestamp": 1779839607310,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 32000,
+        "newValue": 256,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: ertyt - ertyt  Valor: R 32000.00 - R 256.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839590945_8v13b6",
+        "timestamp": 1779839590945,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 3256,
+        "newValue": 52,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: yuiuyi - yuiuyi  Valor: R 3256.00 - R 52.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839565660_btw292",
+        "timestamp": 1779839565660,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 2400,
+        "newValue": 523,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: ertyt - ertyt  Valor: R 2400.00 - R 523.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839484462_rai72l",
+        "timestamp": 1779839484462,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "boleto",
+        "oldValue": 3200.52,
+        "newValue": 3200,
+        "description": "LOJA1 2026-05-26 editou item em Boleto  descricao: ertyt - ertyt  Valor: R 3200.52 - R 3200.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_timeline_1779839447242_4ru8x1",
+        "timestamp": 1779839447242,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 2500,
+        "newValue": 1500,
+        "description": "LOJA1 2026-05-26 editou item em Cartao  descricao: hfghfg - hfghfg  Valor: R 2500.00 - R 1500.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779841655345_vmzi26r_t",
+        "timestamp": 1779841655345,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "update",
+        "date": "2026-05-26",
+        "field": "pix",
+        "oldValue": 250,
+        "newValue": 200,
+        "description": "LOJA1 2026-05-26 editou item em PIX  descricao: asdasd - asdasd  Valor: R 250.00 - R 200.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779841791771_dz99qmy_t",
+        "timestamp": 1779841791771,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "dinheiro",
+        "oldValue": 9,
+        "description": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: ghjhg  Valor: R 9.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842548126",
+        "timestamp": 1779842548126,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "create",
+        "date": "2026-05-27",
+        "field": "Produto dinheiro",
+        "newValue": "dfgdfg (1x 150)",
+        "description": "Novo produto adicionado em CAIXA: dfgdfg - 1x R 150.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842556659",
+        "timestamp": 1779842556659,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "create",
+        "date": "2026-05-27",
+        "field": "Produto pix",
+        "newValue": "fdgfd (1x 150)",
+        "description": "Novo produto adicionado em CAIXA: fdgfd - 1x R 150.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842568091",
+        "timestamp": 1779842568091,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-27",
+        "field": "Produto pix",
+        "oldValue": "fdgfd (1x 150,00)",
+        "description": "Produto removido de CAIXA: fdgfd",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842581411",
+        "timestamp": 1779842581411,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-27",
+        "field": "Produto dinheiro",
+        "oldValue": "dfgdfg (1x 150,00)",
+        "description": "Produto removido de CAIXA: dfgdfg",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842617084",
+        "timestamp": 1779842617084,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "Produto dinheiro",
+        "oldValue": "fdsfd (1x 356,00)",
+        "description": "Produto removido de CAIXA: fdsfd",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842618965",
+        "timestamp": 1779842618965,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "Produto dinheiro",
+        "oldValue": "gff (1x 2,95)",
+        "description": "Produto removido de CAIXA: gff",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842621645",
+        "timestamp": 1779842621645,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "Produto pix",
+        "oldValue": "asdasd (1x 200,00)",
+        "description": "Produto removido de CAIXA: asdasd",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842623781",
+        "timestamp": 1779842623781,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "Produto pix",
+        "oldValue": "qweqw (1x 156,00)",
+        "description": "Produto removido de CAIXA: qweqw",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842649629",
+        "timestamp": 1779842649629,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "Produto cartao",
+        "oldValue": "sdfds (1x 3,50)",
+        "description": "Produto removido de CAIXA: sdfds",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "1779842661853",
+        "timestamp": 1779842661853,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "Produto boleto",
+        "oldValue": "dfsdffs (1x 250,00)",
+        "description": "Produto removido de CAIXA: dfsdffs",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779843345657_sbtmafi_t",
+        "timestamp": 1779843345657,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "pix",
+        "oldValue": 200,
+        "description": "LOJA1 2026-05-26 excluiu item em PIX  descricao: SADASD  Valor: R 200.00",
+        "details": "",
+        "userName": ""
+      },
+      {
+        "id": "program_evt_1779843351777_8u8983k_t",
+        "timestamp": 1779843351777,
+        "module": "caixa",
+        "storeId": "loja1",
+        "action": "delete",
+        "date": "2026-05-26",
+        "field": "cartao",
+        "oldValue": 300,
+        "description": "LOJA1 2026-05-26 excluiu item em Cartao  descricao: ASDASD  Valor: R 300.00",
+        "details": "",
+        "userName": ""
+      }
+    ],
+    "actionUsers": [
+      {
+        "id": "mpizxo2mxr2r9p",
+        "name": "cleyton",
+        "password": "9115",
+        "permissions": [
+          "delete",
+          "edit",
+          "changeDate"
+        ]
+      },
+      {
+        "id": "mplyym9lz605kf",
+        "name": "TES1",
+        "password": "2512",
+        "permissions": [
+          "delete",
+          "edit",
+          "changeDate"
+        ]
+      }
+    ],
+    "accessLogs": [
+      {
+        "id": "program_evt_1779843351777_8u8983k_a",
+        "timestamp": 1779843351777,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "PROGRAMA",
+        "details": "LOJA1 2026-05-26 excluiu item em Cartao  descricao: ASDASD  Valor: R 300.00",
+        "date": "2026-05-26",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "program_evt_1779843345657_sbtmafi_a",
+        "timestamp": 1779843345657,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "PROGRAMA",
+        "details": "LOJA1 2026-05-26 excluiu item em PIX  descricao: SADASD  Valor: R 200.00",
+        "date": "2026-05-26",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842649629",
+        "timestamp": 1779842649629,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em cartao  descricao: sdfds  Valor: R 3,50",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842623781",
+        "timestamp": 1779842623781,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em pix  descricao: qweqw  Valor: R 156,00",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842621645",
+        "timestamp": 1779842621645,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em pix  descricao: asdasd  Valor: R 200,00",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842618965",
+        "timestamp": 1779842618965,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em dinheiro  descricao: gff  Valor: R 2,95",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842617084",
+        "timestamp": 1779842617084,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em dinheiro  descricao: fdsfd  Valor: R 356,00",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842581411",
+        "timestamp": 1779842581411,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em dinheiro  descricao: dfgdfg  Valor: R 150,00",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "1779842568091",
+        "timestamp": 1779842568091,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "cleyton",
+        "details": "Exclusão autorizada: item em pix  descricao: fdgfd  Valor: R 150,00",
+        "description": "",
+        "field": ""
+      },
+      {
+        "id": "program_evt_1779841791771_dz99qmy_a",
+        "timestamp": 1779841791771,
+        "storeId": "loja1",
+        "action": "delete",
+        "status": "success",
+        "userName": "PROGRAMA",
+        "details": "LOJA1 2026-05-26 excluiu item em Dinheiro  descricao: ghjhg  Valor: R 9.00",
+        "date": "2026-05-26",
+        "description": "",
+        "field": ""
+      }
+    ],
+    "fieldMappingCompacto1": [
+      {
+        "fechamento_field": "dinheiro",
+        "lancamento_field": "dinheiro"
+      },
+      {
+        "fechamento_field": "pix",
+        "lancamento_field": "pix"
+      },
+      {
+        "fechamento_field": "sobra",
+        "lancamento_field": "sobra"
+      },
+      {
+        "fechamento_field": "cartao",
+        "lancamento_field": "cartao"
+      },
+      {
+        "fechamento_field": "boleto",
+        "lancamento_field": "duplicata"
+      }
+    ],
+    "senhaVendas": "2512",
+    "customSaldoSelection": [],
+    "purchaseOptions": {
+      "groups": [
+        "M",
+        "JB",
+        "JT"
+      ],
+      "suppliers": [
+        "OEX"
+      ],
+      "institutions": [
+        "ITAU"
+      ]
+    },
+    "purchaseEntries": {
+      "2026-05": [],
+      "": [
+        {
+          "id": "1779750576068_0vf6cf",
+          "dueDate": "2026-05-01",
+          "group": "M",
+          "supplier": "",
+          "documentNumber": "",
+          "issueDate": "",
+          "installments": "",
+          "amount": 0,
+          "financialInstitution": "ITAU"
+        }
+      ],
+      "2026-04": []
+    }
+  },
+  "caixa": {
+    "loja1": {
+      "2026-05-14": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-15": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-17": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-18": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-19": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-23": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-22": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-24": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-16": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-25": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-26": {
+        "dinheiro": [],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-27": {
+        "dinheiro": [],
+        "pix": []
+      }
+    },
+    "loja2": {
+      "2026-05-14": {
+        "dinheiro": [
+          {
+            "id": "1778788326840",
+            "descricao": "werwe",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "16:52"
+          }
+        ],
+        "pix": [
+          {
+            "id": "1778788331112",
+            "descricao": "sdf",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "16:52"
+          }
+        ],
+        "cartao": [
+          {
+            "id": "1778788334048",
+            "descricao": "werwe",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "16:52"
+          }
+        ],
+        "boleto": [
+          {
+            "id": "1778788337024",
+            "descricao": "werw",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "16:52"
+          }
+        ]
+      },
+      "2026-05-13": {
+        "dinheiro": [
+          {
+            "id": "1778790112435",
+            "descricao": "fdf",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "17:21"
+          }
+        ],
+        "pix": [
+          {
+            "id": "1778790115899",
+            "descricao": "fgfd",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "17:21"
+          }
+        ],
+        "cartao": [
+          {
+            "id": "1778790119386",
+            "descricao": "dfgfd",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "17:21"
+          }
+        ],
+        "boleto": [
+          {
+            "id": "1778790130563",
+            "descricao": "vbnvb",
+            "quantidade": 1,
+            "valor": "200",
+            "hora": "17:22"
+          }
+        ]
+      },
+      "2026-05-15": {
+        "dinheiro": [
+          {
+            "id": "1778805046702",
+            "descricao": "asd",
+            "quantidade": 1,
+            "valor": "2000",
+            "hora": "21:30"
+          },
+          {
+            "id": "1778808413893",
+            "descricao": "dfg",
+            "quantidade": 1,
+            "valor": "2000,00",
+            "hora": "22:26"
+          }
+        ],
+        "pix": [
+          {
+            "id": "1778805051262",
+            "descricao": "sadsa",
+            "quantidade": 1,
+            "valor": "2000",
+            "hora": "21:30"
+          },
+          {
+            "id": "1778808416565",
+            "descricao": "dfgdf",
+            "quantidade": 1,
+            "valor": "2000,00",
+            "hora": "22:26"
+          }
+        ],
+        "cartao": [
+          {
+            "id": "1778805055167",
+            "descricao": "asd",
+            "quantidade": 1,
+            "valor": "2000",
+            "hora": "21:30"
+          },
+          {
+            "id": "1778808419509",
+            "descricao": "dfgdfg",
+            "quantidade": 1,
+            "valor": "2000,00",
+            "hora": "22:26"
+          }
+        ],
+        "boleto": [
+          {
+            "id": "1778805058776",
+            "descricao": "asdas",
+            "quantidade": 1,
+            "valor": "2000",
+            "hora": "21:30"
+          },
+          {
+            "id": "1778808422261",
+            "descricao": "dfgdf",
+            "quantidade": 1,
+            "valor": "2000,00",
+            "hora": "22:27"
+          }
+        ]
+      },
+      "2026-05-18": {
+        "dinheiro": [
+          {
+            "id": "1779111327392",
+            "descricao": "sadsad",
+            "quantidade": 1,
+            "valor": "15,00",
+            "hora": "10:35",
+            "nomeDigital": "teste18,5"
+          },
+          {
+            "id": "1779131494349",
+            "descricao": "fdsfsd",
+            "quantidade": 1,
+            "valor": "233,00",
+            "hora": "16:11",
+            "nomeDigital": "filial1"
+          },
+          {
+            "id": "1779131512311",
+            "descricao": "asdsa",
+            "quantidade": 1,
+            "valor": "1,25",
+            "hora": "16:11"
+          }
+        ],
+        "pix": [],
+        "cartao": [],
+        "boleto": []
+      },
+      "2026-05-24": {
+        "dinheiro": [
+          {
+            "id": "1779646343826",
+            "descricao": "fghfgh",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:12",
+            "nomeDigital": "fil24"
+          },
+          {
+            "id": "1779646430149",
+            "descricao": "sdfsd",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          }
+        ],
+        "pix": [
+          {
+            "id": "1779607706727",
+            "descricao": "fdgfd",
+            "quantidade": 1,
+            "valor": "2424,00",
+            "hora": "04:28"
+          },
+          {
+            "id": "1779646417996",
+            "descricao": "sdfsdf",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          },
+          {
+            "id": "1779646424604",
+            "descricao": "sdfsdf",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          }
+        ],
+        "cartao": [
+          {
+            "id": "1779607490487",
+            "descricao": "asdas",
+            "quantidade": 1,
+            "valor": "2424,00",
+            "hora": "04:24"
+          },
+          {
+            "id": "1779646394027",
+            "descricao": "ertert",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          },
+          {
+            "id": "1779646399043",
+            "descricao": "sdfsdf",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          },
+          {
+            "id": "1779646403692",
+            "descricao": "sdfds",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          },
+          {
+            "id": "1779646413532",
+            "descricao": "sdfsdf",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          }
+        ],
+        "boleto": [
+          {
+            "id": "1779607710734",
+            "descricao": "dfgfd",
+            "quantidade": 1,
+            "valor": "2424,00",
+            "hora": "04:28"
+          },
+          {
+            "id": "1779646365971",
+            "descricao": "sdfsdf",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:12",
+            "nomeDigital": "fil24"
+          },
+          {
+            "id": "1779646384036",
+            "descricao": "dfgdfg",
+            "quantidade": 1,
+            "valor": "240,00",
+            "hora": "15:13",
+            "nomeDigital": "fil24"
+          }
+        ]
+      }
+    }
+  },
+  "fechamento": {
+    "loja1": {
+      "2026-05-14": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes14"
+      },
+      "2026-05-13": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes13"
+      },
+      "2026-05-12": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes12"
+      },
+      "2026-05-11": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes11"
+      },
+      "2026-05-10": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes10"
+      },
+      "2026-05-09": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes09"
+      },
+      "2026-05-08": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes08"
+      },
+      "2026-05-07": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-06": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-05": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-04": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes04"
+      },
+      "2026-05-03": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes03"
+      },
+      "2026-05-02": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes02"
+      },
+      "2026-05-01": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes01"
+      },
+      "2026-05-15": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes15"
+      },
+      "2026-05-17": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes17"
+      },
+      "2026-05-18": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes18"
+      },
+      "2026-05-19": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "test19"
+      },
+      "2026-05-22": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-21": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-20": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "test20"
+      },
+      "2026-05-16": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "tes16"
+      },
+      "2026-05-23": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-24": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-25": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-26": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-27": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangria": 0,
+        "despesa": 0,
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "teste27"
+      },
+      "2026-05-28": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "teste28"
+      },
+      "2026-05-29": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "teste29"
+      },
+      "2026-05-30": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "teste30"
+      },
+      "2026-05-31": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "teste31"
+      },
+      "2026-04-29": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "cartao": "",
+        "boleto": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "FSDF",
+        "sangria": 0,
+        "despesa": 0
+      }
+    },
+    "loja2": {
+      "2026-05-14": {
+        "dinheiro": "200,00",
+        "sobra": "2",
+        "pix": "200,00",
+        "boleto": "200,00",
+        "cartao": "200,00",
+        "sangrias": [
+          {
+            "id": "1778801935493",
+            "valor": 2
+          },
+          {
+            "id": "1778801936381",
+            "valor": 2
+          },
+          {
+            "id": "1778801937164",
+            "valor": 2
+          }
+        ],
+        "despesas": [
+          {
+            "id": "1778801945820",
+            "descricao": "asdf",
+            "valor": 2
+          }
+        ],
+        "nomeDigital": "cleyton 2"
+      },
+      "2026-05-13": {
+        "dinheiro": "200,00",
+        "sobra": "200",
+        "pix": "200,00",
+        "boleto": "200,00",
+        "cartao": "200,00",
+        "sangrias": [
+          {
+            "id": "1778763588555",
+            "valor": 200
+          },
+          {
+            "id": "1778787365259",
+            "valor": 200
+          },
+          {
+            "id": "1778787366875",
+            "valor": 200
+          }
+        ],
+        "despesas": [
+          {
+            "id": "1778763597443",
+            "descricao": "sad",
+            "valor": 20
+          },
+          {
+            "id": "1778787114467",
+            "descricao": "TRYTRY",
+            "valor": 20
+          }
+        ],
+        "nomeDigital": "cleyton 2"
+      },
+      "2026-05-15": {
+        "dinheiro": "4000,00",
+        "sobra": "40",
+        "pix": "4000,00",
+        "boleto": "4000,00",
+        "cartao": "4000,00",
+        "sangrias": [
+          {
+            "id": "1778805065406",
+            "valor": 20
+          },
+          {
+            "id": "1778805066142",
+            "valor": 20
+          },
+          {
+            "id": "1778808440694",
+            "valor": 40
+          }
+        ],
+        "despesas": [
+          {
+            "id": "1778805074362",
+            "descricao": "asdddsa",
+            "valor": 20
+          },
+          {
+            "id": "1778808447494",
+            "descricao": "fdfgfd",
+            "valor": 40
+          }
+        ],
+        "nomeDigital": "cleyton 2"
+      },
+      "2026-05-18": {
+        "dinheiro": "249,25",
+        "sobra": "35",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "filial1"
+      },
+      "2026-05-23": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-24": {
+        "dinheiro": "480,00",
+        "sobra": "24",
+        "pix": "2904,00",
+        "boleto": "2904,00",
+        "cartao": "3384,00",
+        "sangrias": [],
+        "despesas": [
+          {
+            "id": "1779607735407",
+            "descricao": "jkk",
+            "valor": 24
+          }
+        ],
+        "nomeDigital": "",
+        "sangria": 0,
+        "despesa": 24
+      },
+      "2026-05-22": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-21": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-20": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-19": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-17": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-16": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-12": {
+        "dinheiro": "0,00",
+        "sobra": "",
+        "pix": "0,00",
+        "boleto": "0,00",
+        "cartao": "0,00",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-11": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-10": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-09": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-08": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-07": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "boleto": "",
+        "cartao": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": ""
+      },
+      "2026-05-26": {
+        "dinheiro": "",
+        "sobra": "",
+        "pix": "",
+        "cartao": "",
+        "boleto": "",
+        "sangrias": [],
+        "despesas": [],
+        "nomeDigital": "",
+        "sangria": 0,
+        "despesa": 0
+      }
+    }
+  },
+  "saldoDia": 0,
+  "lancamentos": {
+    "loja1": {
+      "2026-05-26": {
+        "date": "2026-05-26",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-14": {
+        "date": "2026-05-14",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-13": {
+        "date": "2026-05-13",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-12": {
+        "date": "2026-05-12",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-11": {
+        "date": "2026-05-11",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-10": {
+        "date": "2026-05-10",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-09": {
+        "date": "2026-05-09",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-08": {
+        "date": "2026-05-08",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-07": {
+        "date": "2026-05-07",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-06": {
+        "date": "2026-05-06",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-05": {
+        "date": "2026-05-05",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-04": {
+        "date": "2026-05-04",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-03": {
+        "date": "2026-05-03",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-02": {
+        "date": "2026-05-02",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-01": {
+        "date": "2026-05-01",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-15": {
+        "date": "2026-05-15",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-17": {
+        "date": "2026-05-17",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-18": {
+        "date": "2026-05-18",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-19": {
+        "date": "2026-05-19",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-22": {
+        "date": "2026-05-22",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-21": {
+        "date": "2026-05-21",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-20": {
+        "date": "2026-05-20",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-16": {
+        "date": "2026-05-16",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-23": {
+        "date": "2026-05-23",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-24": {
+        "date": "2026-05-24",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-25": {
+        "date": "2026-05-25",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-27": {
+        "date": "2026-05-27",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-28": {
+        "date": "2026-05-28",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-29": {
+        "date": "2026-05-29",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-30": {
+        "date": "2026-05-30",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-31": {
+        "date": "2026-05-31",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-04-29": {
+        "date": "2026-04-29",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      }
+    },
+    "loja2": {
+      "2026-05-14": {
+        "date": "2026-05-14",
+        "values": {
+          "dinheiro": 200,
+          "pix": 200,
+          "sobra": 2,
+          "cartao": 200,
+          "duplicata": 200,
+          "sangria": 6,
+          "est_desp": 2
+        }
+      },
+      "2026-05-13": {
+        "date": "2026-05-13",
+        "values": {
+          "dinheiro": 200,
+          "pix": 200,
+          "sobra": 200,
+          "cartao": 200,
+          "duplicata": 200,
+          "sangria": 600,
+          "est_desp": 40
+        }
+      },
+      "2026-05-15": {
+        "date": "2026-05-15",
+        "values": {
+          "dinheiro": 4000,
+          "pix": 4000,
+          "sobra": 40,
+          "cartao": 4000,
+          "duplicata": 4000,
+          "sangria": 80,
+          "est_desp": 60
+        }
+      },
+      "2026-05-18": {
+        "date": "2026-05-18",
+        "values": {
+          "dinheiro": 249.25,
+          "pix": 0,
+          "sobra": 35,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-23": {
+        "date": "2026-05-23",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-24": {
+        "date": "2026-05-24",
+        "values": {
+          "dinheiro": 480,
+          "pix": 2904,
+          "sobra": 24,
+          "cartao": 3384,
+          "duplicata": 2904,
+          "sangria": 0,
+          "est_desp": 24
+        }
+      },
+      "2026-05-22": {
+        "date": "2026-05-22",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-21": {
+        "date": "2026-05-21",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-20": {
+        "date": "2026-05-20",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-19": {
+        "date": "2026-05-19",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-17": {
+        "date": "2026-05-17",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-16": {
+        "date": "2026-05-16",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-12": {
+        "date": "2026-05-12",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-11": {
+        "date": "2026-05-11",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-10": {
+        "date": "2026-05-10",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-09": {
+        "date": "2026-05-09",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-08": {
+        "date": "2026-05-08",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-07": {
+        "date": "2026-05-07",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      },
+      "2026-05-26": {
+        "date": "2026-05-26",
+        "values": {
+          "dinheiro": 0,
+          "pix": 0,
+          "sobra": 0,
+          "cartao": 0,
+          "duplicata": 0,
+          "sangria": 0,
+          "est_desp": 0
+        }
+      }
+    }
+  }
+}

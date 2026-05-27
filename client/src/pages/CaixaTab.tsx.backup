@@ -1,0 +1,1291 @@
+import { useState } from 'react';
+import { useApp } from '@/contexts/AppContext';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Plus, Trash2, Edit2, Calendar, Banknote, FileText, CreditCard, Save, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import React, { useRef } from 'react';
+
+interface Sangria {
+  id: string;
+  descricao: string;
+  valor: number;
+}
+
+interface Produto {
+  id: string;
+  descricao: string;
+  quantidade: number;
+  valor: number;
+  hora: string;
+}
+
+type CaixaTab = 'caixa' | 'fechamento';
+type TipoPagamento = 'dinheiro' | 'pix' | 'cartao' | 'boleto';
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+// Parse comma-separated numbers
+const parseCommaNumber = (value: string | number): number => {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  return parseFloat(value.toString().replace(',', '.')) || 0;
+};
+
+// Format input to accept only comma as decimal separator
+const handleNumberInput = (value: string): string => {
+  return value.replace(/[^0-9,]/g, '');
+};
+
+// Formatar data para DD/MM/YYYY
+const formatarData = (dateString: string): string => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+// Obter hora atual em formato HH:MM
+const obterHoraAtual = (): string => {
+  const agora = new Date();
+  const horas = String(agora.getHours()).padStart(2, '0');
+  const minutos = String(agora.getMinutes()).padStart(2, '0');
+  return `${horas}:${minutos}`;
+};
+
+// Componente de calendário compacto com dias da semana
+interface CompactDatePickerProps {
+  value: string;
+  onChange: (date: string) => void;
+}
+
+const CompactDatePicker: React.FC<CompactDatePickerProps> = ({ value, onChange }) => {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date(value + 'T00:00:00'));
+  const [showCalendar, setShowCalendar] = React.useState(false);
+  
+  const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayDayOfWeek = daysOfWeek[today.getDay()];
+  
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+  
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+  
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  };
+  
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  };
+  
+  const handleSelectDay = (day: number) => {
+    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const dateStr = newDate.toISOString().split('T')[0];
+    onChange(dateStr);
+    setShowCalendar(false);
+  };
+  
+  const daysInMonth = getDaysInMonth(currentMonth);
+  const firstDay = getFirstDayOfMonth(currentMonth);
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const emptyDays = Array.from({ length: firstDay }, (_, i) => i);
+  
+  return (
+    <div className="w-64">
+      {/* Dia da semana destacado */}
+      <div className="text-center mb-3 p-2 bg-primary/10 rounded-lg">
+        <p className="text-xs font-semibold text-muted-foreground uppercase">Hoje</p>
+        <p className="text-lg font-bold text-primary">{todayDayOfWeek}</p>
+      </div>
+      
+      {/* Botão para abrir calendário */}
+      <Button 
+        onClick={() => setShowCalendar(!showCalendar)}
+        variant="outline"
+        className="w-full mb-2 text-xs"
+      >
+        <Calendar className="w-3 h-3 mr-1" />
+        {showCalendar ? 'Fechar' : 'Abrir Calendário'}
+      </Button>
+      
+      {/* Calendário compacto */}
+      {showCalendar && (
+        <div className="border border-border rounded-lg p-2 bg-background">
+          {/* Navegação de mês */}
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={handlePrevMonth} className="p-1 hover:bg-accent rounded">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <p className="text-xs font-semibold text-center flex-1">
+              {currentMonth.toLocaleString('pt-BR', { month: 'short', year: 'numeric' })}
+            </p>
+            <button onClick={handleNextMonth} className="p-1 hover:bg-accent rounded">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Dias da semana */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {daysOfWeek.map(day => (
+              <div key={day} className="text-center text-[10px] font-bold text-muted-foreground h-5 flex items-center justify-center">
+                {day}
+              </div>
+            ))}
+          </div>
+          
+          {/* Dias do mês */}
+          <div className="grid grid-cols-7 gap-1">
+            {emptyDays.map((_, i) => (
+              <div key={`empty-${i}`} className="h-5" />
+            ))}
+            {days.map(day => {
+              const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+              const dateStr = date.toISOString().split('T')[0];
+              const isSelected = dateStr === value;
+              const isToday = dateStr === today.toISOString().split('T')[0];
+              
+              return (
+                <button
+                  key={day}
+                  onClick={() => handleSelectDay(day)}
+                  className={`h-5 text-[10px] font-semibold rounded flex items-center justify-center ${
+                    isSelected 
+                      ? 'bg-primary text-primary-foreground' 
+                      : isToday
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-accent/50'
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function CaixaTab() {
+  const { setScreen, currentStore, stores } = useApp();
+  const store = stores[currentStore];
+  
+  const [activeTab, setActiveTab] = useState<CaixaTab>('caixa');
+  const today = new Date().toISOString().split('T')[0];
+  const [data, setData] = useState(today);
+  const [dataDisplay, setDataDisplay] = useState(formatarData(today));
+  
+  // Aba CAIXA - Produtos por tipo de pagamento
+  const [produtosDinheiro, setProdutosDinheiro] = useState<Produto[]>([]);
+  const [produtosPix, setProdutosPix] = useState<Produto[]>([]);
+  const [produtosCartao, setProdutosCartao] = useState<Produto[]>([]);
+  const [produtosBoleto, setProdutosBoleto] = useState<Produto[]>([]);
+
+  // Estado de edição
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [editandoTipo, setEditandoTipo] = useState<TipoPagamento | null>(null);
+
+  // Formulários para adicionar/editar produtos
+  const [descricaoDinheiro, setDescricaoDinheiro] = useState('');
+  const [quantidadeDinheiro, setQuantidadeDinheiro] = useState('');
+  const [valorDinheiro, setValorDinheiro] = useState('');
+
+  const [descricaoPix, setDescricaoPix] = useState('');
+  const [quantidadePix, setQuantidadePix] = useState('');
+  const [valorPix, setValorPix] = useState('');
+
+  const [descricaoCartao, setDescricaoCartao] = useState('');
+  const [quantidadeCartao, setQuantidadeCartao] = useState('');
+  const [valorCartao, setValorCartao] = useState('');
+
+  const [descricaoBoleto, setDescricaoBoleto] = useState('');
+  const [quantidadeBoleto, setQuantidadeBoleto] = useState('');
+  const [valorBoleto, setValorBoleto] = useState('');
+
+  // Aba FECHAMENTO
+  const [dinheiro, setDinheiro] = useState('');
+  const [sobra, setSobra] = useState('');
+  const [pix, setPix] = useState('');
+  const [boleto, setBoleto] = useState('');
+  const [cartao, setCartao] = useState('');
+  
+  const [sangrias, setSangrias] = useState<Sangria[]>([]);
+  const [novaDescricao, setNovaDescricao] = useState('');
+  const [novaValor, setNovaValor] = useState('');
+  const [nomeDigital, setNomeDigital] = useState('');
+
+  // Modal de senha para exclusão
+  const [showSenhaModal, setShowSenhaModal] = useState(false);
+  const [senhaInput, setSenhaInput] = useState('');
+  const [produtoParaExcluir, setProdutoParaExcluir] = useState<{ tipo: TipoPagamento; id: string } | null>(null);
+  // Removido - agora usa estado de senhas dinâmicas
+
+  // Modal de edição
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editModalTipo, setEditModalTipo] = useState<TipoPagamento | null>(null);
+  const [editModalDescricao, setEditModalDescricao] = useState('');
+  const [editModalQuantidade, setEditModalQuantidade] = useState('');
+  const [editModalValor, setEditModalValor] = useState('');
+
+  // Senhas
+  const [senhaCaixa, setSenhaCaixa] = useState('2513089');
+  const [senhaVendas, setSenhaVendas] = useState('2512');
+
+  // Modal de senha para editar
+  const [showSenhaEditModal, setShowSenhaEditModal] = useState(false);
+  const [senhaEditInput, setSenhaEditInput] = useState('');
+  const [produtoParaEditar, setProdutoParaEditar] = useState<{ tipo: TipoPagamento; produto: Produto } | null>(null);
+
+  // Refs para navegação com ENTER em CAIXA
+  const inputRefsDinheiro = useRef<{ desc: HTMLInputElement | null; qtd: HTMLInputElement | null; valor: HTMLInputElement | null }>({ desc: null, qtd: null, valor: null });
+  const inputRefsPix = useRef<{ desc: HTMLInputElement | null; qtd: HTMLInputElement | null; valor: HTMLInputElement | null }>({ desc: null, qtd: null, valor: null });
+  const inputRefsCartao = useRef<{ desc: HTMLInputElement | null; qtd: HTMLInputElement | null; valor: HTMLInputElement | null }>({ desc: null, qtd: null, valor: null });
+  const inputRefsBoleto = useRef<{ desc: HTMLInputElement | null; qtd: HTMLInputElement | null; valor: HTMLInputElement | null }>({ desc: null, qtd: null, valor: null });
+  const buttonRefsDinheiro = useRef<HTMLButtonElement | null>(null);
+  const buttonRefsPix = useRef<HTMLButtonElement | null>(null);
+  const buttonRefsCartao = useRef<HTMLButtonElement | null>(null);
+  const buttonRefsBoleto = useRef<HTMLButtonElement | null>(null);
+
+  // Calcular totais para aba CAIXA
+  const totalDinheiro = produtosDinheiro.reduce((sum, p) => sum + (p.valor * p.quantidade), 0);
+  const totalPix = produtosPix.reduce((sum, p) => sum + (p.valor * p.quantidade), 0);
+  const totalCartao = produtosCartao.reduce((sum, p) => sum + (p.valor * p.quantidade), 0);
+  const totalBoleto = produtosBoleto.reduce((sum, p) => sum + (p.valor * p.quantidade), 0);
+
+  // Sincronizar totais com FECHAMENTO (automático)
+  const sincronizarTotais = () => {
+    setDinheiro(totalDinheiro > 0 ? totalDinheiro.toString().replace('.', ',') : '');
+    setPix(totalPix > 0 ? totalPix.toString().replace('.', ',') : '');
+    setCartao(totalCartao > 0 ? totalCartao.toString().replace('.', ',') : '');
+    setBoleto(totalBoleto > 0 ? totalBoleto.toString().replace('.', ',') : '');
+  };
+
+  // Sincronizar automaticamente quando houver mudanças
+  React.useEffect(() => {
+    sincronizarTotais();
+  }, [totalDinheiro, totalPix, totalCartao, totalBoleto]);
+
+  // Abrir modal de senha para editar
+  const abrirModalSenhaEdicao = (tipo: TipoPagamento, produto: Produto) => {
+    setProdutoParaEditar({ tipo, produto });
+    setShowSenhaEditModal(true);
+    setSenhaEditInput('');
+  };
+
+  // Confirmar senha e abrir modal de edição
+  const confirmarSenhaEdicao = () => {
+    if (senhaEditInput !== senhaCaixa) {
+      toast.error('Senha incorreta!');
+      setSenhaEditInput('');
+      return;
+    }
+
+    if (produtoParaEditar) {
+      abrirModalEdicao(produtoParaEditar.tipo, produtoParaEditar.produto);
+    }
+
+    setShowSenhaEditModal(false);
+    setSenhaEditInput('');
+    setProdutoParaEditar(null);
+  };
+
+  // Abrir modal de edição
+  const abrirModalEdicao = (tipo: TipoPagamento, produto: Produto) => {
+    setEditandoId(produto.id);
+    setEditandoTipo(tipo);
+    setEditModalTipo(tipo);
+    setEditModalDescricao(produto.descricao);
+    setEditModalQuantidade(produto.quantidade.toString());
+    setEditModalValor(produto.valor.toString().replace('.', ','));
+    setShowEditModal(true);
+  };
+
+  // Cancelar edição modal
+  const cancelarEdicaoModal = () => {
+    setShowEditModal(false);
+    setEditandoId(null);
+    setEditandoTipo(null);
+    setEditModalTipo(null);
+    setEditModalDescricao('');
+    setEditModalQuantidade('');
+    setEditModalValor('');
+  };
+
+  // Salvar edição (modal)
+  const salvarEdicao = () => {
+    if (!editModalDescricao.trim()) {
+      toast.error('Descrição é obrigatória');
+      return;
+    }
+
+    const valorNum = parseCommaNumber(editModalValor);
+    if (valorNum <= 0) {
+      toast.error('Valor é obrigatório');
+      return;
+    }
+
+    const quantidadeNum = parseCommaNumber(editModalQuantidade) || 1;
+    const tipo = editModalTipo;
+
+    if (tipo === 'dinheiro') {
+      setProdutosDinheiro(produtosDinheiro.map(p => 
+        p.id === editandoId ? { ...p, descricao: editModalDescricao.trim(), quantidade: quantidadeNum, valor: valorNum } : p
+      ));
+    } else if (tipo === 'pix') {
+      setProdutosPix(produtosPix.map(p => 
+        p.id === editandoId ? { ...p, descricao: editModalDescricao.trim(), quantidade: quantidadeNum, valor: valorNum } : p
+      ));
+    } else if (tipo === 'cartao') {
+      setProdutosCartao(produtosCartao.map(p => 
+        p.id === editandoId ? { ...p, descricao: editModalDescricao.trim(), quantidade: quantidadeNum, valor: valorNum } : p
+      ));
+    } else if (tipo === 'boleto') {
+      setProdutosBoleto(produtosBoleto.map(p => 
+        p.id === editandoId ? { ...p, descricao: editModalDescricao.trim(), quantidade: quantidadeNum, valor: valorNum } : p
+      ));
+    }
+
+    cancelarEdicaoModal();
+    toast.success('Produto atualizado');
+  };
+
+  // Cancelar edição
+  const cancelarEdicao = () => {
+    setEditandoId(null);
+    setEditandoTipo(null);
+    setDescricaoDinheiro('');
+    setQuantidadeDinheiro('');
+    setValorDinheiro('');
+    setDescricaoPix('');
+    setQuantidadePix('');
+    setValorPix('');
+    setDescricaoCartao('');
+    setQuantidadeCartao('');
+    setValorCartao('');
+    setDescricaoBoleto('');
+    setQuantidadeBoleto('');
+    setValorBoleto('');
+  };
+
+  // Adicionar produto
+  const adicionarProduto = (tipo: TipoPagamento) => {
+    let descricao = '';
+    let quantidade = '';
+    let valor = '';
+
+    if (tipo === 'dinheiro') {
+      descricao = descricaoDinheiro;
+      quantidade = quantidadeDinheiro;
+      valor = valorDinheiro;
+    } else if (tipo === 'pix') {
+      descricao = descricaoPix;
+      quantidade = quantidadePix;
+      valor = valorPix;
+    } else if (tipo === 'cartao') {
+      descricao = descricaoCartao;
+      quantidade = quantidadeCartao;
+      valor = valorCartao;
+    } else if (tipo === 'boleto') {
+      descricao = descricaoBoleto;
+      quantidade = quantidadeBoleto;
+      valor = valorBoleto;
+    }
+
+    if (!descricao.trim()) {
+      toast.error('Descrição é obrigatória');
+      return;
+    }
+
+    const valorNum = parseCommaNumber(valor);
+    if (valorNum <= 0) {
+      toast.error('Valor é obrigatório');
+      return;
+    }
+
+    const quantidadeNum = parseCommaNumber(quantidade) || 1;
+
+    const novoProduto: Produto = {
+      id: Date.now().toString(),
+      descricao: descricao.trim(),
+      quantidade: quantidadeNum,
+      valor: valorNum,
+      hora: obterHoraAtual(),
+    };
+
+    if (tipo === 'dinheiro') {
+      setProdutosDinheiro([...produtosDinheiro, novoProduto]);
+      setDescricaoDinheiro('');
+      setQuantidadeDinheiro('');
+      setValorDinheiro('');
+    } else if (tipo === 'pix') {
+      setProdutosPix([...produtosPix, novoProduto]);
+      setDescricaoPix('');
+      setQuantidadePix('');
+      setValorPix('');
+    } else if (tipo === 'cartao') {
+      setProdutosCartao([...produtosCartao, novoProduto]);
+      setDescricaoCartao('');
+      setQuantidadeCartao('');
+      setValorCartao('');
+    } else if (tipo === 'boleto') {
+      setProdutosBoleto([...produtosBoleto, novoProduto]);
+      setDescricaoBoleto('');
+      setQuantidadeBoleto('');
+      setValorBoleto('');
+    }
+
+    toast.success('Produto adicionado');
+  };
+
+  // Abrir modal de senha para exclusão
+  const abrirModalExclusao = (tipo: TipoPagamento, id: string) => {
+    setProdutoParaExcluir({ tipo, id });
+    setShowSenhaModal(true);
+    setSenhaInput('');
+  };
+
+  // Confirmar exclusão com senha
+  const confirmarExclusaoComSenha = () => {
+    if (senhaInput !== senhaCaixa) {
+      toast.error('Senha incorreta!');
+      setSenhaInput('');
+      return;
+    }
+
+    if (produtoParaExcluir) {
+      removerProdutoConfirmado(produtoParaExcluir.tipo, produtoParaExcluir.id);
+    }
+
+    setShowSenhaModal(false);
+    setSenhaInput('');
+    setProdutoParaExcluir(null);
+  };
+
+  // Remover produto após confirmação de senha
+  const removerProdutoConfirmado = (tipo: TipoPagamento, id: string) => {
+    if (tipo === 'dinheiro') {
+      setProdutosDinheiro(produtosDinheiro.filter(p => p.id !== id));
+    } else if (tipo === 'pix') {
+      setProdutosPix(produtosPix.filter(p => p.id !== id));
+    } else if (tipo === 'cartao') {
+      setProdutosCartao(produtosCartao.filter(p => p.id !== id));
+    } else if (tipo === 'boleto') {
+      setProdutosBoleto(produtosBoleto.filter(p => p.id !== id));
+    }
+    toast.success('Produto removido');
+  };
+
+  const removerProduto = (tipo: TipoPagamento, id: string) => {
+    abrirModalExclusao(tipo, id);
+  };
+
+  // Aba FECHAMENTO
+  const dinheiroNum = parseCommaNumber(dinheiro);
+  const sobraNum = parseCommaNumber(sobra);
+  const pixNum = parseCommaNumber(pix);
+  const boletoNum = parseCommaNumber(boleto);
+  const cartaoNum = parseCommaNumber(cartao);
+
+  const totalVendas = dinheiroNum + sobraNum + pixNum + boletoNum + cartaoNum;
+  const totalSangria = sangrias.reduce((sum, s) => sum + s.valor, 0);
+  const saldoDinheiro = dinheiroNum + sobraNum - totalSangria;
+  const saldoGeral = totalVendas - totalSangria;
+
+  const adicionarSangria = () => {
+    if (!novaDescricao.trim()) {
+      toast.error('Digite uma descrição');
+      return;
+    }
+    const valor = parseCommaNumber(novaValor);
+    if (valor <= 0) {
+      toast.error('Digite um valor válido');
+      return;
+    }
+    setSangrias([...sangrias, {
+      id: Date.now().toString(),
+      descricao: novaDescricao,
+      valor: valor,
+    }]);
+    setNovaDescricao('');
+    setNovaValor('');
+    toast.success('Sangria adicionada');
+  };
+
+  const removerSangria = (id: string) => {
+    setSangrias(sangrias.filter(s => s.id !== id));
+  };
+
+  const salvarFechamento = () => {
+    if (totalVendas === 0) {
+      toast.error('Adicione pelo menos um valor de venda');
+      return;
+    }
+    if (!nomeDigital.trim()) {
+      toast.error('Digite seu nome para assinatura');
+      return;
+    }
+    toast.success('Fechamento de caixa salvo com sucesso!');
+  };
+
+  const exportarPDF = () => {
+    toast.info('Funcionalidade de PDF em desenvolvimento');
+  };
+
+  // Componente para renderizar coluna de pagamento
+  const renderColunaPagamento = (
+    tipo: TipoPagamento,
+    titulo: string,
+    cor: string,
+    corBg: string,
+    icone: React.ReactNode,
+    descricao: string,
+    setDescricao: (v: string) => void,
+    quantidade: string,
+    setQuantidade: (v: string) => void,
+    valor: string,
+    setValor: (v: string) => void,
+    produtos: Produto[],
+    total: number,
+    inputRefs: React.MutableRefObject<{ desc: HTMLInputElement | null; qtd: HTMLInputElement | null; valor: HTMLInputElement | null }>,
+    buttonRef: React.MutableRefObject<HTMLButtonElement | null>
+  ) => {
+    const emEdicao = editandoTipo === tipo && editandoId;
+
+    const handleKeyDown = (field: 'desc' | 'qtd' | 'valor', e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (field === 'desc') {
+          setTimeout(() => {
+            inputRefs.current.qtd?.focus();
+            inputRefs.current.qtd?.select();
+          }, 0);
+        } else if (field === 'qtd') {
+          setTimeout(() => {
+            inputRefs.current.valor?.focus();
+            inputRefs.current.valor?.select();
+          }, 0);
+        } else if (field === 'valor') {
+          setTimeout(() => {
+            buttonRef.current?.click();
+          }, 0);
+        }
+      }
+    };
+
+    return (
+      <Card className={`p-4 border-l-4 ${corBg}`}>
+        <h3 className={`text-lg font-bold ${cor} mb-4`}>{titulo}</h3>
+
+        {/* Formulário */}
+        <div className="space-y-3 mb-4 pb-4 border-b border-border">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">
+              Descrição <span className="text-red-500">*</span>
+            </label>
+            <Input
+              ref={el => { if (el) inputRefs.current.desc = el; }}
+              type="text"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              onKeyDown={(e) => handleKeyDown('desc', e)}
+              placeholder="Ex: Produto"
+              className="w-full"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">Qtd</label>
+              <Input
+                ref={el => { if (el) inputRefs.current.qtd = el; }}
+                type="text"
+                value={quantidade}
+                onChange={(e) => setQuantidade(handleNumberInput(e.target.value))}
+                onKeyDown={(e) => handleKeyDown('qtd', e)}
+                placeholder="1"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">
+                Valor <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-semibold">R$</span>
+                <Input
+                  ref={el => { if (el) inputRefs.current.valor = el; }}
+                  type="text"
+                  value={valor}
+                  onChange={(e) => setValor(handleNumberInput(e.target.value))}
+                  onKeyDown={(e) => handleKeyDown('valor', e)}
+                  placeholder="0,00"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Button
+            ref={buttonRef}
+            onClick={() => adicionarProduto(tipo)}
+            size="sm"
+            className={`w-full gap-2 ${cor.replace('text-', 'bg-').replace('-600', '-600')} hover:opacity-90`}
+            style={{ backgroundColor: cor === 'text-green-600' ? '#16a34a' : cor === 'text-blue-600' ? '#2563eb' : cor === 'text-purple-600' ? '#9333ea' : '#dc2626' }}
+          >
+            <Plus className="w-4 h-4" /> Adicionar
+          </Button>
+        </div>
+
+        {/* Total */}
+        <div className={`${corBg} p-3 rounded-lg mb-4`}>
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total</p>
+          <p className={`text-2xl font-bold ${cor}`}>{formatCurrency(total)}</p>
+        </div>
+
+        {/* Lista de Produtos */}
+        <div className="space-y-2">
+          {produtos.map((produto) => (
+            <div key={produto.id}>
+              <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{produto.descricao}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {produto.quantidade}x {formatCurrency(produto.valor)}
+                  </p>
+                </div>
+                <div className="flex gap-1 ml-2">
+                <button
+                  onClick={() => abrirModalSenhaEdicao(tipo, produto)}
+                  className="text-blue-600 hover:bg-blue-50 p-1 rounded"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                  <button
+                    onClick={() => abrirModalExclusao(tipo, produto.id)}
+                    className="text-destructive hover:bg-destructive/10 p-1 rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground text-right mt-1 px-2">{produto.hora}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div className="flex items-center justify-between p-4 max-w-6xl mx-auto">
+          <button onClick={() => setScreen('caixaSelection')} className="flex items-center gap-2 text-primary">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium">Voltar</span>
+          </button>
+          <h1 className="text-lg font-bold text-foreground">{store?.name?.toUpperCase() || 'LOJA'}</h1>
+          <div className="w-12" />
+        </div>
+      </div>
+
+      {/* Tabs Navigation */}
+      <div className="sticky top-[60px] z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div className="flex max-w-6xl mx-auto">
+          <div className="flex-1 flex flex-col items-center justify-center py-2 px-4 border-r border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Anotações</p>
+            <button
+              onClick={() => setActiveTab('caixa')}
+              className={`w-full py-2 text-sm font-bold transition-all rounded-lg ${
+                activeTab === 'caixa'
+                  ? 'bg-primary text-primary-foreground shadow-lg'
+                  : 'text-muted-foreground hover:bg-secondary'
+              }`}
+            >
+              CAIXA
+            </button>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center py-2 px-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Resumo</p>
+            <button
+              onClick={() => setActiveTab('fechamento')}
+              className={`w-full py-2 text-sm font-bold transition-all rounded-lg ${
+                activeTab === 'fechamento'
+                  ? 'bg-accent text-accent-foreground shadow-lg'
+                  : 'text-muted-foreground hover:bg-secondary'
+              }`}
+            >
+              FECHAMENTO
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-6xl mx-auto p-4">
+        {/* Aba CAIXA - 4 Colunas */}
+        {activeTab === 'caixa' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            {/* Data - Calendário Compacto */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <Card className="p-4">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase mb-3 block">Data Selecionada</label>
+                  <p className="text-2xl font-bold text-primary">{dataDisplay}</p>
+                </Card>
+              </div>
+              <Card className="p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-2 border-primary/20">
+                <CompactDatePicker 
+                  value={data} 
+                  onChange={(newDate) => {
+                    setData(newDate);
+                    setDataDisplay(formatarData(newDate));
+                  }}
+                />
+              </Card>
+            </div>
+
+            {/* 4 Colunas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Coluna DINHEIRO */}
+              {renderColunaPagamento(
+                'dinheiro',
+                'DINHEIRO',
+                'text-green-600',
+                'border-l-green-500',
+                <Banknote className="w-5 h-5" />,
+                descricaoDinheiro,
+                setDescricaoDinheiro,
+                quantidadeDinheiro,
+                setQuantidadeDinheiro,
+                valorDinheiro,
+                setValorDinheiro,
+                produtosDinheiro,
+                totalDinheiro,
+                inputRefsDinheiro,
+                buttonRefsDinheiro
+              )}
+
+              {/* Coluna PIX */}
+              {renderColunaPagamento(
+                'pix',
+                'PIX',
+                'text-blue-600',
+                'border-l-blue-500',
+                <FileText className="w-5 h-5" />,
+                descricaoPix,
+                setDescricaoPix,
+                quantidadePix,
+                setQuantidadePix,
+                valorPix,
+                setValorPix,
+                produtosPix,
+                totalPix,
+                inputRefsPix,
+                buttonRefsPix
+              )}
+
+              {/* Coluna CARTÃO */}
+              {renderColunaPagamento(
+                'cartao',
+                'CARTÃO',
+                'text-purple-600',
+                'border-l-purple-500',
+                <CreditCard className="w-5 h-5" />,
+                descricaoCartao,
+                setDescricaoCartao,
+                quantidadeCartao,
+                setQuantidadeCartao,
+                valorCartao,
+                setValorCartao,
+                produtosCartao,
+                totalCartao,
+                inputRefsCartao,
+                buttonRefsCartao
+              )}
+
+              {/* Coluna BOLETO */}
+              {renderColunaPagamento(
+                'boleto',
+                'BOLETO',
+                'text-red-600',
+                'border-l-red-500',
+                <FileText className="w-5 h-5" />,
+                descricaoBoleto,
+                setDescricaoBoleto,
+                quantidadeBoleto,
+                setQuantidadeBoleto,
+                valorBoleto,
+                setValorBoleto,
+                produtosBoleto,
+                totalBoleto,
+                inputRefsBoleto,
+                buttonRefsBoleto
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Aba FECHAMENTO */}
+        {activeTab === 'fechamento' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            {/* Data - Calendário Compacto */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+              <div className="flex items-start justify-between gap-4">
+                <Card className="flex-1 p-4">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">
+                    Data Selecionada <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-2xl font-bold text-primary">{dataDisplay}</p>
+                </Card>
+                <Card className="p-3 bg-gradient-to-br from-primary/5 to-accent/5 border-2 border-primary/20">
+                  <CompactDatePicker 
+                    value={data} 
+                    onChange={(newDate: string) => {
+                      setData(newDate);
+                      setDataDisplay(formatarData(newDate));
+                    }}
+                  />
+                </Card>
+              </div>
+            </motion.div>
+
+            {/* Dinheiro e Sobra - Lado a Lado */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Dinheiro */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Banknote className="w-5 h-5 text-green-600" />
+                    <label className="text-xs font-semibold text-muted-foreground uppercase">
+                      Dinheiro <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-muted-foreground">R$</span>
+                    <Input
+                      type="text"
+                      value={dinheiro}
+                      onChange={(e) => setDinheiro(handleNumberInput(e.target.value))}
+                      placeholder="0,00"
+                    />
+                  </div>
+                </Card>
+              </motion.div>
+
+              {/* Sobra */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Banknote className="w-5 h-5 text-amber-600" />
+                    <label className="text-xs font-semibold text-muted-foreground uppercase">
+                      Sobra <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-muted-foreground">R$</span>
+                    <Input
+                      type="text"
+                      value={sobra}
+                      onChange={(e) => setSobra(handleNumberInput(e.target.value))}
+                      placeholder="0,00"
+                    />
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* PIX */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                    PIX <span className="text-red-500">*</span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-muted-foreground">R$</span>
+                  <Input
+                    type="text"
+                    value={pix}
+                    onChange={(e) => setPix(handleNumberInput(e.target.value))}
+                    placeholder="0,00"
+                  />
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Boleto */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="w-5 h-5 text-purple-600" />
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">Boleto</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-muted-foreground">R$</span>
+                  <Input
+                    type="text"
+                    value={boleto}
+                    onChange={(e) => setBoleto(handleNumberInput(e.target.value))}
+                    placeholder="0,00"
+                  />
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Cartão */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CreditCard className="w-5 h-5 text-red-600" />
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">
+                    Cartão <span className="text-red-500">*</span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-muted-foreground">R$</span>
+                  <Input
+                    type="text"
+                    value={cartao}
+                    onChange={(e) => setCartao(handleNumberInput(e.target.value))}
+                    placeholder="0,00"
+                  />
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Total de Vendas */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+              <Card className="p-4 bg-primary/10 border-primary/20">
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total de Vendas</p>
+                  <p className="text-2xl font-bold text-primary">{formatCurrency(totalVendas)}</p>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Sangrias */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card className="p-4">
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-3 block">Sangrias</label>
+                {sangrias.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {sangrias.map((sangria) => (
+                      <div key={sangria.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">{sangria.descricao}</p>
+                          <p className="text-xs text-muted-foreground">{formatCurrency(sangria.valor)}</p>
+                        </div>
+                        <button
+                          onClick={() => removerSangria(sangria.id)}
+                          className="text-destructive hover:bg-destructive/10 p-2 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-2 mb-3">
+                  <Input
+                    type="text"
+                    value={novaDescricao}
+                    onChange={(e) => setNovaDescricao(e.target.value)}
+                    placeholder="Descrição"
+                    className="w-full"
+                  />
+                  <div className="flex gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-sm font-semibold text-muted-foreground">R$</span>
+                      <Input
+                        type="text"
+                        value={novaValor}
+                        onChange={(e) => setNovaValor(handleNumberInput(e.target.value))}
+                        placeholder="0,00"
+                        className="flex-1"
+                      />
+                    </div>
+                    <Button
+                      onClick={adicionarSangria}
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Plus className="w-4 h-4" /> Adicionar
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Total de Sangria */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+              <Card className="p-4 bg-destructive/10 border-destructive/20">
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total de Sangria</p>
+                  <p className="text-2xl font-bold text-destructive">{formatCurrency(totalSangria)}</p>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Saldo em Dinheiro */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              <Card className="p-4 bg-accent/10 border-accent/20">
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Saldo em Dinheiro</p>
+                  <p className="text-2xl font-bold text-accent">{formatCurrency(saldoDinheiro)}</p>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Saldo Geral */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+              <Card className="p-4 bg-green-500/10 border-green-500/20">
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Saldo Geral</p>
+                  <p className="text-2xl font-bold text-green-600">{formatCurrency(saldoGeral)}</p>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Nome Digital */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+              <Card className="p-4">
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">
+                  Nome Digital <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  value={nomeDigital}
+                  onChange={(e) => setNomeDigital(e.target.value)}
+                  placeholder="Digite seu nome"
+                  className="w-full"
+                />
+              </Card>
+            </motion.div>
+
+            {/* Botões de Ação */}
+            <div className="flex gap-3 pb-4">
+              <Button
+                onClick={salvarFechamento}
+                className="flex-1 bg-primary hover:bg-primary/90"
+              >
+                Salvar Fechamento
+              </Button>
+              <Button
+                onClick={exportarPDF}
+                variant="outline"
+                className="flex-1"
+              >
+                Exportar PDF
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Modal de Edição */}
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-background rounded-lg shadow-lg p-6 w-96 max-w-[90vw]"
+            >
+              <h2 className="text-lg font-bold text-foreground mb-4">Editar Produto</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">
+                    Descrição <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={editModalDescricao}
+                    onChange={(e) => setEditModalDescricao(e.target.value)}
+                    placeholder="Ex: Produto"
+                    className="w-full"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Qtd</label>
+                    <Input
+                      type="text"
+                      value={editModalQuantidade}
+                      onChange={(e) => setEditModalQuantidade(handleNumberInput(e.target.value))}
+                      placeholder="1"
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">
+                      Valor <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-semibold">R$</span>
+                      <Input
+                        type="text"
+                        value={editModalValor}
+                        onChange={(e) => setEditModalValor(handleNumberInput(e.target.value))}
+                        placeholder="0,00"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button
+                  onClick={cancelarEdicaoModal}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={salvarEdicao}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  Salvar
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal de Senha para Exclusão */}
+        {showSenhaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-background rounded-lg shadow-lg p-6 w-96 max-w-[90vw]"
+            >
+              <h2 className="text-lg font-bold text-foreground mb-4">Confirmar Exclusão</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Digite a senha para confirmar a exclusão do produto.
+              </p>
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">
+                  Senha
+                </label>
+                <Input
+                  type="password"
+                  value={senhaInput}
+                  onChange={(e) => setSenhaInput(e.target.value)}
+                  placeholder="Digite a senha"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      confirmarExclusaoComSenha();
+                    }
+                  }}
+                  className="w-full"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setShowSenhaModal(false);
+                    setSenhaInput('');
+                    setProdutoParaExcluir(null);
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={confirmarExclusaoComSenha}
+                  className="flex-1 bg-destructive hover:bg-destructive/90"
+                >
+                  Confirmar
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+      {/* Modal de Senha para Editar */}
+      {showSenhaEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-background rounded-lg shadow-lg p-6 w-96 max-w-[90vw]"
+          >
+            <h2 className="text-lg font-bold text-foreground mb-4">Confirmar Edição</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Digite a senha para confirmar a edição do produto.
+            </p>
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">
+                Senha
+              </label>
+              <Input
+                type="password"
+                value={senhaEditInput}
+                onChange={(e) => setSenhaEditInput(e.target.value)}
+                placeholder="Digite a senha"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    confirmarSenhaEdicao();
+                  }
+                }}
+                className="w-full"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setShowSenhaEditModal(false);
+                  setSenhaEditInput('');
+                  setProdutoParaEditar(null);
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmarSenhaEdicao}
+                className="flex-1 bg-primary hover:bg-primary/90"
+              >
+                Confirmar
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      </div>
+    </div>
+  );
+}
