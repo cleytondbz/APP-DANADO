@@ -12,6 +12,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const DEBUG_SYNC = process.env.DEBUG_SYNC === '1';
+const SYNC_TOKEN = process.env.SYNC_TOKEN || '';
+const CLOUD_SYNC_URL = process.env.CLOUD_SYNC_URL || '';
+const CLOUD_SYNC_TOKEN = process.env.CLOUD_SYNC_TOKEN || '';
+const ENABLE_CLOUD_PUSH = process.env.ENABLE_CLOUD_PUSH === '1';
 
 const normalizeKey = (value: any) =>
   String(value ?? '')
@@ -436,9 +440,69 @@ function loadDataFromFile() {
 function saveDataToFile(data: Record<string, any>) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    scheduleCloudPush();
   } catch (error) {
     console.error('[Server] Erro ao salvar dados:', error);
   }
+}
+
+let cloudPushTimer: NodeJS.Timeout | null = null;
+let cloudPushInFlight = false;
+let cloudPushQueued = false;
+
+async function pushDataToCloud() {
+  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) return;
+  if (cloudPushInFlight) {
+    cloudPushQueued = true;
+    return;
+  }
+
+  cloudPushInFlight = true;
+  try {
+    const payload = {
+      source: 'site',
+      settings: dataStore.settings || {},
+      stores: dataStore.stores || {},
+      debts: dataStore.debts || [],
+      saldoDia: dataStore.saldoDia || 0,
+      caixa: dataStore.caixa || {},
+      fechamento: dataStore.fechamento || {},
+      lancamentos: dataStore.lancamentos || {},
+    };
+
+    const resp = await fetch(CLOUD_SYNC_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-sync-token': CLOUD_SYNC_TOKEN,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '');
+      console.error('[CloudSync] Falha ao enviar dados:', resp.status, txt);
+    } else if (DEBUG_SYNC) {
+      console.log('[CloudSync] Dados enviados para nuvem');
+    }
+  } catch (err) {
+    console.error('[CloudSync] Erro de envio:', err);
+  } finally {
+    cloudPushInFlight = false;
+    if (cloudPushQueued) {
+      cloudPushQueued = false;
+      scheduleCloudPush();
+    }
+  }
+}
+
+function scheduleCloudPush() {
+  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) return;
+  if (cloudPushTimer) clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(() => {
+    cloudPushTimer = null;
+    void pushDataToCloud();
+  }, 700);
 }
 
 // Middleware
@@ -447,6 +511,20 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
+
+// Em produção online (Render), bloqueia qualquer escrita pública.
+// Escrita só é permitida com token enviado pelo servidor local.
+app.use((req: Request, res: Response, next) => {
+  const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
+  const isApiRoute = req.path.startsWith('/api/');
+  if (!SYNC_TOKEN || !isApiRoute || !isWriteMethod) return next();
+
+  const providedToken = String(req.headers['x-sync-token'] || '');
+  if (providedToken !== SYNC_TOKEN) {
+    return res.status(401).json({ success: false, error: 'write_blocked' });
+  }
+  return next();
+});
 
 // Dados em memória (para teste local)
 // Em produção, isso seria um banco de dados
@@ -589,7 +667,9 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   console.log('[DEBUG] Settings:', settings ? 'SIM' : 'NÃO');
   }
   const syncPreference = dataStore.settings?.syncPreference || 'both';
+  const hasSyncTokenAuth = !!SYNC_TOKEN && String(req.headers['x-sync-token'] || '') === SYNC_TOKEN;
   const sourceAllowed =
+    hasSyncTokenAuth ||
     syncPreference === 'both' ||
     (syncPreference === 'site' && source === 'site') ||
     (syncPreference === 'program' && source === 'program');
