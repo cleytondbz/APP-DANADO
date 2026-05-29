@@ -47,6 +47,7 @@ export interface PurchaseEntry {
   amount: number;
   paidDate?: string; // YYYY-MM-DD
   financialInstitution: string;
+  difType?: 'D' | 'I' | 'F';
 }
 
 export interface PurchaseOptions {

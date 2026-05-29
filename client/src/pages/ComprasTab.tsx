@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import MonthSelector from '@/components/MonthSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PurchaseEntry, PurchaseOptions } from '@/lib/types';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
 const DEFAULT_PURCHASE_OPTIONS: PurchaseOptions = {
   groups: ['M', 'JB'],
@@ -26,6 +25,7 @@ const emptyForm = {
   amount: '',
   paidDate: '',
   financialInstitution: '',
+  difType: '' as '' | 'D' | 'I' | 'F',
 };
 
 const monthKey = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
@@ -118,6 +118,12 @@ const normalizeAmountInput = (raw: string) => {
   return `${cleaned},00`;
 };
 
+const difTypeColors: Record<'D' | 'I' | 'F', string> = {
+  D: 'bg-blue-600 text-white',
+  I: 'bg-amber-500 text-white',
+  F: 'bg-emerald-600 text-white',
+};
+
 export default function ComprasTab() {
   const { settings, setSettings, selectedYear, selectedMonth } = useApp();
   const [form, setForm] = useState(emptyForm);
@@ -137,6 +143,7 @@ export default function ComprasTab() {
   const [showClearMonthDialog, setShowClearMonthDialog] = useState(false);
   const [clearMonthPassword, setClearMonthPassword] = useState('');
   const [clearMonthConfirmText, setClearMonthConfirmText] = useState('');
+  const [analyticsMode, setAnalyticsMode] = useState<'top' | 'dif'>('top');
   const dueDateRef = useRef<HTMLInputElement | null>(null);
   const groupRef = useRef<HTMLInputElement | null>(null);
   const supplierRef = useRef<HTMLInputElement | null>(null);
@@ -146,20 +153,36 @@ export default function ComprasTab() {
   const amountRef = useRef<HTMLInputElement | null>(null);
   const paidDateRef = useRef<HTMLInputElement | null>(null);
   const institutionRef = useRef<HTMLInputElement | null>(null);
+  const difSelectorRef = useRef<HTMLDivElement | null>(null);
   const [editingOption, setEditingOption] = useState<null | {
     field: 'groups' | 'suppliers' | 'institutions';
     oldValue: string;
     value: string;
   }>(null);
 
-  const options: PurchaseOptions = {
-    groups: mergeUnique(DEFAULT_PURCHASE_OPTIONS.groups, settings.purchaseOptions?.groups || []),
-    suppliers: mergeUnique(DEFAULT_PURCHASE_OPTIONS.suppliers, settings.purchaseOptions?.suppliers || []),
-    institutions: mergeUnique(DEFAULT_PURCHASE_OPTIONS.institutions, settings.purchaseOptions?.institutions || []),
-  };
   const currentMonthKey = monthKey(selectedYear, selectedMonth);
   const allEntries = settings.purchaseEntries || {};
   const entries: PurchaseEntry[] = allEntries[currentMonthKey] || [];
+  const existingSuppliersFromEntries = Object.values(allEntries)
+    .flatMap((list) => list || [])
+    .map((entry) => (entry.supplier || '').trim())
+    .filter((name) => name.length > 0);
+  const existingInstitutionsFromEntries = Object.values(allEntries)
+    .flatMap((list) => list || [])
+    .map((entry) => (entry.financialInstitution || '').trim())
+    .filter((name) => name.length > 0);
+
+  const options: PurchaseOptions = {
+    groups: mergeUnique(DEFAULT_PURCHASE_OPTIONS.groups, settings.purchaseOptions?.groups || []),
+    suppliers: mergeUnique(
+      DEFAULT_PURCHASE_OPTIONS.suppliers,
+      [...(settings.purchaseOptions?.suppliers || []), ...existingSuppliersFromEntries]
+    ),
+    institutions: mergeUnique(
+      DEFAULT_PURCHASE_OPTIONS.institutions,
+      [...(settings.purchaseOptions?.institutions || []), ...existingInstitutionsFromEntries]
+    ),
+  };
 
   const normalizeText = (value: string | number | undefined | null) =>
     String(value || '')
@@ -240,6 +263,21 @@ export default function ComprasTab() {
       .map(([supplier, total]) => ({ supplier, total }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 8);
+  }, [entries]);
+  const difChartData = useMemo(() => {
+    const map: Record<'D' | 'I' | 'F', number> = { D: 0, I: 0, F: 0 };
+    entries.forEach((entry) => {
+      if (entry.difType === 'D' || entry.difType === 'I' || entry.difType === 'F') {
+        map[entry.difType] += entry.amount || 0;
+      }
+    });
+    return (['D', 'I', 'F'] as const)
+      .map((type) => ({
+        type,
+        name: type === 'D' ? 'Despesa' : type === 'I' ? 'Imposto' : 'Fornecedor',
+        value: map[type],
+      }))
+      .filter((x) => x.value > 0);
   }, [entries]);
   const allEntriesFlat = useMemo(
     () =>
@@ -330,6 +368,7 @@ export default function ComprasTab() {
       amount,
       paidDate: form.paidDate || undefined,
       financialInstitution: form.financialInstitution.trim(),
+      difType: form.difType ? (form.difType as 'D' | 'I' | 'F') : undefined,
     };
 
     const targetMonth = form.dueDate.slice(0, 7);
@@ -358,6 +397,7 @@ export default function ComprasTab() {
       amount: entry.amount.toFixed(2).replace('.', ','),
       paidDate: entry.paidDate || '',
       financialInstitution: entry.financialInstitution,
+      difType: (entry.difType as 'D' | 'I' | 'F' | '') || '',
     });
   };
 
@@ -389,6 +429,7 @@ export default function ComprasTab() {
       installments: fixedInstallments,
       paidDate: rowEditForm.paidDate || undefined,
       financialInstitution: (rowEditForm.financialInstitution || '').trim(),
+      difType: rowEditForm.difType ? (rowEditForm.difType as 'D' | 'I' | 'F') : undefined,
     };
 
     const oldMonth = rowEditOriginalDueDate.slice(0, 7);
@@ -430,7 +471,18 @@ export default function ComprasTab() {
     toast.success('Opcao adicionada.');
   };
 
-  const exportCsv = () => {
+  const handleOptionEnter = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    field: 'groups' | 'suppliers' | 'institutions',
+    value: string,
+    reset: () => void,
+  ) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addOption(field, value, reset);
+  };
+
+  const buildCsvLines = (list: PurchaseEntry[]) => {
     const header = [
       'vencimento',
       'categoria',
@@ -441,10 +493,11 @@ export default function ComprasTab() {
       'valor',
       'pago',
       'instituicao_financeira',
+      'tipo_dif',
     ];
 
     const lines: string[] = [header.join(';')];
-    const sorted = [...entries].sort((a, b) => {
+    const sorted = [...list].sort((a, b) => {
       if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
       return a.supplier.localeCompare(b.supplier);
     });
@@ -461,9 +514,15 @@ export default function ComprasTab() {
           csvEscape(entry.amount.toFixed(2).replace('.', ',')),
           csvEscape(entry.paidDate || ''),
           csvEscape(entry.financialInstitution),
+          csvEscape(entry.difType || ''),
         ].join(';')
       );
     });
+    return lines;
+  };
+
+  const exportCsv = () => {
+    const lines = buildCsvLines(entries);
 
     const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -475,6 +534,30 @@ export default function ComprasTab() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success('CSV exportado.');
+  };
+
+  const exportCsvAnual = () => {
+    const yearPrefix = `${selectedYear}-`;
+    const annualEntries = Object.entries(allEntries)
+      .filter(([month]) => month.startsWith(yearPrefix))
+      .flatMap(([, monthEntries]) => monthEntries || []);
+
+    if (annualEntries.length === 0) {
+      toast.error('Sem compras para exportar neste ano.');
+      return;
+    }
+
+    const lines = buildCsvLines(annualEntries);
+    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `compras_${selectedYear}_anual.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('CSV anual exportado.');
   };
 
   const importCsv = (file: File) => {
@@ -502,6 +585,8 @@ export default function ComprasTab() {
           const amount = parseFloat((cols[6] || '0').replace(/\./g, '').replace(',', '.')) || 0;
           const paidDate = cols[7] || undefined;
           const financialInstitution = cols[8];
+          const difTypeRaw = (cols[9] || '').trim().toUpperCase();
+          const difType: 'D' | 'I' | 'F' | undefined = difTypeRaw === 'D' || difTypeRaw === 'I' || difTypeRaw === 'F' ? (difTypeRaw as 'D' | 'I' | 'F') : undefined;
 
           if (!dueDate || !supplier || !issueDate || !financialInstitution || amount <= 0) continue;
 
@@ -516,6 +601,7 @@ export default function ComprasTab() {
             amount,
             paidDate,
             financialInstitution,
+            difType,
           });
         }
 
@@ -534,6 +620,79 @@ export default function ComprasTab() {
         toast.success(`CSV importado (${imported.length} linhas).`);
       } catch {
         toast.error('Erro ao importar CSV.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const importCsvAnual = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const content = String(reader.result || '').replace(/^\uFEFF/, '');
+        const rows = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
+        if (rows.length < 2) {
+          toast.error('CSV sem dados.');
+          return;
+        }
+
+        const imported: PurchaseEntry[] = [];
+        for (let i = 1; i < rows.length; i += 1) {
+          const cols = parseCsvLine(rows[i]);
+          if (cols.length < 9) continue;
+
+          const dueDate = cols[0];
+          const group = cols[1];
+          const supplier = cols[2];
+          const documentNumber = cols[3];
+          const issueDate = cols[4];
+          const installments = cols[5];
+          const amount = parseFloat((cols[6] || '0').replace(/\./g, '').replace(',', '.')) || 0;
+          const paidDate = cols[7] || undefined;
+          const financialInstitution = cols[8];
+          const difTypeRaw = (cols[9] || '').trim().toUpperCase();
+          const difType: 'D' | 'I' | 'F' | undefined = difTypeRaw === 'D' || difTypeRaw === 'I' || difTypeRaw === 'F' ? (difTypeRaw as 'D' | 'I' | 'F') : undefined;
+
+          if (!dueDate || !supplier || !issueDate || !financialInstitution || amount <= 0) continue;
+          if (!dueDate.startsWith(`${selectedYear}-`)) continue;
+
+          imported.push({
+            id: `${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+            dueDate,
+            group,
+            supplier,
+            documentNumber,
+            issueDate,
+            installments,
+            amount,
+            paidDate,
+            financialInstitution,
+            difType,
+          });
+        }
+
+        if (imported.length === 0) {
+          toast.error('Nenhuma linha valida do ano selecionado.');
+          return;
+        }
+
+        saveSettingsEntries((prev) => {
+          const next = { ...prev };
+          Object.keys(next).forEach((month) => {
+            if (month.startsWith(`${selectedYear}-`)) next[month] = [];
+          });
+
+          imported.forEach((entry) => {
+            const month = entry.dueDate.slice(0, 7);
+            if (!next[month]) next[month] = [];
+            next[month].push(entry);
+          });
+          return next;
+        });
+
+        toast.success(`CSV anual importado (${imported.length} linhas).`);
+      } catch {
+        toast.error('Erro ao importar CSV anual.');
       }
     };
     reader.readAsText(file);
@@ -598,8 +757,6 @@ export default function ComprasTab() {
 
   return (
     <div className="space-y-4 pb-24">
-      <MonthSelector />
-
       <Card className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold">Compras</h3>
@@ -619,8 +776,26 @@ export default function ComprasTab() {
                 <span>Importar CSV</span>
               </Button>
             </label>
+            <label>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) importCsvAnual(file);
+                  e.currentTarget.value = '';
+                }}
+              />
+              <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground">
+                <span>Importar Anual</span>
+              </Button>
+            </label>
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportCsv}>
               Exportar CSV
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportCsvAnual}>
+              Exportar Anual
             </Button>
             <Button
               size="sm"
@@ -635,7 +810,7 @@ export default function ComprasTab() {
         </div>
 
         <div className="overflow-x-auto">
-          <div className="min-w-[1400px] grid grid-cols-9 gap-3">
+          <div className="min-w-[1400px] grid grid-cols-9 gap-2">
             <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase">Vencimento</label>
             <Input
@@ -737,8 +912,68 @@ export default function ComprasTab() {
               list="institutions-list"
               value={form.financialInstitution}
               onChange={(e) => setForm((p) => ({ ...p, financialInstitution: e.target.value }))}
-              onKeyDown={(e) => handleEnterAdvance(e, undefined, handleSave)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  difSelectorRef.current?.focus();
+                  return;
+                }
+              }}
             />
+            </div>
+            <div className="col-span-9 mt-1">
+              <div
+                ref={difSelectorRef}
+                tabIndex={0}
+                className="flex gap-2 h-8 items-center justify-start outline-none"
+                onKeyDown={(e) => {
+                  const order: Array<'D' | 'I' | 'F'> = ['D', 'I', 'F'];
+                  const current = order.indexOf((form.difType as 'D' | 'I' | 'F') || 'D');
+                  if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    setForm((p) => ({ ...p, difType: order[(current + 1) % order.length] }));
+                    return;
+                  }
+                  if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    setForm((p) => ({ ...p, difType: order[(current - 1 + order.length) % order.length] }));
+                    return;
+                  }
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSave();
+                  }
+                }}
+              >
+                {(['D', 'I', 'F'] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, difType: opt }))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSave();
+                      }
+                    }}
+                    className={`w-7 h-7 rounded-full text-xs font-bold border transition ${
+                      form.difType === opt ? difTypeColors[opt] : 'bg-white text-muted-foreground border-border'
+                    }`}
+                    title={opt}
+                  >
+                    {opt}
+                  </button>
+                ))}
+                <Button onClick={handleSave} className="gap-2 h-8 px-3 ml-1">
+                  <Plus className="w-4 h-4" />
+                  {editingId ? 'Atualizar' : 'Adicionar'}
+                </Button>
+              </div>
+            </div>
+            <div className="col-span-9 mt-1">
+              <div className="flex items-center gap-2">
+                {editingId && <Button variant="outline" onClick={clearForm}>Cancelar edicao</Button>}
+              </div>
             </div>
           </div>
         </div>
@@ -747,13 +982,6 @@ export default function ComprasTab() {
         <datalist id="suppliers-list">{options.suppliers.map((item) => <option key={item} value={item} />)}</datalist>
         <datalist id="institutions-list">{options.institutions.map((item) => <option key={item} value={item} />)}</datalist>
 
-        <div className="flex gap-2">
-          <Button onClick={handleSave} className="gap-2">
-            <Plus className="w-4 h-4" />
-            {editingId ? 'Atualizar' : 'Adicionar'}
-          </Button>
-          {editingId && <Button variant="outline" onClick={clearForm}>Cancelar edicao</Button>}
-        </div>
       </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -789,21 +1017,53 @@ export default function ComprasTab() {
           </div>
         </Card>
 
-        <Card className="p-3">
-          <h4 className="text-xs font-bold mb-2">Top fornecedores do mes</h4>
-          {supplierChartData.length > 0 ? (
-            <div className="h-[200px]">
+        <Card className="p-2.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <h4 className="text-[11px] font-bold">
+              {analyticsMode === 'top' ? 'Top 8 fornecedores do mes' : 'Distribuicao D / I / F'}
+            </h4>
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setAnalyticsMode((p) => (p === 'top' ? 'dif' : 'top'))}>
+              Inverter
+            </Button>
+          </div>
+          {analyticsMode === 'top' ? (
+            supplierChartData.length > 0 ? (
+              <div className="h-[168px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={supplierChartData.slice(0, 8)} layout="vertical" margin={{ left: 0, right: 8, top: 2, bottom: 2 }} barCategoryGap={4}>
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="supplier" type="category" width={98} tick={{ fontSize: 9 }} />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    <Bar dataKey="total" fill="#2563eb" radius={[0, 3, 3, 0]} barSize={8} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Sem dados no mes.</p>
+            )
+          ) : difChartData.length > 0 ? (
+            <div className="h-[168px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={supplierChartData.slice(0, 5)} layout="vertical" margin={{ left: 0, right: 10, top: 2, bottom: 2 }}>
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="supplier" type="category" width={120} tick={{ fontSize: 10 }} />
+                <PieChart>
+                  <Pie
+                    data={difChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={55}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {difChartData.map((item, index) => (
+                      <Cell key={`${item.name}-${index}`} fill={item.type === 'D' ? '#2563eb' : item.type === 'I' ? '#f59e0b' : '#10b981'} />
+                    ))}
+                  </Pie>
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="total" fill="#2563eb" radius={[0, 4, 4, 0]} />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">Sem dados no mes.</p>
+            <p className="text-xs text-muted-foreground">Sem letras D/I/F no mes.</p>
           )}
         </Card>
       </div>
@@ -865,6 +1125,16 @@ export default function ComprasTab() {
                       <td className="px-3 py-2 truncate">{entry.financialInstitution || '-'}</td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-1">
+                          {entry.difType && (
+                            <span
+                              className={`w-5 h-5 rounded-full text-[10px] font-bold inline-flex items-center justify-center ${
+                                difTypeColors[entry.difType as 'D' | 'I' | 'F']
+                              }`}
+                              title={`Tipo ${entry.difType}`}
+                            >
+                              {entry.difType}
+                            </span>
+                          )}
                           <Button
                             size="icon"
                             variant="outline"
@@ -904,25 +1174,27 @@ export default function ComprasTab() {
       </div>
 
       <Dialog open={showManageOptions} onOpenChange={setShowManageOptions}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[96vw] sm:max-w-[96vw] lg:max-w-[1600px] mt-12">
           <DialogHeader>
             <DialogTitle>Listas de Compras</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase">Adicionar Categoria</label>
               <div className="flex gap-2 mt-1">
-                <Input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="Ex: M, JB" />
+                <Input
+                  value={newGroup}
+                  onChange={(e) => setNewGroup(e.target.value)}
+                  onKeyDown={(e) => handleOptionEnter(e, 'groups', newGroup, () => setNewGroup(''))}
+                  placeholder="Ex: M, JB"
+                />
                 <Button onClick={() => addOption('groups', newGroup, () => setNewGroup(''))}>Adicionar</Button>
               </div>
-              <div className="mt-2 space-y-1">
+              <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
                 {options.groups.map((item) => (
-                  <div key={`group-${item}`} className="flex items-center gap-2 bg-secondary/30 rounded px-2 py-1">
-                    <span className="text-sm flex-1">{item}</span>
-                    <Button size="icon" variant="outline" onClick={() => startEditOption('groups', item)}>
-                      <Pencil className="w-3 h-3" />
-                    </Button>
+                  <div key={`group-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
+                    <span className="text-sm break-words">{item}</span>
                     <Button size="icon" variant="outline" onClick={() => removeOption('groups', item)}>
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -933,16 +1205,18 @@ export default function ComprasTab() {
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase">Adicionar Fornecedor</label>
               <div className="flex gap-2 mt-1">
-                <Input value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} placeholder="Nome fornecedor" />
+                <Input
+                  value={newSupplier}
+                  onChange={(e) => setNewSupplier(e.target.value)}
+                  onKeyDown={(e) => handleOptionEnter(e, 'suppliers', newSupplier, () => setNewSupplier(''))}
+                  placeholder="Nome fornecedor"
+                />
                 <Button onClick={() => addOption('suppliers', newSupplier, () => setNewSupplier(''))}>Adicionar</Button>
               </div>
-              <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+              <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
                 {options.suppliers.map((item) => (
-                  <div key={`supplier-${item}`} className="flex items-center gap-2 bg-secondary/30 rounded px-2 py-1">
-                    <span className="text-sm flex-1">{item}</span>
-                    <Button size="icon" variant="outline" onClick={() => startEditOption('suppliers', item)}>
-                      <Pencil className="w-3 h-3" />
-                    </Button>
+                  <div key={`supplier-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
+                    <span className="text-sm break-words">{item}</span>
                     <Button size="icon" variant="outline" onClick={() => removeOption('suppliers', item)}>
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -953,16 +1227,18 @@ export default function ComprasTab() {
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase">Adicionar Instituicao</label>
               <div className="flex gap-2 mt-1">
-                <Input value={newInstitution} onChange={(e) => setNewInstitution(e.target.value)} placeholder="Banco/Instituicao" />
+                <Input
+                  value={newInstitution}
+                  onChange={(e) => setNewInstitution(e.target.value)}
+                  onKeyDown={(e) => handleOptionEnter(e, 'institutions', newInstitution, () => setNewInstitution(''))}
+                  placeholder="Banco/Instituicao"
+                />
                 <Button onClick={() => addOption('institutions', newInstitution, () => setNewInstitution(''))}>Adicionar</Button>
               </div>
-              <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+              <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
                 {options.institutions.map((item) => (
-                  <div key={`institution-${item}`} className="flex items-center gap-2 bg-secondary/30 rounded px-2 py-1">
-                    <span className="text-sm flex-1">{item}</span>
-                    <Button size="icon" variant="outline" onClick={() => startEditOption('institutions', item)}>
-                      <Pencil className="w-3 h-3" />
-                    </Button>
+                  <div key={`institution-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
+                    <span className="text-sm break-words">{item}</span>
                     <Button size="icon" variant="outline" onClick={() => removeOption('institutions', item)}>
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -1141,6 +1417,26 @@ export default function ComprasTab() {
                   onChange={(e) => setRowEditForm((p) => (p ? { ...p, financialInstitution: e.target.value } : p))}
                   onFocus={(e) => e.currentTarget.select()}
                 />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">D / I / F</label>
+                <div className="flex gap-2 h-10 items-center">
+                  {(['D', 'I', 'F'] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setRowEditForm((p) => (p ? { ...p, difType: opt } : p))}
+                      className={`w-8 h-8 rounded-full text-xs font-bold border transition ${
+                        (((rowEditForm.difType as 'D' | 'I' | 'F') || 'D') === opt)
+                          ? difTypeColors[opt]
+                          : 'bg-white text-muted-foreground border-border'
+                      }`}
+                      title={opt}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

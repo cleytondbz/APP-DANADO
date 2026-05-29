@@ -1,7 +1,8 @@
 import { useApp } from '@/contexts/AppContext';
 import type { MainTab } from '@/lib/types';
 import { useEffect } from 'react';
-import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MONTH_NAMES } from '@/lib/types';
 import DashboardTab from './DashboardTab';
 import LancamentosTab from './LancamentosTab';
 import FechamentoCompactoTab from './FechamentoCompactoTab';
@@ -19,7 +20,7 @@ const tabs: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
 ];
 
 export default function MainLayout() {
-  const { tab, setTab, setScreen, currentStore, setCurrentStore } = useApp();
+  const { tab, setTab, setScreen, currentStore, setCurrentStore, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useApp();
   const isAndroidAppMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('app') === 'android';
   const availableTabs = isAndroidAppMode
     ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'fechamentoCompacto')
@@ -31,13 +32,27 @@ export default function MainLayout() {
     }
   }, [isAndroidAppMode, tab, setTab]);
 
+  const navMonth = (dir: number) => {
+    let m = selectedMonth + dir;
+    let y = selectedYear;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    } else if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+    setSelectedMonth(m);
+    setSelectedYear(y);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={() => setScreen('storeSelection')} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
           <ArrowLeft className="w-4 h-4 text-primary" />
         </button>
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex items-center justify-center gap-3">
           <div className="inline-flex rounded-lg border border-primary/30 bg-primary/10 p-1">
             <button
               onClick={() => setCurrentStore('loja1')}
@@ -58,6 +73,18 @@ export default function MainLayout() {
               }`}
             >
               Loja 2
+            </button>
+          </div>
+          <div className="inline-flex items-center rounded-lg border border-border bg-card px-2 py-1 gap-2">
+            <button onClick={() => navMonth(-1)} className="p-1 rounded hover:bg-secondary">
+              <ChevronLeft className="w-4 h-4 text-primary" />
+            </button>
+            <div className="text-center leading-tight min-w-[104px]">
+              <div className="text-sm font-semibold">{MONTH_NAMES[selectedMonth - 1]}</div>
+              <div className="text-[10px] text-muted-foreground">{selectedYear}</div>
+            </div>
+            <button onClick={() => navMonth(1)} className="p-1 rounded hover:bg-secondary">
+              <ChevronRight className="w-4 h-4 text-primary" />
             </button>
           </div>
         </div>

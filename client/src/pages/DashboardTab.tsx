@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency, getDaysInMonth, getDayOfWeek } from '@/lib/helpers';
 import { CHART_HEX, DAY_NAMES_FULL } from '@/lib/types';
-import MonthSelector from '@/components/MonthSelector';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend, AreaChart, Area } from 'recharts';
 import { motion } from 'framer-motion';
 import { exportReportPDF } from '@/lib/pdf-export';
@@ -43,7 +42,7 @@ const CustomTooltip = ({ active, payload, label, tooltipTextColor = '#000000', t
 };
 
 export default function DashboardTab() {
-  const { settings, getCategories, getMonthData, selectedYear, selectedMonth } = useApp();
+  const { settings, stores, getCategories, getMonthData, selectedYear, selectedMonth } = useApp();
   const cats = getCategories();
   const md = getMonthData(selectedYear, selectedMonth);
   const [selCat, setSelCat] = useState<string | null>(null);
@@ -114,6 +113,33 @@ export default function DashboardTab() {
     }));
   }, [catTotals, cats]);
 
+  const comprasVsVendasData = useMemo(() => {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const getStoreMonthTotal = (storeId: 'loja1' | 'loja2', year: number, month: number) => {
+      const store = stores[storeId];
+      if (!store) return 0;
+      const monthData = store.months.find((m) => m.year === year && m.month === month);
+      if (!monthData) return 0;
+      return monthData.entries.reduce((sum, entry) => {
+        let entryTotal = 0;
+        (store.categories || []).forEach((cat) => {
+          if (cat.operation !== 'null') {
+            entryTotal += (cat.operation === 'add' ? 1 : -1) * (entry.values[cat.id] || 0);
+          }
+        });
+        return sum + entryTotal;
+      }, 0);
+    };
+
+    return months.map((name, idx) => {
+      const month = idx + 1;
+      const monthKey = `${selectedYear}-${String(month).padStart(2, '0')}`;
+      const compras = (settings.purchaseEntries?.[monthKey] || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      const vendas = getStoreMonthTotal('loja1', selectedYear, month) + getStoreMonthTotal('loja2', selectedYear, month);
+      return { name, compras, vendas };
+    });
+  }, [settings.purchaseEntries, stores, selectedYear]);
+
   const dowData = useMemo(() => {
     const dt: Record<number, { total: number; count: number }> = {};
     for (let i = 0; i < 7; i++) dt[i] = { total: 0, count: 0 };
@@ -151,7 +177,6 @@ export default function DashboardTab() {
 
   return (
     <div className="space-y-4 pb-24">
-      <MonthSelector />
 
       {/* Botão de Exportação */}
       <button onClick={handleExportPDF}
@@ -341,6 +366,21 @@ export default function DashboardTab() {
       <div className="bg-card rounded-2xl p-4">
         <h3 className="text-sm font-bold text-foreground mb-4">Totais (Resumo Geral)</h3>
         <TotaisTab embedded />
+      </div>
+
+      <div className="bg-card rounded-2xl p-4">
+        <h3 className="text-sm font-bold text-foreground mb-3">Comparativo Anual {selectedYear} (Compras x Vendas)</h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={comprasVsVendasData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+            <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={60}
+              tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
+            <Tooltip content={<CustomTooltip tooltipTextColor={tooltipTextColor} tooltipBgColor={tooltipBgColor} />} />
+            <Legend />
+            <Bar dataKey="compras" name="Compras" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="vendas" name="Vendas (L1+L2)" fill="#2563eb" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

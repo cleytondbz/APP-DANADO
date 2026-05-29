@@ -2,7 +2,6 @@ import { useState, useRef, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency, getDaysInMonth, getDayOfWeek, dateStr } from '@/lib/helpers';
 import { DAY_NAMES } from '@/lib/types';
-import MonthSelector from '@/components/MonthSelector';
 import { Plus, Settings2, Pencil, Trash2, X, Check, GripVertical, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -445,8 +444,6 @@ export default function LancamentosTab() {
 
   return (
     <div className="space-y-3 pb-24">
-      <MonthSelector />
-
       {/* Actions */}
       <div className="flex gap-2 flex-col">
         <Button onClick={openAdd} className="w-full h-12 gap-2 text-base font-semibold"><Plus className="w-5 h-5" /> Lançar</Button>
