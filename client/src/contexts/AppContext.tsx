@@ -230,6 +230,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!hasInitialized || !hasLoadedFromServer || !isOnline) return;
 
     const pullLatest = async () => {
+      if (document.visibilityState === 'hidden') return;
       // Evita sobrescrever alteracoes locais antes do save ao servidor concluir
       if (Date.now() - lastLocalChangeRef.current < 1800) return;
 
@@ -259,8 +260,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const timer = setInterval(pullLatest, 1200);
-    const onFocus = () => { pullLatest(); };
+    const timer = setInterval(pullLatest, 6000);
+    const onFocus = () => { if (document.visibilityState === 'visible') pullLatest(); };
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
 
@@ -376,7 +377,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
 
       // Sincronizar após 1 segundo de inatividade
-      const timer = setTimeout(syncData, 1000);
+      const timer = setTimeout(syncData, 2200);
       return () => clearTimeout(timer);
     }
   }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, isLoading, hasInitialized, hasLoadedFromServer, isOnline, isPullingServerData]);
@@ -619,14 +620,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addActionUser = (name: string, password: string, permissions: any[]) => {
     setSettings(prev => ({
       ...prev,
-      actionUsers: [...(prev.actionUsers || []), { id: generateId(), name, password, permissions }]
+      actionUsers: (prev.actionUsers || []).some(u => String(u.password || '').trim() === String(password || '').trim())
+        ? (prev.actionUsers || [])
+        : [...(prev.actionUsers || []), { id: generateId(), name, password, permissions }]
     }));
   };
 
   const updateActionUser = (id: string, updates: any) => {
     setSettings(prev => ({
       ...prev,
-      actionUsers: (prev.actionUsers || []).map(u => u.id === id ? { ...u, ...updates } : u)
+      actionUsers: (prev.actionUsers || []).map(u => {
+        if (u.id !== id) return u;
+        const nextPassword = String((updates?.password ?? u.password) || '').trim();
+        const hasDuplicate = (prev.actionUsers || []).some(
+          other => other.id !== id && String(other.password || '').trim() === nextPassword
+        );
+        if (hasDuplicate) return u;
+        return { ...u, ...updates };
+      })
     }));
   };
 

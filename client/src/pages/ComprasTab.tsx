@@ -47,6 +47,38 @@ const normalizeKey = (value: string) =>
     .trim()
     .toUpperCase();
 
+const fixMojibake = (value: string) => {
+  const raw = String(value || '');
+  if (!raw) return '';
+  if (!/[ÃÂ�]/.test(raw)) return raw;
+  try {
+    const bytes = Uint8Array.from(Array.from(raw).map((ch) => ch.charCodeAt(0) & 0xff));
+    const decoded = new TextDecoder('utf-8').decode(bytes);
+    return decoded || raw;
+  } catch {
+    return raw;
+  }
+};
+
+const isLikelyMojibakeSafe = (value: string) => {
+  const raw = String(value || '');
+  if (!raw) return false;
+  return /(Ã¡|Ã¢|Ã£|Ã¤|Ãª|Ã©|Ã¨|Ã­|Ã³|Ã´|Ãµ|Ãº|Ã§|Ã‡|Âº|Âª|Â°|ï¿½|�)/.test(raw);
+};
+
+const fixMojibakeSafe = (value: string) => {
+  const raw = String(value || '');
+  if (!raw) return '';
+  if (!isLikelyMojibakeSafe(raw)) return raw;
+  try {
+    const bytes = Uint8Array.from(Array.from(raw).map((ch) => ch.charCodeAt(0) & 0xff));
+    const decoded = new TextDecoder('utf-8').decode(bytes);
+    return decoded || raw;
+  } catch {
+    return raw;
+  }
+};
+
 const mergeUnique = (base: string[], extra: string[]) => {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -57,6 +89,28 @@ const mergeUnique = (base: string[], extra: string[]) => {
     out.push((item || '').trim());
   });
   return out;
+};
+
+const hasBrokenEncoding = (value: string) => /Ã|Â|�/.test(String(value || ''));
+const sanitizeStoredText = (value: string) =>
+  fixMojibakeSafe(String(value || ''))
+    .replace(/�/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+const sanitizeOptionList = (list: string[]) => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  (list || []).forEach((raw) => {
+    const fixed = fixMojibakeSafe(String(raw || '').trim());
+    if (!fixed) return;
+    if (isLikelyMojibakeSafe(fixed)) return;
+    const key = normalizeKey(fixed);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(fixed);
+  });
+  return out.sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
 };
 
 const parseCsvLine = (line: string): string[] => {
@@ -163,29 +217,61 @@ export default function ComprasTab() {
   const currentMonthKey = monthKey(selectedYear, selectedMonth);
   const allEntries = settings.purchaseEntries || {};
   const entries: PurchaseEntry[] = allEntries[currentMonthKey] || [];
-  const existingSuppliersFromEntries = Object.values(allEntries)
-    .flatMap((list) => list || [])
-    .map((entry) => (entry.supplier || '').trim())
-    .filter((name) => name.length > 0);
-  const existingInstitutionsFromEntries = Object.values(allEntries)
-    .flatMap((list) => list || [])
-    .map((entry) => (entry.financialInstitution || '').trim())
-    .filter((name) => name.length > 0);
+  const options: PurchaseOptions = useMemo(
+    () => ({
+      groups: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.groups, settings.purchaseOptions?.groups || [])),
+      suppliers: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.suppliers, settings.purchaseOptions?.suppliers || [])),
+      institutions: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.institutions, settings.purchaseOptions?.institutions || [])),
+    }),
+    [settings.purchaseOptions?.groups, settings.purchaseOptions?.suppliers, settings.purchaseOptions?.institutions]
+  );
 
-  const options: PurchaseOptions = {
-    groups: mergeUnique(DEFAULT_PURCHASE_OPTIONS.groups, settings.purchaseOptions?.groups || []),
-    suppliers: mergeUnique(
-      DEFAULT_PURCHASE_OPTIONS.suppliers,
-      [...(settings.purchaseOptions?.suppliers || []), ...existingSuppliersFromEntries]
-    ),
-    institutions: mergeUnique(
-      DEFAULT_PURCHASE_OPTIONS.institutions,
-      [...(settings.purchaseOptions?.institutions || []), ...existingInstitutionsFromEntries]
-    ),
-  };
+  useEffect(() => {
+    const current = settings.purchaseOptions || DEFAULT_PURCHASE_OPTIONS;
+    const next: PurchaseOptions = {
+      groups: sanitizeOptionList(current.groups || []),
+      suppliers: sanitizeOptionList(current.suppliers || []),
+      institutions: sanitizeOptionList(current.institutions || []),
+    };
+    const changed =
+      JSON.stringify(current.groups || []) !== JSON.stringify(next.groups) ||
+      JSON.stringify(current.suppliers || []) !== JSON.stringify(next.suppliers) ||
+      JSON.stringify(current.institutions || []) !== JSON.stringify(next.institutions);
+    if (!changed) return;
+    setSettings((prev) => ({
+      ...prev,
+      purchaseOptions: {
+        ...(prev.purchaseOptions || DEFAULT_PURCHASE_OPTIONS),
+        groups: next.groups,
+        suppliers: next.suppliers,
+        institutions: next.institutions,
+      },
+    }));
+  }, [settings.purchaseOptions, setSettings]);
+
+  useEffect(() => {
+    const currentEntries = (settings.purchaseEntries || {}) as Record<string, PurchaseEntry[]>;
+    let changed = false;
+    const nextEntries: Record<string, PurchaseEntry[]> = {};
+
+    Object.entries(currentEntries).forEach(([month, list]) => {
+      nextEntries[month] = (list || []).map((entry) => {
+        const nextSupplier = sanitizeStoredText(entry.supplier || '');
+        const nextInstitution = sanitizeStoredText(entry.financialInstitution || '');
+        if (nextSupplier !== (entry.supplier || '') || nextInstitution !== (entry.financialInstitution || '')) {
+          changed = true;
+          return { ...entry, supplier: nextSupplier, financialInstitution: nextInstitution };
+        }
+        return entry;
+      });
+    });
+
+    if (!changed) return;
+    setSettings((prev) => ({ ...prev, purchaseEntries: nextEntries }));
+  }, [settings.purchaseEntries, setSettings]);
 
   const normalizeText = (value: string | number | undefined | null) =>
-    String(value || '')
+    fixMojibakeSafe(String(value || ''))
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
@@ -256,13 +342,12 @@ export default function ComprasTab() {
   const supplierChartData = useMemo(() => {
     const totals = new Map<string, number>();
     entries.forEach((entry) => {
-      const key = (entry.supplier || 'Sem fornecedor').trim() || 'Sem fornecedor';
+      const key = fixMojibakeSafe((entry.supplier || 'Sem fornecedor').trim() || 'Sem fornecedor');
       totals.set(key, (totals.get(key) || 0) + (entry.amount || 0));
     });
     return Array.from(totals.entries())
       .map(([supplier, total]) => ({ supplier, total }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 8);
+      .sort((a, b) => b.total - a.total);
   }, [entries]);
   const difChartData = useMemo(() => {
     const map: Record<'D' | 'I' | 'F', number> = { D: 0, I: 0, F: 0 };
@@ -295,7 +380,7 @@ export default function ComprasTab() {
         return normalizeText(bucket).includes(term);
       })
       .sort((a, b) => {
-        if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+        if (a.dueDate !== b.dueDate) return b.dueDate.localeCompare(a.dueDate);
         return a.supplier.localeCompare(b.supplier);
       });
   }, [allEntriesFlat, globalSearchTerm, globalSearchType]);
@@ -361,13 +446,13 @@ export default function ComprasTab() {
       id: editingId || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       dueDate: form.dueDate,
       group: form.group.trim() || 'M',
-      supplier: form.supplier.trim(),
+      supplier: sanitizeStoredText(form.supplier),
       documentNumber: form.documentNumber.trim(),
       issueDate: form.issueDate || '',
       installments: fixedInstallments,
       amount,
       paidDate: form.paidDate || undefined,
-      financialInstitution: form.financialInstitution.trim(),
+      financialInstitution: sanitizeStoredText(form.financialInstitution),
       difType: form.difType ? (form.difType as 'D' | 'I' | 'F') : undefined,
     };
 
@@ -390,13 +475,13 @@ export default function ComprasTab() {
     setForm({
       dueDate: entry.dueDate,
       group: entry.group,
-      supplier: entry.supplier,
+      supplier: sanitizeStoredText(entry.supplier),
       documentNumber: entry.documentNumber,
       issueDate: entry.issueDate,
       installments: entry.installments,
       amount: entry.amount.toFixed(2).replace('.', ','),
       paidDate: entry.paidDate || '',
-      financialInstitution: entry.financialInstitution,
+      financialInstitution: sanitizeStoredText(entry.financialInstitution),
       difType: (entry.difType as 'D' | 'I' | 'F' | '') || '',
     });
   };
@@ -423,12 +508,12 @@ export default function ComprasTab() {
       ...rowEditForm,
       amount: Number.isFinite(Number(rowEditForm.amount)) ? Number(rowEditForm.amount) : 0,
       group: (rowEditForm.group || '').trim() || 'M',
-      supplier: (rowEditForm.supplier || '').trim(),
+      supplier: sanitizeStoredText(rowEditForm.supplier || ''),
       documentNumber: (rowEditForm.documentNumber || '').trim(),
       issueDate: rowEditForm.issueDate || '',
       installments: fixedInstallments,
       paidDate: rowEditForm.paidDate || undefined,
-      financialInstitution: (rowEditForm.financialInstitution || '').trim(),
+      financialInstitution: sanitizeStoredText(rowEditForm.financialInstitution || ''),
       difType: rowEditForm.difType ? (rowEditForm.difType as 'D' | 'I' | 'F') : undefined,
     };
 
@@ -1020,7 +1105,7 @@ export default function ComprasTab() {
         <Card className="p-2.5">
           <div className="flex items-center justify-between mb-1.5">
             <h4 className="text-[11px] font-bold">
-              {analyticsMode === 'top' ? 'Top 8 fornecedores do mes' : 'Distribuicao D / I / F'}
+              {analyticsMode === 'top' ? 'Top 20 fornecedores do mes' : 'Distribuicao D / I / F'}
             </h4>
             <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setAnalyticsMode((p) => (p === 'top' ? 'dif' : 'top'))}>
               Inverter
@@ -1028,15 +1113,22 @@ export default function ComprasTab() {
           </div>
           {analyticsMode === 'top' ? (
             supplierChartData.length > 0 ? (
-              <div className="h-[168px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={supplierChartData.slice(0, 8)} layout="vertical" margin={{ left: 0, right: 8, top: 2, bottom: 2 }} barCategoryGap={4}>
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="supplier" type="category" width={98} tick={{ fontSize: 9 }} />
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    <Bar dataKey="total" fill="#2563eb" radius={[0, 3, 3, 0]} barSize={8} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="h-[240px] overflow-y-auto pr-1 space-y-1.5">
+                {supplierChartData.slice(0, 20).map((item, index) => {
+                  const max = supplierChartData[0]?.total || 1;
+                  const width = Math.max(6, (item.total / max) * 100);
+                  return (
+                    <div key={`${item.supplier}-${index}`} className="rounded border border-border/60 p-1.5">
+                      <div className="flex items-center justify-between gap-2 text-[10px]">
+                        <span className="font-semibold truncate">{index + 1}. {item.supplier}</span>
+                        <span className="font-bold whitespace-nowrap">{formatCurrency(item.total)}</span>
+                      </div>
+                      <div className="mt-1 h-1.5 rounded bg-muted overflow-hidden">
+                        <div className="h-full rounded bg-blue-600" style={{ width: `${width}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">Sem dados no mes.</p>
@@ -1116,13 +1208,13 @@ export default function ComprasTab() {
                     >
                       <td className="px-3 py-2 whitespace-nowrap">{formatDateBr(entry.dueDate)}</td>
                       <td className="px-3 py-2 font-semibold">{entry.group}</td>
-                      <td className="px-3 py-2 truncate">{entry.supplier || '-'}</td>
+                      <td className="px-3 py-2 truncate">{fixMojibakeSafe(entry.supplier || '-')}</td>
                       <td className="px-3 py-2 truncate">{entry.documentNumber || '-'}</td>
                       <td className="px-3 py-2">{entry.issueDate ? formatDateBr(entry.issueDate) : '-'}</td>
                       <td className="px-3 py-2">{entry.installments || '-'}</td>
                       <td className="px-3 py-2 font-semibold">{formatCurrency(entry.amount)}</td>
                       <td className="px-3 py-2">{entry.paidDate ? formatDateBr(entry.paidDate) : '-'}</td>
-                      <td className="px-3 py-2 truncate">{entry.financialInstitution || '-'}</td>
+                      <td className="px-3 py-2 truncate">{fixMojibakeSafe(entry.financialInstitution || '-')}</td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-1">
                           {entry.difType && (
@@ -1194,7 +1286,7 @@ export default function ComprasTab() {
               <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
                 {options.groups.map((item) => (
                   <div key={`group-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
-                    <span className="text-sm break-words">{item}</span>
+                    <span className="text-sm break-words">{fixMojibakeSafe(item)}</span>
                     <Button size="icon" variant="outline" onClick={() => removeOption('groups', item)}>
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -1216,7 +1308,7 @@ export default function ComprasTab() {
               <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
                 {options.suppliers.map((item) => (
                   <div key={`supplier-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
-                    <span className="text-sm break-words">{item}</span>
+                    <span className="text-sm break-words">{fixMojibakeSafe(item)}</span>
                     <Button size="icon" variant="outline" onClick={() => removeOption('suppliers', item)}>
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -1238,7 +1330,7 @@ export default function ComprasTab() {
               <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
                 {options.institutions.map((item) => (
                   <div key={`institution-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
-                    <span className="text-sm break-words">{item}</span>
+                    <span className="text-sm break-words">{fixMojibakeSafe(item)}</span>
                     <Button size="icon" variant="outline" onClick={() => removeOption('institutions', item)}>
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
@@ -1325,12 +1417,12 @@ export default function ComprasTab() {
                       <td className="px-2 py-2">{item.month}</td>
                       <td className="px-2 py-2">{formatDateBr(item.dueDate)}</td>
                       <td className="px-2 py-2 font-semibold">{item.group}</td>
-                      <td className="px-2 py-2">{item.supplier || '-'}</td>
+                      <td className="px-2 py-2">{fixMojibakeSafe(item.supplier || '-')}</td>
                       <td className="px-2 py-2">{item.documentNumber || '-'}</td>
                       <td className="px-2 py-2">{item.issueDate ? formatDateBr(item.issueDate) : '-'}</td>
                       <td className="px-2 py-2">{item.installments || '-'}</td>
                       <td className="px-2 py-2">{item.paidDate ? formatDateBr(item.paidDate) : '-'}</td>
-                      <td className="px-2 py-2 truncate max-w-[240px]">{item.financialInstitution || '-'}</td>
+                      <td className="px-2 py-2 truncate max-w-[240px]">{fixMojibakeSafe(item.financialInstitution || '-')}</td>
                       <td className="px-2 py-2 font-semibold">{formatCurrency(item.amount)}</td>
                     </tr>
                   ))}

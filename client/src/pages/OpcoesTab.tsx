@@ -182,8 +182,8 @@ export default function OpcoesTab() {
       details: normalizeLogText(log.details),
     }));
 
-  const syncPreference = settings.syncPreference || 'program';
-  const setSyncPreference = async (mode: 'site' | 'program' | 'both') => {
+  const syncPreference = settings.syncPreference === 'site' ? 'site' : 'program';
+  const setSyncPreference = async (mode: 'site' | 'program') => {
     // Atualização local imediata
     setSettings((current) => ({ ...current, syncPreference: mode }));
     try {
@@ -315,6 +315,13 @@ export default function OpcoesTab() {
       toast.error('Selecione pelo menos uma permissão!');
       return;
     }
+    const duplicatePassword = actionUsers.some(
+      (u) => String(u?.password || '').trim() === String(newActionUserPassword || '').trim()
+    );
+    if (duplicatePassword) {
+      toast.error('Senha inválida em opções: esta senha já está em uso por outro usuário.');
+      return;
+    }
     addActionUser(newActionUserName, newActionUserPassword, newActionUserPermissions);
     setActionUsers(getActionUsers());
     setNewActionUserName('');
@@ -416,7 +423,7 @@ export default function OpcoesTab() {
       <div className="bg-card rounded-2xl overflow-hidden border border-border">
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-bold text-foreground">Sincronização (Site x Programa)</h3>
-          <p className="text-xs text-muted-foreground mt-1">Define quem pode gravar no servidor</p>
+          <p className="text-xs text-muted-foreground mt-1">Define quem atualiza Caixa e Fechamento: Programa ou Site</p>
         </div>
         <div className="p-4 flex flex-wrap gap-2">
           <Button
@@ -432,13 +439,6 @@ export default function OpcoesTab() {
             onClick={() => setSyncPreference('site')}
           >
             Apenas Site
-          </Button>
-          <Button
-            size="sm"
-            variant={syncPreference === 'both' ? 'default' : 'outline'}
-            onClick={() => setSyncPreference('both')}
-          >
-            Ambos
           </Button>
         </div>
       </div>
@@ -487,6 +487,15 @@ export default function OpcoesTab() {
                       onClick={() => {
                         const newPassword = prompt(`Digite a nova senha para ${user.name}:`);
                         if (newPassword) {
+                          const duplicatePassword = actionUsers.some(
+                            (u) =>
+                              String(u?.id) !== String(user.id) &&
+                              String(u?.password || '').trim() === String(newPassword || '').trim()
+                          );
+                          if (duplicatePassword) {
+                            toast.error('Senha inválida em opções: esta senha já está em uso por outro usuário.');
+                            return;
+                          }
                           updateActionUser(user.id, { ...user, password: newPassword });
                           toast.success(`Senha de ${user.name} alterada!`);
                         }
@@ -521,10 +530,24 @@ export default function OpcoesTab() {
             <Button
               size="sm"
               variant="outline"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
-                clearAccessLogs();
-                toast.success('Relatório limpo!');
+                try {
+                  const host = window.location.hostname;
+                  const protocol = window.location.protocol;
+                  const serverUrl = window.location.port === '5173'
+                    ? `${protocol}//${host}:3000`
+                    : `${protocol}//${host}`;
+                  const resp = await fetch(`${serverUrl}/api/settings/clear-access-logs`, {
+                    method: 'POST',
+                  });
+                  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                  clearAccessLogs();
+                  toast.success('Relatório limpo!');
+                } catch (err) {
+                  console.error('[OpcoesTab] Erro ao limpar relatório no servidor:', err);
+                  toast.error('Não foi possível limpar no servidor.');
+                }
               }}
               className="gap-1 text-xs"
             >

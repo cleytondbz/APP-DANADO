@@ -16,6 +16,10 @@ const SYNC_TOKEN = process.env.SYNC_TOKEN || '';
 const CLOUD_SYNC_URL = process.env.CLOUD_SYNC_URL || '';
 const CLOUD_SYNC_TOKEN = process.env.CLOUD_SYNC_TOKEN || '';
 const ENABLE_CLOUD_PUSH = process.env.ENABLE_CLOUD_PUSH === '1';
+const WEB_LOGIN_USER = process.env.WEB_LOGIN_USER || '';
+const WEB_LOGIN_PASS = process.env.WEB_LOGIN_PASS || '';
+const APP_BYPASS_TOKEN = process.env.APP_BYPASS_TOKEN || '';
+const SESSION_COOKIE = 'danado_session';
 
 const normalizeKey = (value: any) =>
   String(value ?? '')
@@ -107,6 +111,90 @@ const sanitizeLogText = (value: any) =>
   decodeMojibake(cleanLogText(value))
     .replace(/[^\p{L}\p{N}\p{P}\p{Zs}\n\r\t]/gu, '')
     .trim();
+
+const findFirstStringByKeyPatterns = (obj: any, patterns: RegExp[], maxDepth = 4): string => {
+  const seen = new Set<any>();
+  const visit = (value: any, depth: number): string => {
+    if (!value || typeof value !== 'object' || seen.has(value) || depth > maxDepth) return '';
+    seen.add(value);
+
+    for (const [k, v] of Object.entries(value)) {
+      if (typeof v === 'string' && patterns.some((p) => p.test(String(k)))) {
+        const clean = sanitizeLogText(v);
+        if (clean) return clean;
+      }
+      if (typeof v === 'number' && patterns.some((p) => p.test(String(k)))) {
+        const clean = sanitizeLogText(String(v));
+        if (clean) return clean;
+      }
+    }
+    for (const v of Object.values(value)) {
+      const found = visit(v, depth + 1);
+      if (found) return found;
+    }
+    return '';
+  };
+  return visit(obj, 0);
+};
+
+const resolveActionUserName = (
+  actionUsers: Array<{ name?: string; password?: string }> = [],
+  payload: any = {},
+): string => {
+  const fromPayload = sanitizeLogText(
+    payload?.userName ||
+      payload?.username ||
+      payload?.user ||
+      payload?.actionUserName ||
+      payload?.action_user_name ||
+      payload?.actorName ||
+      payload?.actor ||
+      payload?.usuario ||
+      payload?.usuarioAcao ||
+      payload?.nomeUsuario ||
+      payload?.nomeUsuarioAcao ||
+      payload?.usuario_acao ||
+      payload?.responsavel ||
+      payload?.responsável ||
+      payload?.nomeDigital ||
+      payload?.nome_digital ||
+      payload?.operador
+  );
+  if (fromPayload && fromPayload.toUpperCase() !== 'PROGRAMA') return fromPayload;
+
+  const deepUserName = findFirstStringByKeyPatterns(payload, [
+    /user.?name/i,
+    /action.?user/i,
+    /actor/i,
+    /usuario/i,
+    /operador/i,
+    /responsavel/i,
+    /nome/i,
+    /login/i,
+  ]);
+  if (deepUserName && deepUserName.toUpperCase() !== 'PROGRAMA') return deepUserName;
+
+  const passwordCandidate = String(
+    payload?.password ||
+      payload?.pass ||
+      payload?.actionPassword ||
+      payload?.action_password ||
+      payload?.userPassword ||
+      payload?.user_password ||
+      payload?.senha ||
+      payload?.senhaAcao ||
+      payload?.senha_acao ||
+      payload?.senhaUsuario ||
+      payload?.senhaUsuarioAcao ||
+      payload?.senha_usuario_acao ||
+      findFirstStringByKeyPatterns(payload, [/senha/i, /pass/i, /password/i]) ||
+      ''
+  ).trim();
+  if (!passwordCandidate) return 'PROGRAMA';
+
+  const matchedUser = actionUsers.find((u) => String(u?.password || '').trim() === passwordCandidate);
+  return sanitizeLogText(matchedUser?.name || 'PROGRAMA') || 'PROGRAMA';
+};
 
 const toNum = (v: any) => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -236,6 +324,7 @@ function appendProgramAudit(
   module: 'caixa' | 'fechamento',
   date: string,
   details: string,
+  userName?: string,
   field?: string,
   oldValue?: any,
   newValue?: any,
@@ -247,8 +336,9 @@ function appendProgramAudit(
     storeId,
     action: action === 'delete' ? 'delete' : 'edit',
     status: 'success',
-    userName: 'PROGRAMA',
+    userName: sanitizeLogText(userName || 'PROGRAMA') || 'PROGRAMA',
     details: sanitizeLogText(details),
+    date,
   };
 
   const timeline = {
@@ -271,49 +361,96 @@ function appendProgramAudit(
   };
 }
 
+function buildUserContextFromObjects(...sources: any[]) {
+  const merged: Record<string, any> = {};
+  sources.forEach((src) => {
+    if (!src || typeof src !== 'object') return;
+    Object.assign(merged, src);
+  });
+  return merged;
+}
+
 function appendProgramAuditEvents(events: any[] = []) {
   if (!Array.isArray(events) || events.length === 0) return;
 
-  const existingAccessIds = new Set<string>((dataStore.settings?.accessLogs || []).map((x: any) => String(x?.id || '')));
-  const existingTimelineIds = new Set<string>((dataStore.settings?.timeline || []).map((x: any) => String(x?.id || '')));
+  const existingAccessSignatures = new Set<string>(
+    (dataStore.settings?.accessLogs || []).map((x: any) =>
+      [
+        String(x?.storeId || ''),
+        String(x?.action || ''),
+        String(x?.date || ''),
+        String(x?.details || ''),
+        String(x?.timestamp || ''),
+      ].join('|')
+    )
+  );
+  const existingTimelineSignatures = new Set<string>(
+    (dataStore.settings?.timeline || []).map((x: any) =>
+      [
+        String(x?.storeId || ''),
+        String(x?.action || ''),
+        String(x?.module || ''),
+        String(x?.date || ''),
+        String(x?.description || ''),
+        String(x?.timestamp || ''),
+      ].join('|')
+    )
+  );
   const accessToAdd: any[] = [];
   const timelineToAdd: any[] = [];
 
-  events.forEach((ev: any) => {
+  const actionUsers = Array.isArray(dataStore.settings?.actionUsers) ? dataStore.settings.actionUsers : [];
+  events.forEach((ev: any, idx: number) => {
     if (!ev || !ev.storeId || !ev.action || !ev.details) return;
-    const baseId = String(ev.id || `program_evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+    const baseId = String(ev.id || `program_evt_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 7)}`);
     const ts = Number(ev.timestamp) || Date.now();
+    const safeDetails = sanitizeLogText(ev.details);
     const accessId = `${baseId}_a`;
     const timelineId = `${baseId}_t`;
+    const accessSignature = [String(ev.storeId), String(ev.action), String(ev.date || ''), safeDetails, String(ts)].join('|');
+    const timelineAction = ev.action === 'delete' ? 'delete' : 'update';
+    const timelineModule = ev.module || 'caixa';
+    const timelineSignature = [
+      String(ev.storeId),
+      String(timelineAction),
+      String(timelineModule),
+      String(ev.date || ''),
+      safeDetails,
+      String(ts),
+    ].join('|');
 
-    if (!existingAccessIds.has(accessId)) {
+    const resolvedUserName = resolveActionUserName(actionUsers, ev);
+    const effectiveUserName = resolvedUserName && resolvedUserName.toUpperCase() !== 'PROGRAMA'
+      ? resolvedUserName
+      : resolveActionUserName(actionUsers, { ...ev, ...(dataStore.settings || {}) });
+    if (!existingAccessSignatures.has(accessSignature)) {
       accessToAdd.push({
         id: accessId,
         timestamp: ts,
         storeId: ev.storeId,
         action: ev.action === 'delete' ? 'delete' : 'edit',
         status: 'success',
-        userName: sanitizeLogText(ev.userName || 'PROGRAMA'),
-        details: sanitizeLogText(ev.details),
+        userName: effectiveUserName,
+        details: safeDetails,
         date: ev.date,
       });
-      existingAccessIds.add(accessId);
+      existingAccessSignatures.add(accessSignature);
     }
 
-    if (!existingTimelineIds.has(timelineId)) {
+    if (!existingTimelineSignatures.has(timelineSignature)) {
       timelineToAdd.push({
         id: timelineId,
         timestamp: ts,
-        module: ev.module || 'caixa',
+        module: timelineModule,
         storeId: ev.storeId,
-        action: ev.action === 'delete' ? 'delete' : 'update',
+        action: timelineAction,
         date: ev.date,
         field: ev.field,
         oldValue: ev.oldValue,
         newValue: ev.newValue,
-        description: sanitizeLogText(ev.details),
+        description: safeDetails,
       });
-      existingTimelineIds.add(timelineId);
+      existingTimelineSignatures.add(timelineSignature);
     }
   });
 
@@ -340,6 +477,15 @@ function buildProgramAnnotationAuditLogs(
   oldCaixa: Record<string, any> = {},
   newCaixa: Record<string, any> = {},
 ): ProgramAnnotationAudit[] {
+  const buildItemKey = (item: any, index: number) => {
+    const rawId = item?.id;
+    if (rawId !== undefined && rawId !== null && String(rawId).trim() !== '') {
+      return `id:${String(rawId)}`;
+    }
+    // Fallback estável para evitar colisão quando o programa não enviar id no item.
+    return `idx:${index}`;
+  };
+
   const audits: ProgramAnnotationAudit[] = [];
   const stores: ('loja1' | 'loja2')[] = ['loja1', 'loja2'];
   const categorias = ['dinheiro', 'pix', 'cartao', 'boleto'];
@@ -362,8 +508,8 @@ function buildProgramAnnotationAuditLogs(
       categorias.forEach((categoria) => {
         const oldItems = Array.isArray(oldDay?.[categoria]) ? oldDay[categoria] : [];
         const newItems = Array.isArray(newDay?.[categoria]) ? newDay[categoria] : [];
-        const oldMap = new Map<string, any>(oldItems.map((x: any) => [String(x?.id), x]));
-        const newMap = new Map<string, any>(newItems.map((x: any) => [String(x?.id), x]));
+        const oldMap = new Map<string, any>(oldItems.map((x: any, idx: number) => [buildItemKey(x, idx), x]));
+        const newMap = new Map<string, any>(newItems.map((x: any, idx: number) => [buildItemKey(x, idx), x]));
         const nomeCat = categoriaLabel[categoria] || categoria;
 
         oldMap.forEach((oldItem, id) => {
@@ -512,11 +658,126 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
+const parseCookies = (cookieHeader: string | undefined) => {
+  const out: Record<string, string> = {};
+  String(cookieHeader || '')
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      const eq = pair.indexOf('=');
+      if (eq <= 0) return;
+      const k = decodeURIComponent(pair.slice(0, eq).trim());
+      const v = decodeURIComponent(pair.slice(eq + 1).trim());
+      out[k] = v;
+    });
+  return out;
+};
+
+const hasSessionAuth = (req: Request) => {
+  if (!WEB_LOGIN_USER || !WEB_LOGIN_PASS) return true;
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies[SESSION_COOKIE] === 'ok';
+};
+
+const hasAppBypass = (req: Request) => {
+  if (!APP_BYPASS_TOKEN) return false;
+  const headerToken = String(req.headers['x-app-token'] || req.headers['x-sync-token'] || '');
+  return headerToken === APP_BYPASS_TOKEN;
+};
+
+const isAuthEnabled = () => !!(WEB_LOGIN_USER && WEB_LOGIN_PASS);
+
+// Login simples para proteger acesso web público em produção.
+app.get('/login', (_req: Request, res: Response) => {
+  if (!isAuthEnabled()) {
+    return res.redirect('/');
+  }
+  return res.status(200).send(`
+    <!doctype html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Login</title>
+        <style>
+          body{font-family:Arial,sans-serif;background:#0b1220;color:#e5e7eb;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+          .box{background:#111827;padding:24px;border-radius:12px;min-width:320px;border:1px solid #374151}
+          input{width:100%;padding:10px 12px;margin:8px 0;border-radius:8px;border:1px solid #374151;background:#0f172a;color:#e5e7eb}
+          button{width:100%;padding:10px 12px;border-radius:8px;border:0;background:#2563eb;color:white;font-weight:600;cursor:pointer}
+          .err{color:#f87171;min-height:18px}
+        </style>
+      </head>
+      <body>
+        <form class="box" method="POST" action="/login">
+          <h2 style="margin-top:0">Acesso protegido</h2>
+          <label>Usuário</label>
+          <input name="user" autocomplete="username" />
+          <label>Senha</label>
+          <input name="pass" type="password" autocomplete="current-password" />
+          <div class="err">${''}</div>
+          <button type="submit">Entrar</button>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+app.post('/login', express.urlencoded({ extended: false }), (req: Request, res: Response) => {
+  if (!isAuthEnabled()) return res.redirect('/');
+  const user = String(req.body?.user || '');
+  const pass = String(req.body?.pass || '');
+  if (user === WEB_LOGIN_USER && pass === WEB_LOGIN_PASS) {
+    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    res.setHeader('Set-Cookie', `${SESSION_COOKIE}=ok; Path=/; HttpOnly; SameSite=Lax${secure}`);
+    return res.redirect('/');
+  }
+  return res.status(401).send(`
+    <!doctype html>
+    <html lang="pt-BR">
+      <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Login</title></head>
+      <body style="font-family:Arial;background:#0b1220;color:#e5e7eb;display:flex;min-height:100vh;align-items:center;justify-content:center">
+        <form method="POST" action="/login" style="background:#111827;padding:24px;border-radius:12px;min-width:320px;border:1px solid #374151">
+          <h2 style="margin-top:0">Acesso protegido</h2>
+          <label>Usuário</label>
+          <input name="user" style="width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #374151;background:#0f172a;color:#e5e7eb" />
+          <label>Senha</label>
+          <input name="pass" type="password" style="width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #374151;background:#0f172a;color:#e5e7eb" />
+          <div style="color:#f87171;min-height:18px">Usuário ou senha inválidos</div>
+          <button style="width:100%;padding:10px;border-radius:8px;border:0;background:#2563eb;color:white;font-weight:600" type="submit">Entrar</button>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+app.post('/logout', (_req: Request, res: Response) => {
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax`);
+  return res.json({ success: true });
+});
+
 // Em produção online (Render), bloqueia qualquer escrita pública.
 // Escrita só é permitida com token enviado pelo servidor local.
 app.use((req: Request, res: Response, next) => {
-  const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
   const isApiRoute = req.path.startsWith('/api/');
+  const isAuthRoute = req.path === '/login' || req.path === '/logout';
+
+  // Proteção de leitura/escrita para APIs quando login está ativo:
+  // aceita sessão web OU token de bypass do app.
+  if (isAuthEnabled() && isApiRoute && req.path !== '/api/health') {
+    if (!hasSessionAuth(req) && !hasAppBypass(req)) {
+      return res.status(401).json({ success: false, error: 'unauthorized' });
+    }
+  }
+
+  // Proteção para páginas web públicas.
+  if (isAuthEnabled() && !isApiRoute && !isAuthRoute) {
+    if (!hasSessionAuth(req)) {
+      return res.redirect('/login');
+    }
+  }
+
+  const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
   if (!SYNC_TOKEN || !isApiRoute || !isWriteMethod) return next();
 
   const providedToken = String(req.headers['x-sync-token'] || '');
@@ -657,22 +918,73 @@ app.delete('/api/debts/:id', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+// Limpeza explícita do relatório de acessos (persistente em arquivo)
+app.post('/api/settings/clear-access-logs', (_req: Request, res: Response) => {
+  try {
+    const currentSettings = dataStore.settings || {};
+    dataStore.settings = {
+      ...currentSettings,
+      accessLogs: [],
+    };
+    saveDataToFile(dataStore);
+    return res.json({
+      success: true,
+      message: 'Relatório de acessos limpo com sucesso.',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Falha ao limpar relatório de acessos.',
+      error: String(error?.message || error),
+    });
+  }
+});
+
 // ==================== APP DATA SYNC ====================
 // Salvar dados do AppContext (settings, stores, debts, saldoDia)
 app.post('/api/sync/save', (req: Request, res: Response) => {
-  const { source = 'site', settings, stores, debts, saldoDia, caixa, fechamento, lancamentos, lancamentosCompacto, programAuditEvents } = req.body;
+  const {
+    source = 'site',
+    settings,
+    stores,
+    debts,
+    saldoDia,
+    caixa,
+    fechamento,
+    lancamentos,
+    lancamentosCompacto,
+    programAuditEvents,
+    actionUserName,
+    actionPassword,
+    userName,
+    username,
+    user,
+    actorName,
+    actor,
+    password,
+    pass,
+    senha,
+    senhaAcao,
+    senha_acao,
+    action_password,
+    user_password,
+    senhaUsuario,
+    senhaUsuarioAcao,
+    senha_usuario_acao,
+  } = req.body;
   if (DEBUG_SYNC) {
     console.log('[DEBUG] Sync/Save recebido');
   console.log('[DEBUG] Lancamentos:', lancamentos ? 'SIM' : 'NÃO');
   console.log('[DEBUG] Settings:', settings ? 'SIM' : 'NÃO');
   }
-  const syncPreference = dataStore.settings?.syncPreference || 'both';
+  // Modo estabilização temporário: força sincronização "ambos" para reduzir conflitos de bloqueio.
+  const currentSyncPreference = dataStore.settings?.syncPreference;
+  const syncPreference = currentSyncPreference === 'site' || currentSyncPreference === 'program'
+    ? currentSyncPreference
+    : 'program';
   const hasSyncTokenAuth = !!SYNC_TOKEN && String(req.headers['x-sync-token'] || '') === SYNC_TOKEN;
-  const sourceAllowed =
-    hasSyncTokenAuth ||
-    syncPreference === 'both' ||
-    (syncPreference === 'site' && source === 'site') ||
-    (syncPreference === 'program' && source === 'program');
+  const sourceAllowed = true;
 
   if (!sourceAllowed) {
     if (source === 'site' && settings) {
@@ -745,10 +1057,27 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
 
   if (settings) {
     const incomingSettings = { ...settings };
+    if (Array.isArray(incomingSettings.actionUsers)) {
+      const seen = new Set<string>();
+      for (const user of incomingSettings.actionUsers) {
+        const pass = String(user?.password || '').trim();
+        if (!pass) continue;
+        if (seen.has(pass)) {
+          return res.status(400).json({
+            success: false,
+            error: 'duplicate_action_user_password',
+            message: 'Nao e permitido repetir senha em usuarios de acao.',
+          });
+        }
+        seen.add(pass);
+      }
+    }
+    delete (incomingSettings as any).syncPreference;
+    // accessLogs/timeline são autoritativos no servidor para evitar perda por sobrescrita de sync concorrente.
+    delete (incomingSettings as any).accessLogs;
+    delete (incomingSettings as any).timeline;
     if (source === 'program') {
       // Evita que o programa desktop sobrescreva dados gerenciados no site.
-      delete (incomingSettings as any).timeline;
-      delete (incomingSettings as any).accessLogs;
       delete (incomingSettings as any).actionUsers;
       delete (incomingSettings as any).senhaVendas;
       delete (incomingSettings as any).purchaseEntries;
@@ -770,6 +1099,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       ...incomingSettings,
       purchaseEntries: mergedPurchaseEntries,
       purchaseOptions: mergedPurchaseOptions,
+      syncPreference,
     };
     if (DEBUG_SYNC) {
       console.log('[DEBUG] fieldMappingCompacto1:', settings.fieldMappingCompacto1);
@@ -781,13 +1111,15 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   const oldFechSnapshot = JSON.parse(JSON.stringify(dataStore.fechamento || {}));
 
   if (saldoDia !== undefined) dataStore.saldoDia = saldoDia;
-  if (caixa) dataStore.caixa = caixa;
-  if (fechamento) dataStore.fechamento = fechamento;
+  const caixaSourceAllowed = hasSyncTokenAuth || source === syncPreference;
+  const fechamentoSourceAllowed = hasSyncTokenAuth || source === syncPreference;
+  if (caixa && caixaSourceAllowed) dataStore.caixa = caixa;
+  if (fechamento && fechamentoSourceAllowed) dataStore.fechamento = fechamento;
 
   // Quando o programa já envia eventos explícitos, evita duplicar logs via diff.
   const hasProgramAuditEvents = source === 'program' && Array.isArray(programAuditEvents) && programAuditEvents.length > 0;
 
-  if (source === 'program' && caixa && !hasProgramAuditEvents) {
+  if (source === 'program' && caixa && caixaSourceAllowed && !hasProgramAuditEvents) {
     const audits = buildProgramAnnotationAuditLogs(oldCaixaSnapshot, dataStore.caixa || {});
     audits.forEach((audit) => {
       appendProgramAudit(
@@ -796,6 +1128,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
         'caixa',
         audit.date,
         audit.details,
+        undefined,
         audit.field,
         audit.oldValue,
         audit.newValue,
@@ -804,7 +1137,27 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   }
 
   if (hasProgramAuditEvents) {
-    appendProgramAuditEvents(programAuditEvents);
+    const eventContext = {
+      actionUserName,
+      actionPassword,
+      userName,
+      username,
+      user,
+      actorName,
+      actor,
+      password,
+      pass,
+      senha,
+      senhaAcao,
+      senha_acao,
+      action_password,
+      user_password,
+      senhaUsuario,
+      senhaUsuarioAcao,
+      senha_usuario_acao,
+    };
+    const normalizedEvents = (programAuditEvents || []).map((ev: any) => ({ ...eventContext, ...ev }));
+    appendProgramAuditEvents(normalizedEvents);
   }
 
   if (false && source === 'program' && (caixa || fechamento)) {
@@ -853,7 +1206,10 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   }
   
   saveDataToFile(dataStore);
-  res.json({ success: true, timestamp: new Date().toISOString() });
+  const ignoredFields: string[] = [];
+  if (caixa && !caixaSourceAllowed) ignoredFields.push('caixa');
+  if (fechamento && !fechamentoSourceAllowed) ignoredFields.push('fechamento');
+  res.json({ success: true, timestamp: new Date().toISOString(), ignoredFields });
 });
 
 // Carregar dados do AppContext (sem userId, sincroniza tudo)
@@ -957,7 +1313,11 @@ app.post('/api/sync/annotation/add', (req: Request, res: Response) => {
 app.post('/api/sync/annotation/update', (req: Request, res: Response) => {
   try {
     const { storeId, date, id, annotation } = req.body;
-    
+    const actionUsers = Array.isArray(dataStore.settings?.actionUsers) ? dataStore.settings.actionUsers : [];
+    if (DEBUG_SYNC) {
+      console.log('[DEBUG][annotation/update] keys:', Object.keys(req.body || {}));
+    }
+
     if (dataStore.caixa[storeId] && dataStore.caixa[storeId][date]) {
       const annotations = dataStore.caixa[storeId][date].annotations || [];
       const index = annotations.findIndex((a: any) => a.id == id);
@@ -965,6 +1325,10 @@ app.post('/api/sync/annotation/update', (req: Request, res: Response) => {
       if (index !== -1) {
         const previous = { ...annotations[index] };
         annotations[index] = { ...annotations[index], ...annotation, updatedAt: new Date().toISOString() };
+        const resolvedUserName = resolveActionUserName(
+          actionUsers,
+          buildUserContextFromObjects(req.body, annotation, previous, annotations[index])
+        );
         const oldValue = toNum(previous?.valor);
         const newValue = toNum(annotations[index]?.valor);
         appendProgramAudit(
@@ -973,6 +1337,7 @@ app.post('/api/sync/annotation/update', (req: Request, res: Response) => {
           'caixa',
           date,
           `${storeId.toUpperCase()} ${date} editou item em ${annotations[index]?.categoria || 'categoria'} | descricao: ${previous?.descricao || '-'} -> ${annotations[index]?.descricao || '-'} | Valor: R$ ${oldValue.toFixed(2)} -> R$ ${newValue.toFixed(2)}`,
+          resolvedUserName,
           annotations[index]?.categoria || 'anotacao',
           oldValue,
           newValue
@@ -995,6 +1360,10 @@ app.post('/api/sync/annotation/update', (req: Request, res: Response) => {
 app.post('/api/sync/annotation/delete', (req: Request, res: Response) => {
   try {
     const { storeId, date, id } = req.body;
+    const actionUsers = Array.isArray(dataStore.settings?.actionUsers) ? dataStore.settings.actionUsers : [];
+    if (DEBUG_SYNC) {
+      console.log('[DEBUG][annotation/delete] keys:', Object.keys(req.body || {}));
+    }
     
     if (dataStore.caixa[storeId] && dataStore.caixa[storeId][date]) {
       const annotations = dataStore.caixa[storeId][date].annotations || [];
@@ -1002,6 +1371,10 @@ app.post('/api/sync/annotation/delete', (req: Request, res: Response) => {
       
       if (index !== -1) {
         const removed = annotations[index];
+        const resolvedUserName = resolveActionUserName(
+          actionUsers,
+          buildUserContextFromObjects(req.body, removed)
+        );
         const removedValue = toNum(removed?.valor);
         annotations.splice(index, 1);
         appendProgramAudit(
@@ -1009,7 +1382,8 @@ app.post('/api/sync/annotation/delete', (req: Request, res: Response) => {
           'delete',
           'caixa',
           date,
-          `${storeId.toUpperCase()} ${date} excluiu item em ${removed?.categoria || 'categoria'} | descricao: ${removed?.descricao || '-'} | Valor: R$ ${removedValue.toFixed(2)}`
+          `${storeId.toUpperCase()} ${date} excluiu item em ${removed?.categoria || 'categoria'} | descricao: ${removed?.descricao || '-'} | Valor: R$ ${removedValue.toFixed(2)}`,
+          resolvedUserName
         );
         saveDataToFile(dataStore);
         res.json({ success: true });

@@ -52,10 +52,27 @@ const getLocalDateKey = (timestamp: number) => {
 const isAnnotationActionLog = (details?: string) => {
   const t = String(details || '').toLowerCase();
   if (!t) return false;
-  return (
-    (t.includes('edição autorizada') || t.includes('exclusão autorizada') || t.includes('editou') || t.includes('excluiu')) &&
-    (t.includes('produto') || t.includes('item') || t.includes('categoria'))
-  );
+  const hasAction =
+    t.includes('edição') ||
+    t.includes('edicao') ||
+    t.includes('editou') ||
+    t.includes('exclusão') ||
+    t.includes('exclusao') ||
+    t.includes('excluiu') ||
+    t.includes('update') ||
+    t.includes('delete');
+  const hasCaixaSignal =
+    t.includes('produto') ||
+    t.includes('item') ||
+    t.includes('categoria') ||
+    t.includes('loja') ||
+    t.includes('dinheiro') ||
+    t.includes('pix') ||
+    t.includes('cartao') ||
+    t.includes('cartão') ||
+    t.includes('boleto') ||
+    t.includes('sobra');
+  return hasAction && hasCaixaSignal;
 };
 
 export default function FechamentoCompactoTab() {

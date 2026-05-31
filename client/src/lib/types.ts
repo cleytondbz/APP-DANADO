@@ -121,7 +121,7 @@ export interface AppSettings {
   dateProtection?: 'none' | 'day' | 'month';
   customSaldoSelection?: string[];
   customSaldoDays?: number[];
-  syncPreference?: 'site' | 'program' | 'both';
+  syncPreference?: 'site' | 'program';
   purchaseEntries?: Record<string, PurchaseEntry[]>;
   purchaseOptions?: PurchaseOptions;
 }

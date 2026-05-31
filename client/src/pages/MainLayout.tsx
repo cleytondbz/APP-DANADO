@@ -1,15 +1,16 @@
 import { useApp } from '@/contexts/AppContext';
 import type { MainTab } from '@/lib/types';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MONTH_NAMES } from '@/lib/types';
-import DashboardTab from './DashboardTab';
-import LancamentosTab from './LancamentosTab';
-import FechamentoCompactoTab from './FechamentoCompactoTab';
-import ComprasTab from './ComprasTab';
-import OpcoesTab from './OpcoesTab';
-import CaixaTab from './CaixaTab';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const DashboardTab = lazy(() => import('./DashboardTab'));
+const LancamentosTab = lazy(() => import('./LancamentosTab'));
+const FechamentoCompactoTab = lazy(() => import('./FechamentoCompactoTab'));
+const ComprasTab = lazy(() => import('./ComprasTab'));
+const OpcoesTab = lazy(() => import('./OpcoesTab'));
+const CaixaTab = lazy(() => import('./CaixaTab'));
 
 const tabs: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -100,16 +101,18 @@ export default function MainLayout() {
 
       <main className="flex-1 px-4 py-4">
         <div className="w-full max-w-[1680px] mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
-              {tab === 'dashboard' && <DashboardTab />}
-              {!isAndroidAppMode && tab === 'lancamentos' && <LancamentosTab />}
-              {tab === 'fechamentoCompacto' && <FechamentoCompactoTab />}
-              {!isAndroidAppMode && tab === 'compras' && <ComprasTab />}
-              {!isAndroidAppMode && tab === 'caixa' && <CaixaTab />}
-              {!isAndroidAppMode && tab === 'opcoes' && <OpcoesTab />}
-            </motion.div>
-          </AnimatePresence>
+          <Suspense fallback={<div className="text-sm text-muted-foreground py-8 text-center">Carregando aba...</div>}>
+            <AnimatePresence mode="wait">
+              <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
+                {tab === 'dashboard' && <DashboardTab />}
+                {!isAndroidAppMode && tab === 'lancamentos' && <LancamentosTab />}
+                {tab === 'fechamentoCompacto' && <FechamentoCompactoTab />}
+                {!isAndroidAppMode && tab === 'compras' && <ComprasTab />}
+                {!isAndroidAppMode && tab === 'caixa' && <CaixaTab />}
+                {!isAndroidAppMode && tab === 'opcoes' && <OpcoesTab />}
+              </motion.div>
+            </AnimatePresence>
+          </Suspense>
         </div>
       </main>
 
