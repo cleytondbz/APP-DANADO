@@ -766,11 +766,13 @@ app.post('/logout', (_req: Request, res: Response) => {
 app.use((req: Request, res: Response, next) => {
   const isApiRoute = req.path.startsWith('/api/');
   const isAuthRoute = req.path === '/login' || req.path === '/logout';
+  const providedSyncToken = String(req.headers['x-sync-token'] || '');
+  const hasSyncTokenAuth = !!SYNC_TOKEN && providedSyncToken === SYNC_TOKEN;
 
   // Proteção de leitura/escrita para APIs quando login está ativo:
   // aceita sessão web OU token de bypass do app.
   if (isAuthEnabled() && isApiRoute && req.path !== '/api/health') {
-    if (!hasSessionAuth(req) && !hasAppBypass(req)) {
+    if (!hasSessionAuth(req) && !hasAppBypass(req) && !hasSyncTokenAuth) {
       return res.status(401).json({ success: false, error: 'unauthorized' });
     }
   }
@@ -785,8 +787,7 @@ app.use((req: Request, res: Response, next) => {
   const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
   if (!SYNC_TOKEN || !isApiRoute || !isWriteMethod) return next();
 
-  const providedToken = String(req.headers['x-sync-token'] || '');
-  if (providedToken !== SYNC_TOKEN) {
+  if (!hasSyncTokenAuth) {
     return res.status(401).json({ success: false, error: 'write_blocked' });
   }
   return next();
