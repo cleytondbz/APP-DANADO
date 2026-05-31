@@ -16,8 +16,13 @@ const SYNC_TOKEN = process.env.SYNC_TOKEN || '';
 const CLOUD_SYNC_URL = process.env.CLOUD_SYNC_URL || '';
 const CLOUD_SYNC_TOKEN = process.env.CLOUD_SYNC_TOKEN || '';
 const ENABLE_CLOUD_PUSH = process.env.ENABLE_CLOUD_PUSH === '1';
-const WEB_LOGIN_USER = process.env.WEB_LOGIN_USER || '';
-const WEB_LOGIN_PASS = process.env.WEB_LOGIN_PASS || '';
+const normalizeAuthValue = (v: unknown) =>
+  String(v ?? '')
+    .trim()
+    .replace(/^["']+|["']+$/g, '');
+
+const WEB_LOGIN_USER = normalizeAuthValue(process.env.WEB_LOGIN_USER || '');
+const WEB_LOGIN_PASS = normalizeAuthValue(process.env.WEB_LOGIN_PASS || '');
 const APP_BYPASS_TOKEN = process.env.APP_BYPASS_TOKEN || '';
 const SESSION_COOKIE = 'danado_session';
 
@@ -725,8 +730,8 @@ app.get('/login', (_req: Request, res: Response) => {
 
 app.post('/login', express.urlencoded({ extended: false }), (req: Request, res: Response) => {
   if (!isAuthEnabled()) return res.redirect('/');
-  const user = String(req.body?.user || '');
-  const pass = String(req.body?.pass || '');
+  const user = normalizeAuthValue(req.body?.user || '');
+  const pass = normalizeAuthValue(req.body?.pass || '');
   if (user === WEB_LOGIN_USER && pass === WEB_LOGIN_PASS) {
     const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
     res.setHeader('Set-Cookie', `${SESSION_COOKIE}=ok; Path=/; HttpOnly; SameSite=Lax${secure}`);
