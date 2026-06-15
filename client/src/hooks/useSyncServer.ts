@@ -18,6 +18,17 @@ interface UseSyncServerOptions {
   syncInterval?: number; // em ms, padrão 3000 (3 segundos)
 }
 
+const fetchWithTimeout = async (url: string, init: RequestInit = {}, timeoutMs = 5000) => {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+};
+
 export function useSyncServer(options: UseSyncServerOptions = {}) {
   // Auto-detect server URL: se estiver em 5173 (Vite), conectar ao 3000 (Express) no mesmo host
   const getDefaultServerUrl = () => {
@@ -35,8 +46,21 @@ export function useSyncServer(options: UseSyncServerOptions = {}) {
     return `${protocol}//${host}`;
   };
 
+  const resolveInitialServerUrl = () => {
+    if (typeof window === 'undefined') return options.serverUrl || '';
+    if (options.serverUrl) return options.serverUrl;
+
+    // Em ambiente local (Vite), sempre apontar para o servidor local.
+    // Evita recarregar do Render por URL antiga salva no navegador.
+    if (window.location.port === '5173') {
+      return getDefaultServerUrl();
+    }
+
+    return localStorage.getItem('fd_serverUrl') || getDefaultServerUrl();
+  };
+
   const {
-    serverUrl = localStorage.getItem('fd_serverUrl') || getDefaultServerUrl(),
+    serverUrl = resolveInitialServerUrl(),
     userId = localStorage.getItem('fd_userId') || '',
     onDataLoaded,
     onError,
@@ -55,7 +79,7 @@ export function useSyncServer(options: UseSyncServerOptions = {}) {
     }
 
     try {
-      const response = await fetch(`${serverUrl}/api/sync/save`, {
+      const response = await fetchWithTimeout(`${serverUrl}/api/sync/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +95,7 @@ export function useSyncServer(options: UseSyncServerOptions = {}) {
           fechamento: data.fechamento,
           lancamentos: data.lancamentos,
         }),
-      });
+      }, 4500);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -100,7 +124,7 @@ export function useSyncServer(options: UseSyncServerOptions = {}) {
         ? `${serverUrl}/api/sync/load/${userId}`
         : `${serverUrl}/api/sync/load`;
       
-      const response = await fetch(url);
+      const response = await fetchWithTimeout(url, {}, 5000);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -136,9 +160,9 @@ export function useSyncServer(options: UseSyncServerOptions = {}) {
     }
 
     try {
-      const response = await fetch(`${serverUrl}/health`, {
+      const response = await fetchWithTimeout(`${serverUrl}/api/health`, {
         method: 'GET',
-      });
+      }, 3000);
 
       return response.ok;
     } catch (error) {

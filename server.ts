@@ -25,6 +25,9 @@ const WEB_LOGIN_USER = normalizeAuthValue(process.env.WEB_LOGIN_USER || '');
 const WEB_LOGIN_PASS = normalizeAuthValue(process.env.WEB_LOGIN_PASS || '');
 const APP_BYPASS_TOKEN = process.env.APP_BYPASS_TOKEN || '';
 const SESSION_COOKIE = 'danado_session';
+const SYNC_AUDIT_FILE = path.resolve(process.cwd(), 'data', 'sync-audit.log');
+const CAIXA_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'caixa-movements.log');
+const PURCHASE_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'purchase-movements.log');
 
 const normalizeKey = (value: any) =>
   String(value ?? '')
@@ -87,6 +90,87 @@ const uniqueNormalizedList = (list: string[] = []) => {
   return out;
 };
 
+const sanitizePurchaseSupplierDifTypes = (input: unknown): Record<string, 'D' | 'I' | 'F'> => {
+  const out: Record<string, 'D' | 'I' | 'F'> = {};
+  if (!input || typeof input !== 'object') return out;
+
+  Object.entries(input as Record<string, unknown>).forEach(([key, value]) => {
+    const normalizedKey = normalizeKey(String(key || ''));
+    const type = String(value ?? '').trim().toUpperCase();
+    if (normalizedKey && (type === 'D' || type === 'I' || type === 'F')) {
+      out[normalizedKey] = type;
+    }
+  });
+
+  return out;
+};
+
+const sanitizePurchaseOptionsForServer = (incoming: any = {}, current: any = {}) => {
+  const hasIncomingMap = Object.prototype.hasOwnProperty.call(incoming || {}, 'supplierDifTypes');
+  return {
+    groups: uniqueNormalizedList(incoming?.groups || []),
+    suppliers: uniqueNormalizedList(incoming?.suppliers || []),
+    institutions: uniqueNormalizedList(incoming?.institutions || []),
+    supplierDifTypes: hasIncomingMap
+      ? sanitizePurchaseSupplierDifTypes(incoming?.supplierDifTypes)
+      : sanitizePurchaseSupplierDifTypes(current?.supplierDifTypes),
+  };
+};
+
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getLocalDateTimeString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const millis = String(date.getMilliseconds()).padStart(3, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${millis}`;
+};
+
+const mergeStoreBranch = (
+  currentValue: Record<string, any> = {},
+  incomingValue: Record<string, any> = {},
+): Record<string, any> => {
+  const next = { ...(currentValue || {}) };
+  Object.entries(incomingValue || {}).forEach(([storeId, storePayload]) => {
+    if (storePayload && typeof storePayload === 'object' && !Array.isArray(storePayload)) {
+      next[storeId] = {
+        ...(next[storeId] || {}),
+        ...storePayload,
+      };
+    }
+  });
+  return next;
+};
+
+const appendSyncAudit = (payload: Record<string, any>) => {
+  try {
+    const folder = path.dirname(SYNC_AUDIT_FILE);
+    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+    fs.appendFileSync(SYNC_AUDIT_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+  } catch (e) {
+    console.error('[SyncAudit] Falha ao gravar log:', e);
+  }
+};
+
+const ensureSyncMeta = () => {
+  if (!dataStore._syncMeta || typeof dataStore._syncMeta !== 'object') {
+    dataStore._syncMeta = {};
+  }
+  if (!Number.isFinite(Number(dataStore._syncMeta.caixaFechamentoVersion))) {
+    dataStore._syncMeta.caixaFechamentoVersion = 0;
+  }
+  return dataStore._syncMeta;
+};
+
 const cleanLogText = (value: any) =>
   String(value ?? '')
     .replace(/Ã¡/g, 'á')
@@ -116,6 +200,111 @@ const sanitizeLogText = (value: any) =>
   decodeMojibake(cleanLogText(value))
     .replace(/[^\p{L}\p{N}\p{P}\p{Zs}\n\r\t]/gu, '')
     .trim();
+
+const appendCaixaMovementLog = (payload: Record<string, any>) => {
+  try {
+    const folder = path.dirname(CAIXA_MOVEMENTS_FILE);
+    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+    fs.appendFileSync(CAIXA_MOVEMENTS_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+  } catch (e) {
+    console.error('[CaixaMovements] Falha ao gravar log:', e);
+  }
+};
+
+const appendPurchaseMovementLog = (payload: Record<string, any>) => {
+  try {
+    const folder = path.dirname(PURCHASE_MOVEMENTS_FILE);
+    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+    fs.appendFileSync(PURCHASE_MOVEMENTS_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+  } catch (e) {
+    console.error('[PurchaseMovements] Falha ao gravar log:', e);
+  }
+};
+
+const compactPurchaseEntry = (entry: any) => ({
+  id: sanitizeLogText(entry?.id),
+  dueDate: sanitizeLogText(entry?.dueDate),
+  group: sanitizeLogText(entry?.group),
+  supplier: sanitizeLogText(entry?.supplier),
+  documentNumber: sanitizeLogText(entry?.documentNumber),
+  issueDate: sanitizeLogText(entry?.issueDate),
+  installments: sanitizeLogText(entry?.installments),
+  amount: Number(entry?.amount || 0),
+  paidDate: sanitizeLogText(entry?.paidDate),
+  financialInstitution: sanitizeLogText(entry?.financialInstitution),
+  difType: sanitizeLogText(entry?.difType),
+});
+
+const purchaseEntryLogKey = (entry: any) => sanitizeLogText(entry?.id) || purchaseEntrySignature(entry);
+
+const summarizePurchaseEntries = (entries: Record<string, any[]> = {}) =>
+  Object.entries(entries || {}).map(([monthKey, list]) => {
+    const items = Array.isArray(list) ? list : [];
+    const paidTotal = items.reduce((sum, item) => sum + (item?.paidDate ? Number(item?.amount || 0) : 0), 0);
+    const total = items.reduce((sum, item) => sum + Number(item?.amount || 0), 0);
+    return {
+      monthKey,
+      count: items.length,
+      total,
+      paidTotal,
+      pendingTotal: total - paidTotal,
+    };
+  });
+
+const diffPurchaseEntries = (
+  current: Record<string, any[]> = {},
+  incoming: Record<string, any[]> = {},
+) => {
+  const months = Array.from(new Set([...Object.keys(current || {}), ...Object.keys(incoming || {})])).sort();
+  return months.map((monthKey) => {
+    const currentItems = Array.isArray(current?.[monthKey]) ? current[monthKey] : [];
+    const incomingItems = Array.isArray(incoming?.[monthKey]) ? incoming[monthKey] : [];
+    const currentMap = new Map<string, any>();
+    const incomingMap = new Map<string, any>();
+    currentItems.forEach((entry) => currentMap.set(purchaseEntryLogKey(entry), entry));
+    incomingItems.forEach((entry) => incomingMap.set(purchaseEntryLogKey(entry), entry));
+
+    const added: any[] = [];
+    const removed: any[] = [];
+    const changed: any[] = [];
+
+    incomingMap.forEach((entry, key) => {
+      if (!currentMap.has(key)) {
+        added.push(compactPurchaseEntry(entry));
+        return;
+      }
+      const currentEntry = currentMap.get(key);
+      if (JSON.stringify(currentEntry) !== JSON.stringify(entry)) {
+        changed.push({
+          before: compactPurchaseEntry(currentEntry),
+          after: compactPurchaseEntry(entry),
+        });
+      }
+    });
+
+    currentMap.forEach((entry, key) => {
+      if (!incomingMap.has(key)) removed.push(compactPurchaseEntry(entry));
+    });
+
+    return {
+      monthKey,
+      beforeCount: currentItems.length,
+      incomingCount: incomingItems.length,
+      addedCount: added.length,
+      removedCount: removed.length,
+      changedCount: changed.length,
+      added: added.slice(0, 40),
+      removed: removed.slice(0, 40),
+      changed: changed.slice(0, 40),
+    };
+  }).filter((item) => item.addedCount || item.removedCount || item.changedCount || item.beforeCount !== item.incomingCount);
+};
+
+const summarizePurchaseOptions = (options: any = {}) => ({
+  groups: Array.isArray(options?.groups) ? options.groups.length : 0,
+  suppliers: Array.isArray(options?.suppliers) ? options.suppliers.length : 0,
+  institutions: Array.isArray(options?.institutions) ? options.institutions.length : 0,
+});
 
 const findFirstStringByKeyPatterns = (obj: any, patterns: RegExp[], maxDepth = 4): string => {
   const seen = new Set<any>();
@@ -213,6 +402,315 @@ const sumItems = (arr: any[] = []) =>
     const val = toNum(item?.valor);
     return sum + q * val;
   }, 0);
+
+const CAIXA_ITEM_CATEGORIES = ['dinheiro', 'pix', 'cartao', 'boleto'] as const;
+
+const summarizeCaixaPayload = (payload: Record<string, any> = {}) =>
+  Object.entries(payload || {}).flatMap(([storeId, storePayload]) => {
+    if (!storePayload || typeof storePayload !== 'object' || Array.isArray(storePayload)) return [];
+    return Object.entries(storePayload).map(([date, dayPayload]) => {
+      const counts: Record<string, number> = {};
+      CAIXA_ITEM_CATEGORIES.forEach((category) => {
+        counts[category] = Array.isArray((dayPayload as any)?.[category])
+          ? (dayPayload as any)[category].length
+          : 0;
+      });
+      return { storeId, date, counts };
+    });
+  });
+
+const normalizeCaixaCategory = (value: any) => {
+  const key = normalizeKey(value).replace(/[^A-Z0-9]/g, '');
+  if (key === 'CARTAO' || key === 'CARTAOJB') return 'cartao';
+  if (key === 'DINHEIRO') return 'dinheiro';
+  if (key === 'PIX') return 'pix';
+  if (key === 'BOLETO') return 'boleto';
+  return String(value || '').trim().toLowerCase();
+};
+
+const getCaixaItemDescription = (item: any) =>
+  sanitizeLogText(item?.descricao || item?.produto || item?.description || item?.name || '').trim();
+
+const getCaixaItemQuantity = (item: any) => toNum(item?.quantidade ?? item?.qtd ?? item?.qty ?? 1) || 1;
+const getCaixaItemValue = (item: any) => toNum(item?.valor ?? item?.value ?? item?.amount);
+const getCaixaItemTotal = (item: any) => getCaixaItemQuantity(item) * getCaixaItemValue(item);
+
+const getCaixaItemTimeKey = (item: any) =>
+  sanitizeLogText(item?.hora || item?.time || item?.createdAt || item?.created_at || item?.timestamp || '');
+
+const getCaixaItemKey = (item: any) => {
+  const rawId = item?.id ?? item?._id ?? item?.uuid;
+  if (rawId !== undefined && rawId !== null && String(rawId).trim() !== '') {
+    return `id:${String(rawId).trim()}`;
+  }
+
+  return [
+    'sig',
+    normalizeKey(getCaixaItemDescription(item)),
+    getCaixaItemQuantity(item).toFixed(4),
+    getCaixaItemValue(item).toFixed(4),
+    getCaixaItemTimeKey(item),
+  ].join('|');
+};
+
+const incrementKeyCount = (map: Map<string, number>, key: string) => {
+  map.set(key, (map.get(key) || 0) + 1);
+};
+
+const consumeKeyCount = (map: Map<string, number>, key: string) => {
+  const count = map.get(key) || 0;
+  if (count <= 0) return false;
+  if (count === 1) map.delete(key);
+  else map.set(key, count - 1);
+  return true;
+};
+
+const normalizeNumericText = (value: any) => String(value ?? '').replace(/[^\d]/g, '');
+
+const normalizeCaixaDateKey = (value: any) => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const br = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (br) return `${br[3]}-${br[2].padStart(2, '0')}-${br[1].padStart(2, '0')}`;
+  return raw;
+};
+
+const normalizeStoreKey = (value: any) => {
+  const key = normalizeKey(value).replace(/[^A-Z0-9]/g, '');
+  if (key === 'LOJA1' || key === '1') return 'loja1';
+  if (key === 'LOJA2' || key === '2') return 'loja2';
+  return String(value ?? '').trim().toLowerCase();
+};
+
+const programDeleteEventMatchesItem = (
+  event: any,
+  ctx: { storeId: string; date: string; category: string; item: any },
+) => {
+  if (!event || typeof event !== 'object') return false;
+  const details = sanitizeLogText(event.details || event.description || event.descricao || '');
+  const detailsKey = normalizeKey(details);
+  const actionKey = normalizeKey([
+    event.action,
+    event.type,
+    event.operacao,
+    event.operation,
+    event.acao,
+    event.tipoAcao,
+    event.actionType,
+    event.kind,
+    event.event,
+    event.status,
+    event.label,
+    details,
+  ].filter(Boolean).join(' '));
+  if (!actionKey.includes('DELETE') && !actionKey.includes('EXCL') && !actionKey.includes('REMOV')) return false;
+
+  const actionUsers = Array.isArray(dataStore.settings?.actionUsers) ? dataStore.settings.actionUsers : [];
+  const resolvedUser = resolveActionUserName(actionUsers, event);
+  if (!resolvedUser || normalizeKey(resolvedUser) === 'PROGRAMA') return false;
+
+  const eventStore = normalizeStoreKey(event.storeId || event.store || event.loja);
+  if (eventStore && eventStore !== normalizeStoreKey(ctx.storeId)) return false;
+
+  const eventDate = normalizeCaixaDateKey(event.date || event.data || event.day);
+  if (eventDate && eventDate !== normalizeCaixaDateKey(ctx.date)) return false;
+
+  const eventCategory = normalizeCaixaCategory(event.field || event.category || event.categoria || event.tipo || event.typeName);
+  const categoryLabelKey = normalizeKey(ctx.category);
+  if (eventCategory && eventCategory !== ctx.category && !detailsKey.includes(categoryLabelKey)) return false;
+
+  const itemId = String(ctx.item?.id ?? ctx.item?._id ?? ctx.item?.uuid ?? '').trim();
+  const eventItemId = String(event.itemId ?? event.annotationId ?? event.productId ?? event.idItem ?? '').trim();
+  if (itemId && eventItemId && itemId === eventItemId) return true;
+
+  const descKey = normalizeKey(getCaixaItemDescription(ctx.item));
+  const amountDigits = normalizeNumericText(getCaixaItemTotal(ctx.item).toFixed(2));
+  const eventAmountDigits = normalizeNumericText(
+    event.oldValue ?? event.value ?? event.valor ?? event.amount ?? event.total ?? details,
+  );
+  const hasDescriptionMatch =
+    !!descKey &&
+    (detailsKey.includes(descKey) ||
+      normalizeKey(event.descricao || event.description || event.produto || event.product || event.name).includes(descKey));
+  const hasAmountMatch = amountDigits && eventAmountDigits.includes(amountDigits);
+
+  if (hasDescriptionMatch && hasAmountMatch) return true;
+  if (hasDescriptionMatch && eventCategory === ctx.category) return true;
+  if (hasAmountMatch && eventCategory === ctx.category && !detailsKey && !descKey) return true;
+  return false;
+};
+
+function mergeProgramCaixaBranch(
+  currentValue: Record<string, any> = {},
+  incomingValue: Record<string, any> = {},
+  context: { programAuditEvents?: any[]; clientId?: string; machineName?: string } = {},
+): Record<string, any> {
+  const next = mergeStoreBranch(currentValue || {}, incomingValue || {});
+  const events = Array.isArray(context.programAuditEvents) ? context.programAuditEvents : [];
+
+  Object.entries(incomingValue || {}).forEach(([storeId, storePayload]) => {
+    if (!storePayload || typeof storePayload !== 'object' || Array.isArray(storePayload)) return;
+    const currentStore = currentValue?.[storeId] || {};
+    const nextStore = next?.[storeId] || {};
+
+    Object.entries(storePayload).forEach(([date, incomingDay]) => {
+      if (!incomingDay || typeof incomingDay !== 'object' || Array.isArray(incomingDay)) return;
+      const currentDay = currentStore?.[date] || {};
+      const nextDay = nextStore?.[date] || {};
+
+      CAIXA_ITEM_CATEGORIES.forEach((category) => {
+        if (!Object.prototype.hasOwnProperty.call(incomingDay, category)) return;
+        const currentItems = Array.isArray(currentDay?.[category]) ? currentDay[category] : [];
+        const incomingItems = Array.isArray((incomingDay as any)?.[category]) ? (incomingDay as any)[category] : [];
+        const incomingKeyCounts = new Map<string, number>();
+        incomingItems.forEach((item: any) => {
+          incrementKeyCount(incomingKeyCounts, getCaixaItemKey(item));
+        });
+        const restoredItems: any[] = [];
+
+        currentItems.forEach((item: any) => {
+          const itemKey = getCaixaItemKey(item);
+          if (consumeKeyCount(incomingKeyCounts, itemKey)) return;
+
+          const hasExplicitDelete = events.some((event) =>
+            programDeleteEventMatchesItem(event, { storeId, date, category, item })
+          );
+          if (hasExplicitDelete) return;
+
+          const hasDeleteEvent = events.some((event) => {
+            const actionKey = normalizeKey([
+              event?.action,
+              event?.type,
+              event?.operacao,
+              event?.operation,
+              event?.acao,
+              event?.tipoAcao,
+              event?.actionType,
+              event?.kind,
+              event?.event,
+              event?.status,
+              event?.label,
+              event?.details,
+            ].filter(Boolean).join(' '));
+            return actionKey.includes('DELETE') || actionKey.includes('EXCL') || actionKey.includes('REMOV');
+          });
+          if (hasDeleteEvent) {
+            appendSyncAudit({
+              ts: getLocalDateTimeString(),
+              event: 'program_delete_event_not_matched',
+              source: 'program',
+              storeId,
+              date,
+              category,
+              itemKey,
+              description: getCaixaItemDescription(item),
+              total: Number(getCaixaItemTotal(item).toFixed(2)),
+              clientId: sanitizeLogText(context.clientId),
+              machineName: sanitizeLogText(context.machineName),
+              sampleEvents: events.slice(-5).map((event: any) => ({
+                action: sanitizeLogText(event?.action),
+                storeId: sanitizeLogText(event?.storeId || event?.store || event?.loja),
+                date: sanitizeLogText(event?.date || event?.data || event?.day),
+                field: sanitizeLogText(event?.field || event?.category || event?.categoria || event?.tipo || event?.typeName),
+                details: sanitizeLogText(event?.details || event?.description || event?.descricao),
+                oldValue: event?.oldValue,
+                value: event?.value ?? event?.valor ?? event?.amount ?? event?.total,
+                userName: sanitizeLogText(event?.userName || event?.usuario || event?.user || event?.actionUserName),
+              })),
+            });
+          }
+
+          restoredItems.push(item);
+          appendSyncAudit({
+            ts: getLocalDateTimeString(),
+            event: 'prevented_program_implicit_delete',
+            source: 'program',
+            storeId,
+            date,
+            category,
+            itemKey,
+            description: getCaixaItemDescription(item),
+            total: Number(getCaixaItemTotal(item).toFixed(2)),
+            clientId: sanitizeLogText(context.clientId),
+            machineName: sanitizeLogText(context.machineName),
+            currentCount: currentItems.length,
+            incomingCount: incomingItems.length,
+          });
+          appendCaixaMovementLog({
+            ts: getLocalDateTimeString(),
+            event: 'server_restored_missing_item',
+            reason: 'incoming_program_payload_removed_item_without_matching_delete_event',
+            source: 'program',
+            storeId,
+            date,
+            category,
+            itemKey,
+            description: getCaixaItemDescription(item),
+            total: Number(getCaixaItemTotal(item).toFixed(2)),
+            clientId: sanitizeLogText(context.clientId),
+            machineName: sanitizeLogText(context.machineName),
+            currentCount: currentItems.length,
+            incomingCount: incomingItems.length,
+          });
+        });
+
+        if (restoredItems.length > 0) {
+          next[storeId] = { ...(next[storeId] || {}) };
+          next[storeId][date] = { ...(next[storeId][date] || {}) };
+          next[storeId][date][category] = [...incomingItems, ...restoredItems];
+        }
+      });
+    });
+  });
+
+  return next;
+}
+
+function buildProgramCaixaMergeSummary(
+  beforeValue: Record<string, any> = {},
+  incomingValue: Record<string, any> = {},
+  afterValue: Record<string, any> = {},
+) {
+  const summaries: any[] = [];
+
+  Object.entries(incomingValue || {}).forEach(([storeId, storePayload]) => {
+    if (!storePayload || typeof storePayload !== 'object' || Array.isArray(storePayload)) return;
+
+    Object.entries(storePayload).forEach(([date, incomingDay]) => {
+      if (!incomingDay || typeof incomingDay !== 'object' || Array.isArray(incomingDay)) return;
+
+      CAIXA_ITEM_CATEGORIES.forEach((category) => {
+        if (!Object.prototype.hasOwnProperty.call(incomingDay, category)) return;
+
+        const beforeItems = Array.isArray(beforeValue?.[storeId]?.[date]?.[category])
+          ? beforeValue[storeId][date][category]
+          : [];
+        const incomingItems = Array.isArray((incomingDay as any)?.[category])
+          ? (incomingDay as any)[category]
+          : [];
+        const afterItems = Array.isArray(afterValue?.[storeId]?.[date]?.[category])
+          ? afterValue[storeId][date][category]
+          : [];
+
+        summaries.push({
+          storeId,
+          date,
+          category,
+          beforeCount: beforeItems.length,
+          incomingCount: incomingItems.length,
+          afterCount: afterItems.length,
+          beforeTotal: Number(beforeItems.reduce((sum: number, item: any) => sum + getCaixaItemTotal(item), 0).toFixed(2)),
+          incomingTotal: Number(incomingItems.reduce((sum: number, item: any) => sum + getCaixaItemTotal(item), 0).toFixed(2)),
+          afterTotal: Number(afterItems.reduce((sum: number, item: any) => sum + getCaixaItemTotal(item), 0).toFixed(2)),
+        });
+      });
+    });
+  });
+
+  return summaries;
+}
 
 function buildProgramAuditLogs(
   oldCaixa: Record<string, any> = {},
@@ -482,13 +980,16 @@ function buildProgramAnnotationAuditLogs(
   oldCaixa: Record<string, any> = {},
   newCaixa: Record<string, any> = {},
 ): ProgramAnnotationAudit[] {
-  const buildItemKey = (item: any, index: number) => {
-    const rawId = item?.id;
-    if (rawId !== undefined && rawId !== null && String(rawId).trim() !== '') {
-      return `id:${String(rawId)}`;
-    }
-    // Fallback estável para evitar colisão quando o programa não enviar id no item.
-    return `idx:${index}`;
+  const buildCountedItemMap = (items: any[] = []) => {
+    const seen = new Map<string, number>();
+    const map = new Map<string, any>();
+    items.forEach((item) => {
+      const baseKey = getCaixaItemKey(item);
+      const occurrence = seen.get(baseKey) || 0;
+      seen.set(baseKey, occurrence + 1);
+      map.set(`${baseKey}#${occurrence}`, item);
+    });
+    return map;
   };
 
   const audits: ProgramAnnotationAudit[] = [];
@@ -513,8 +1014,8 @@ function buildProgramAnnotationAuditLogs(
       categorias.forEach((categoria) => {
         const oldItems = Array.isArray(oldDay?.[categoria]) ? oldDay[categoria] : [];
         const newItems = Array.isArray(newDay?.[categoria]) ? newDay[categoria] : [];
-        const oldMap = new Map<string, any>(oldItems.map((x: any, idx: number) => [buildItemKey(x, idx), x]));
-        const newMap = new Map<string, any>(newItems.map((x: any, idx: number) => [buildItemKey(x, idx), x]));
+        const oldMap = buildCountedItemMap(oldItems);
+        const newMap = buildCountedItemMap(newItems);
         const nomeCat = categoriaLabel[categoria] || categoria;
 
         oldMap.forEach((oldItem, id) => {
@@ -621,20 +1122,39 @@ async function pushDataToCloud() {
       lancamentos: dataStore.lancamentos || {},
     };
 
-    const resp = await fetch(CLOUD_SYNC_URL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-sync-token': CLOUD_SYNC_TOKEN,
-      },
-      body: JSON.stringify(payload),
-    });
+    const maxAttempts = 3;
+    let lastStatus = 0;
+    let lastText = '';
+    let sent = false;
 
-    if (!resp.ok) {
-      const txt = await resp.text().catch(() => '');
-      console.error('[CloudSync] Falha ao enviar dados:', resp.status, txt);
-    } else if (DEBUG_SYNC) {
-      console.log('[CloudSync] Dados enviados para nuvem');
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const resp = await fetch(CLOUD_SYNC_URL, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-sync-token': CLOUD_SYNC_TOKEN,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (resp.ok) {
+        sent = true;
+        if (DEBUG_SYNC) {
+          console.log('[CloudSync] Dados enviados para nuvem');
+        }
+        break;
+      }
+
+      lastStatus = resp.status;
+      lastText = await resp.text().catch(() => '');
+      const retryable = [502, 503, 504].includes(resp.status);
+      if (!retryable || attempt === maxAttempts) break;
+
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+    }
+
+    if (!sent) {
+      console.error('[CloudSync] Falha ao enviar dados:', lastStatus, lastText);
     }
   } catch (err) {
     console.error('[CloudSync] Erro de envio:', err);
@@ -817,7 +1337,7 @@ if (loadedData) {
 
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: getLocalDateTimeString() });
 });
 
 // ==================== STORES ====================
@@ -827,7 +1347,7 @@ app.get('/api/stores', (_req: Request, res: Response) => {
 
 app.post('/api/stores', (req: Request, res: Response) => {
   const { id, storeName, cnpj } = req.body;
-  const store = { id, storeName, cnpj, createdAt: new Date().toISOString() };
+  const store = { id, storeName, cnpj, createdAt: getLocalDateTimeString() };
   dataStore.stores.push(store);
   res.json(store);
 });
@@ -841,7 +1361,7 @@ app.get('/api/categories/:storeId', (req: Request, res: Response) => {
 
 app.post('/api/categories', (req: Request, res: Response) => {
   const { id, storeId, name, operation, order } = req.body;
-  const category = { id, storeId, name, operation, order, createdAt: new Date().toISOString() };
+  const category = { id, storeId, name, operation, order, createdAt: getLocalDateTimeString() };
   dataStore.categories.push(category);
   res.json(category);
 });
@@ -851,7 +1371,7 @@ app.put('/api/categories/:id', (req: Request, res: Response) => {
   const { name, operation, order } = req.body;
   const index = dataStore.categories.findIndex((c: any) => c.id === id);
   if (index !== -1) {
-    dataStore.categories[index] = { ...dataStore.categories[index], name, operation, order, updatedAt: new Date().toISOString() };
+    dataStore.categories[index] = { ...dataStore.categories[index], name, operation, order, updatedAt: getLocalDateTimeString() };
     res.json(dataStore.categories[index]);
   } else {
     res.status(404).json({ error: 'Category not found' });
@@ -877,7 +1397,7 @@ app.get('/api/entries/:storeId/:year/:month', (req: Request, res: Response) => {
 
 app.post('/api/entries', (req: Request, res: Response) => {
   const { id, storeId, date, values } = req.body;
-  const entry = { id, storeId, date, values, createdAt: new Date().toISOString() };
+  const entry = { id, storeId, date, values, createdAt: getLocalDateTimeString() };
   dataStore.entries.push(entry);
   res.json(entry);
 });
@@ -887,7 +1407,7 @@ app.put('/api/entries/:id', (req: Request, res: Response) => {
   const { values } = req.body;
   const index = dataStore.entries.findIndex((e: any) => e.id === id);
   if (index !== -1) {
-    dataStore.entries[index] = { ...dataStore.entries[index], values, updatedAt: new Date().toISOString() };
+    dataStore.entries[index] = { ...dataStore.entries[index], values, updatedAt: getLocalDateTimeString() };
     res.json(dataStore.entries[index]);
   } else {
     res.status(404).json({ error: 'Entry not found' });
@@ -901,7 +1421,7 @@ app.get('/api/debts', (_req: Request, res: Response) => {
 
 app.post('/api/debts', (req: Request, res: Response) => {
   const { id, personName, description, amount, date } = req.body;
-  const debt = { id, personName, description, amount, date, paid: false, createdAt: new Date().toISOString() };
+  const debt = { id, personName, description, amount, date, paid: false, createdAt: getLocalDateTimeString() };
   dataStore.debts.push(debt);
   res.json(debt);
 });
@@ -911,7 +1431,7 @@ app.put('/api/debts/:id', (req: Request, res: Response) => {
   const { paid, paidDate, paidAmount } = req.body;
   const index = dataStore.debts.findIndex((d: any) => d.id === id);
   if (index !== -1) {
-    dataStore.debts[index] = { ...dataStore.debts[index], paid, paidDate, paidAmount, updatedAt: new Date().toISOString() };
+    dataStore.debts[index] = { ...dataStore.debts[index], paid, paidDate, paidAmount, updatedAt: getLocalDateTimeString() };
     res.json(dataStore.debts[index]);
   } else {
     res.status(404).json({ error: 'Debt not found' });
@@ -936,7 +1456,7 @@ app.post('/api/settings/clear-access-logs', (_req: Request, res: Response) => {
     return res.json({
       success: true,
       message: 'Relatório de acessos limpo com sucesso.',
-      timestamp: new Date().toISOString(),
+      timestamp: getLocalDateTimeString(),
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -961,6 +1481,8 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     lancamentos,
     lancamentosCompacto,
     programAuditEvents,
+    clientId,
+    machineName,
     actionUserName,
     actionPassword,
     userName,
@@ -978,6 +1500,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     senhaUsuario,
     senhaUsuarioAcao,
     senha_usuario_acao,
+    syncMeta,
   } = req.body;
   if (DEBUG_SYNC) {
     console.log('[DEBUG] Sync/Save recebido');
@@ -991,6 +1514,59 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     : 'program';
   const hasSyncTokenAuth = !!SYNC_TOKEN && String(req.headers['x-sync-token'] || '') === SYNC_TOKEN;
   const sourceAllowed = true;
+  const programEventContext = {
+    actionUserName,
+    actionPassword,
+    userName,
+    username,
+    user,
+    actorName,
+    actor,
+    password,
+    pass,
+    senha,
+    senhaAcao,
+    senha_acao,
+    action_password,
+    user_password,
+    senhaUsuario,
+    senhaUsuarioAcao,
+    senha_usuario_acao,
+  };
+  const normalizedProgramAuditEvents = Array.isArray(programAuditEvents)
+    ? programAuditEvents.map((ev: any) => ({ ...programEventContext, ...ev }))
+    : [];
+  if (source === 'program' && caixa) {
+    appendCaixaMovementLog({
+      ts: getLocalDateTimeString(),
+      event: 'program_caixa_payload_received',
+      source,
+      clientId: sanitizeLogText(clientId),
+      machineName: sanitizeLogText(machineName),
+      syncVersion: Number(syncMeta?.caixaFechamentoVersion ?? req.body?._syncMeta?.caixaFechamentoVersion),
+      auditEventsCount: normalizedProgramAuditEvents.length,
+      storeDays: summarizeCaixaPayload(caixa || {}),
+    });
+  }
+  if (source === 'program' && normalizedProgramAuditEvents.length > 0) {
+    normalizedProgramAuditEvents.forEach((event: any) => {
+      appendCaixaMovementLog({
+        ts: getLocalDateTimeString(),
+        event: 'program_audit_event_received',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        action: sanitizeLogText(event?.action),
+        storeId: sanitizeLogText(event?.storeId || event?.store || event?.loja),
+        date: sanitizeLogText(event?.date || event?.data || event?.day),
+        field: sanitizeLogText(event?.field || event?.category || event?.categoria || event?.tipo || event?.typeName),
+        details: sanitizeLogText(event?.details || event?.description || event?.descricao),
+        oldValue: event?.oldValue,
+        newValue: event?.newValue,
+        userName: sanitizeLogText(event?.userName || event?.actionUserName || event?.usuario || event?.user),
+      });
+    });
+  }
 
   if (!sourceAllowed) {
     if (source === 'site' && settings) {
@@ -1018,11 +1594,10 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       }
       if (has('purchaseOptions')) {
         const incomingPurchaseOptions = settings.purchaseOptions || {};
-        partialSettings.purchaseOptions = {
-          groups: uniqueNormalizedList(incomingPurchaseOptions.groups || []),
-          suppliers: uniqueNormalizedList(incomingPurchaseOptions.suppliers || []),
-          institutions: uniqueNormalizedList(incomingPurchaseOptions.institutions || []),
-        };
+        partialSettings.purchaseOptions = sanitizePurchaseOptionsForServer(
+          incomingPurchaseOptions,
+          dataStore.settings?.purchaseOptions,
+        );
       }
 
       if (Object.keys(partialSettings).length > 0) {
@@ -1038,7 +1613,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
           success: true,
           partial: true,
           message: 'settings parciais sincronizadas',
-          timestamp: new Date().toISOString(),
+          timestamp: getLocalDateTimeString(),
         });
       }
     }
@@ -1050,19 +1625,70 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
         success: true,
         partial: true,
         message: 'syncPreference atualizado',
-        timestamp: new Date().toISOString(),
+        timestamp: getLocalDateTimeString(),
       });
     }
     return res.json({
       success: true,
       ignored: true,
       reason: `source_blocked_by_sync_preference:${syncPreference}`,
-      timestamp: new Date().toISOString(),
+      timestamp: getLocalDateTimeString(),
     });
   }
 
   if (settings) {
     const incomingSettings = { ...settings };
+    const programSentPurchaseEntries =
+      source === 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseEntries');
+    const programSentPurchaseOptions =
+      source === 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseOptions');
+    if (programSentPurchaseEntries || programSentPurchaseOptions) {
+      appendPurchaseMovementLog({
+        ts: getLocalDateTimeString(),
+        event: 'program_purchase_payload_ignored',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        incomingEntriesSummary: programSentPurchaseEntries
+          ? summarizePurchaseEntries(incomingSettings.purchaseEntries || {})
+          : undefined,
+        incomingOptionsSummary: programSentPurchaseOptions
+          ? summarizePurchaseOptions(incomingSettings.purchaseOptions || {})
+          : undefined,
+      });
+      delete (incomingSettings as any).purchaseEntries;
+      delete (incomingSettings as any).purchaseOptions;
+    }
+    const hasPurchaseEntries =
+      source !== 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseEntries');
+    const hasPurchaseOptions =
+      source !== 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseOptions');
+    if (hasPurchaseEntries || hasPurchaseOptions) {
+      appendPurchaseMovementLog({
+        ts: getLocalDateTimeString(),
+        event: 'purchase_settings_received',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        hasPurchaseEntries,
+        hasPurchaseOptions,
+        currentEntriesSummary: hasPurchaseEntries
+          ? summarizePurchaseEntries(dataStore.settings?.purchaseEntries || {})
+          : undefined,
+        incomingEntriesSummary: hasPurchaseEntries
+          ? summarizePurchaseEntries(incomingSettings.purchaseEntries || {})
+          : undefined,
+        entriesDiff: hasPurchaseEntries
+          ? diffPurchaseEntries(dataStore.settings?.purchaseEntries || {}, incomingSettings.purchaseEntries || {})
+          : undefined,
+        currentOptionsSummary: hasPurchaseOptions
+          ? summarizePurchaseOptions(dataStore.settings?.purchaseOptions || {})
+          : undefined,
+        incomingOptionsSummary: hasPurchaseOptions
+          ? summarizePurchaseOptions(incomingSettings.purchaseOptions || {})
+          : undefined,
+      });
+    }
     if (Array.isArray(incomingSettings.actionUsers)) {
       const seen = new Set<string>();
       for (const user of incomingSettings.actionUsers) {
@@ -1090,43 +1716,145 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       delete (incomingSettings as any).purchaseOptions;
     }
 
-    const mergedPurchaseEntries = mergePurchaseEntries(
-      dataStore.settings?.purchaseEntries || {},
-      incomingSettings.purchaseEntries || {}
-    );
-    const incomingPurchaseOptions = incomingSettings.purchaseOptions || {};
-    const mergedPurchaseOptions = {
-      groups: uniqueNormalizedList(incomingPurchaseOptions.groups || dataStore.settings?.purchaseOptions?.groups || []),
-      suppliers: uniqueNormalizedList(incomingPurchaseOptions.suppliers || dataStore.settings?.purchaseOptions?.suppliers || []),
-      institutions: uniqueNormalizedList(incomingPurchaseOptions.institutions || dataStore.settings?.purchaseOptions?.institutions || []),
-    };
+    const nextPurchaseEntries = hasPurchaseEntries
+      ? mergePurchaseEntries({}, incomingSettings.purchaseEntries || {})
+      : (dataStore.settings?.purchaseEntries || {});
+    const incomingPurchaseOptions = hasPurchaseOptions ? (incomingSettings.purchaseOptions || {}) : undefined;
+    const nextPurchaseOptions = hasPurchaseOptions
+      ? sanitizePurchaseOptionsForServer(incomingPurchaseOptions, dataStore.settings?.purchaseOptions)
+      : (dataStore.settings?.purchaseOptions || {});
+    delete (incomingSettings as any).purchaseEntries;
+    delete (incomingSettings as any).purchaseOptions;
+
     dataStore.settings = {
       ...(dataStore.settings || {}),
       ...incomingSettings,
-      purchaseEntries: mergedPurchaseEntries,
-      purchaseOptions: mergedPurchaseOptions,
+      purchaseEntries: nextPurchaseEntries,
+      purchaseOptions: nextPurchaseOptions,
       syncPreference,
     };
+    if (hasPurchaseEntries || hasPurchaseOptions) {
+      appendPurchaseMovementLog({
+        ts: getLocalDateTimeString(),
+        event: 'purchase_settings_applied',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        savedEntriesSummary: hasPurchaseEntries
+          ? summarizePurchaseEntries(dataStore.settings?.purchaseEntries || {})
+          : undefined,
+        savedOptionsSummary: hasPurchaseOptions
+          ? summarizePurchaseOptions(dataStore.settings?.purchaseOptions || {})
+          : undefined,
+      });
+    }
     if (DEBUG_SYNC) {
       console.log('[DEBUG] fieldMappingCompacto1:', settings.fieldMappingCompacto1);
     }
   }
-  if (stores) dataStore.stores = stores;
+  // Stores/Lancamentos devem ser autoritativos do SITE.
+  // O programa desktop só controla Caixa/Fechamento.
+  if (stores && source !== 'program') dataStore.stores = stores;
   if (debts) dataStore.debts = debts;
   const oldCaixaSnapshot = JSON.parse(JSON.stringify(dataStore.caixa || {}));
   const oldFechSnapshot = JSON.parse(JSON.stringify(dataStore.fechamento || {}));
+  const beforeCaixaJson = JSON.stringify(dataStore.caixa || {});
+  const beforeFechamentoJson = JSON.stringify(dataStore.fechamento || {});
 
   if (saldoDia !== undefined) dataStore.saldoDia = saldoDia;
   const caixaSourceAllowed = hasSyncTokenAuth || source === syncPreference;
   const fechamentoSourceAllowed = hasSyncTokenAuth || source === syncPreference;
-  if (caixa && caixaSourceAllowed) dataStore.caixa = caixa;
-  if (fechamento && fechamentoSourceAllowed) dataStore.fechamento = fechamento;
+  const beforeCaixaStores = Object.keys(dataStore.caixa || {});
+  const beforeFechStores = Object.keys(dataStore.fechamento || {});
+  let mergedCaixaStores: string[] = [];
+  let mergedFechStores: string[] = [];
+  const currentSyncMeta = ensureSyncMeta();
+  const hasCaixaFechamentoPayload = Boolean((caixa && caixaSourceAllowed) || (fechamento && fechamentoSourceAllowed));
+  const incomingCaixaFechamentoVersion = Number(syncMeta?.caixaFechamentoVersion ?? req.body?._syncMeta?.caixaFechamentoVersion);
+  let programCaixaMergeSummary: any[] = [];
+
+  if (source === 'program' && hasCaixaFechamentoPayload) {
+    if (!Number.isFinite(incomingCaixaFechamentoVersion)) {
+      appendSyncAudit({
+        ts: getLocalDateTimeString(),
+        event: 'strict_reject_missing_version',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        currentVersion: currentSyncMeta.caixaFechamentoVersion,
+        storeIds: [...Object.keys(caixa || {}), ...Object.keys(fechamento || {})],
+      });
+      return res.status(409).json({
+        success: false,
+        error: 'missing_sync_version',
+        message: 'Cliente sem versao de sincronizacao. Recarregue os dados antes de salvar.',
+        currentSyncMeta,
+        timestamp: getLocalDateTimeString(),
+      });
+    }
+    if (incomingCaixaFechamentoVersion !== currentSyncMeta.caixaFechamentoVersion) {
+      appendSyncAudit({
+        ts: getLocalDateTimeString(),
+        event: 'strict_reject_stale_version',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        incomingVersion: incomingCaixaFechamentoVersion,
+        currentVersion: currentSyncMeta.caixaFechamentoVersion,
+        storeIds: [...Object.keys(caixa || {}), ...Object.keys(fechamento || {})],
+      });
+      return res.status(409).json({
+        success: false,
+        error: 'stale_sync_version',
+        message: 'Dados antigos rejeitados para evitar sobrescrita.',
+        currentSyncMeta,
+        timestamp: getLocalDateTimeString(),
+      });
+    }
+  }
+
+  if (caixa && caixaSourceAllowed) {
+    dataStore.caixa = source === 'program'
+      ? mergeProgramCaixaBranch(dataStore.caixa || {}, caixa || {}, {
+          programAuditEvents: normalizedProgramAuditEvents,
+          clientId,
+          machineName,
+        })
+      : mergeStoreBranch(dataStore.caixa || {}, caixa || {});
+    if (source === 'program') {
+      programCaixaMergeSummary = buildProgramCaixaMergeSummary(oldCaixaSnapshot, caixa || {}, dataStore.caixa || {});
+    }
+    mergedCaixaStores = Object.keys(caixa || {});
+  }
+  if (fechamento && fechamentoSourceAllowed) {
+    dataStore.fechamento = mergeStoreBranch(dataStore.fechamento || {}, fechamento || {});
+    mergedFechStores = Object.keys(fechamento || {});
+  }
 
   // Quando o programa já envia eventos explícitos, evita duplicar logs via diff.
   const hasProgramAuditEvents = source === 'program' && Array.isArray(programAuditEvents) && programAuditEvents.length > 0;
 
   if (source === 'program' && caixa && caixaSourceAllowed && !hasProgramAuditEvents) {
-    const audits = buildProgramAnnotationAuditLogs(oldCaixaSnapshot, dataStore.caixa || {});
+    const rawAudits = buildProgramAnnotationAuditLogs(oldCaixaSnapshot, dataStore.caixa || {});
+    const suppressedDeletes = rawAudits.filter((audit) => audit.action === 'delete');
+    if (suppressedDeletes.length > 0) {
+      appendSyncAudit({
+        ts: getLocalDateTimeString(),
+        event: 'suppressed_program_implicit_delete_audit',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        count: suppressedDeletes.length,
+        items: suppressedDeletes.slice(0, 20).map((audit) => ({
+          storeId: audit.storeId,
+          date: audit.date,
+          field: audit.field,
+          oldValue: audit.oldValue,
+          details: sanitizeLogText(audit.details),
+        })),
+      });
+    }
+    const audits = rawAudits.filter((audit) => audit.action !== 'delete');
     audits.forEach((audit) => {
       appendProgramAudit(
         audit.storeId,
@@ -1143,27 +1871,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   }
 
   if (hasProgramAuditEvents) {
-    const eventContext = {
-      actionUserName,
-      actionPassword,
-      userName,
-      username,
-      user,
-      actorName,
-      actor,
-      password,
-      pass,
-      senha,
-      senhaAcao,
-      senha_acao,
-      action_password,
-      user_password,
-      senhaUsuario,
-      senhaUsuarioAcao,
-      senha_usuario_acao,
-    };
-    const normalizedEvents = (programAuditEvents || []).map((ev: any) => ({ ...eventContext, ...ev }));
-    appendProgramAuditEvents(normalizedEvents);
+    appendProgramAuditEvents(normalizedProgramAuditEvents);
   }
 
   if (false && source === 'program' && (caixa || fechamento)) {
@@ -1194,7 +1902,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
           module: 'fechamento',
           storeId: 'loja1',
           action: 'update',
-          date: new Date().toISOString().slice(0, 10),
+          date: getLocalDateString(),
           description: 'Alteracao recebida do programa desktop',
         }];
 
@@ -1204,10 +1912,35 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       timeline: [...(dataStore.settings?.timeline || []), ...finalTimeline].slice(-800),
     };
   }
+
+  const caixaFechamentoChanged =
+    beforeCaixaJson !== JSON.stringify(dataStore.caixa || {}) ||
+    beforeFechamentoJson !== JSON.stringify(dataStore.fechamento || {});
+
+  if (hasCaixaFechamentoPayload && caixaFechamentoChanged) {
+    const meta = ensureSyncMeta();
+    meta.caixaFechamentoVersion = Number(meta.caixaFechamentoVersion || 0) + 1;
+    meta.caixaFechamentoUpdatedAt = getLocalDateTimeString();
+    meta.caixaFechamentoUpdatedBy = source;
+    meta.caixaFechamentoClientId = sanitizeLogText(clientId);
+    meta.caixaFechamentoMachineName = sanitizeLogText(machineName);
+  } else if (source === 'program' && hasCaixaFechamentoPayload) {
+    appendSyncAudit({
+      ts: getLocalDateTimeString(),
+      event: 'program_no_change_no_version_bump',
+      source,
+      clientId: sanitizeLogText(clientId),
+      machineName: sanitizeLogText(machineName),
+      incomingVersion: incomingCaixaFechamentoVersion,
+      currentVersion: ensureSyncMeta().caixaFechamentoVersion,
+      mergedCaixaStores,
+      mergedFechStores,
+    });
+  }
   
   // Lancamentos ja chegam mapeados pelo frontend (Opcoes + Caixa).
   // Persistir diretamente evita remapeamento incorreto entre lojas.
-  if (lancamentos) {
+  if (lancamentos && source !== 'program') {
     dataStore.lancamentos = lancamentos;
   }
   
@@ -1215,11 +1948,33 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   const ignoredFields: string[] = [];
   if (caixa && !caixaSourceAllowed) ignoredFields.push('caixa');
   if (fechamento && !fechamentoSourceAllowed) ignoredFields.push('fechamento');
-  res.json({ success: true, timestamp: new Date().toISOString(), ignoredFields });
+  appendSyncAudit({
+    ts: getLocalDateTimeString(),
+    source,
+    syncPreference,
+    hasSyncTokenAuth,
+    actionUserName,
+    mergedCaixaStores,
+    mergedFechStores,
+    beforeCaixaStores,
+    beforeFechStores,
+    afterCaixaStores: Object.keys(dataStore.caixa || {}),
+    afterFechStores: Object.keys(dataStore.fechamento || {}),
+    ignoredFields,
+    caixaFechamentoChanged,
+    programCaixaMergeSummary: programCaixaMergeSummary.slice(0, 80),
+    hasProgramAuditEvents,
+    programAuditEventsCount: Array.isArray(programAuditEvents) ? programAuditEvents.length : 0,
+    clientId: sanitizeLogText(clientId),
+    machineName: sanitizeLogText(machineName),
+    syncMeta: ensureSyncMeta(),
+  });
+  res.json({ success: true, timestamp: getLocalDateTimeString(), ignoredFields, syncMeta: ensureSyncMeta() });
 });
 
 // Carregar dados do AppContext (sem userId, sincroniza tudo)
 app.get('/api/sync/load', (_req: Request, res: Response) => {
+  const syncMeta = ensureSyncMeta();
   const sanitizeLogs = (items: any[] = []) =>
     items.map((item) => ({
       ...item,
@@ -1243,13 +1998,15 @@ app.get('/api/sync/load', (_req: Request, res: Response) => {
       caixa: dataStore.caixa || {},
       fechamento: dataStore.fechamento || {},
       lancamentos: dataStore.lancamentos || {},
+      _syncMeta: syncMeta,
     },
-    timestamp: new Date().toISOString()
+    timestamp: getLocalDateTimeString()
   });
 });
 
 // Rota alternativa com userId (para compatibilidade)
 app.get('/api/sync/load/:userId', (_req: Request, res: Response) => {
+  const syncMeta = ensureSyncMeta();
   const sanitizeLogs = (items: any[] = []) =>
     items.map((item) => ({
       ...item,
@@ -1273,8 +2030,9 @@ app.get('/api/sync/load/:userId', (_req: Request, res: Response) => {
       caixa: dataStore.caixa || {},
       fechamento: dataStore.fechamento || {},
       lancamentos: dataStore.lancamentos || {},
+      _syncMeta: syncMeta,
     },
-    timestamp: new Date().toISOString()
+    timestamp: getLocalDateTimeString()
   });
 });
 
@@ -1282,7 +2040,7 @@ app.get('/api/sync/load/:userId', (_req: Request, res: Response) => {
 
 // Health check para o programa desktop
 app.get('/api/sync/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: getLocalDateTimeString() });
 });
 
 // Adicionar anotação
@@ -1301,7 +2059,7 @@ app.post('/api/sync/annotation/add', (req: Request, res: Response) => {
     const newAnnotation = {
       id: Date.now(),
       ...annotation,
-      createdAt: new Date().toISOString(),
+      createdAt: getLocalDateTimeString(),
     };
     
     dataStore.caixa[storeId][date].annotations.push(newAnnotation);
@@ -1330,7 +2088,7 @@ app.post('/api/sync/annotation/update', (req: Request, res: Response) => {
       
       if (index !== -1) {
         const previous = { ...annotations[index] };
-        annotations[index] = { ...annotations[index], ...annotation, updatedAt: new Date().toISOString() };
+        annotations[index] = { ...annotations[index], ...annotation, updatedAt: getLocalDateTimeString() };
         const resolvedUserName = resolveActionUserName(
           actionUsers,
           buildUserContextFromObjects(req.body, annotation, previous, annotations[index])
@@ -1417,7 +2175,7 @@ app.post('/api/sync/closing/save', (req: Request, res: Response) => {
     
     dataStore.fechamento[storeId][date] = {
       ...closing,
-      updatedAt: new Date().toISOString(),
+      updatedAt: getLocalDateTimeString(),
     };
     
     saveDataToFile(dataStore);

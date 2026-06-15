@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AccessLogsReport } from '@/components/AccessLogsReport';
 import { Banknote, FileText, CreditCard, ChevronLeft, ChevronRight, UserRound } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { addDaysToDateStr, localDateStr } from '@/lib/helpers';
 
 interface Sangria {
   id: string;
@@ -77,7 +78,7 @@ const isAnnotationActionLog = (details?: string) => {
 
 export default function FechamentoCompactoTab() {
   const { currentStore, getAccessLogs, fechamentoData, settings } = useApp();
-  const [data, setData] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [data, setData] = useState<string>(() => localDateStr());
 
   const fechamentoPorData = fechamentoData[currentStore] || {};
   const fechamentoAtual = fechamentoPorData[data] || {};
@@ -127,9 +128,7 @@ export default function FechamentoCompactoTab() {
   }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const mudarDia = (offset: number) => {
-    const novaData = new Date(`${data}T00:00:00`);
-    novaData.setDate(novaData.getDate() + offset);
-    setData(novaData.toISOString().split('T')[0]);
+    setData((current) => addDaysToDateStr(current, offset));
   };
 
   const renderValorCard = (label: string, value: number, Icon: any, accent: string) => (

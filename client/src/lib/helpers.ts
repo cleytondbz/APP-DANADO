@@ -20,6 +20,17 @@ export const dateStr = (year: number, month: number, day: number): string => {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 };
 
+export const localDateStr = (date: Date = new Date()): string => {
+  return dateStr(date.getFullYear(), date.getMonth() + 1, date.getDate());
+};
+
+export const addDaysToDateStr = (value: string, offset: number): string => {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, (month || 1) - 1, day || 1);
+  date.setDate(date.getDate() + offset);
+  return localDateStr(date);
+};
+
 export const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 };

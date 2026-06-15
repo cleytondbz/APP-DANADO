@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { TimelineView } from '@/components/TimelineView';
+import { localDateStr } from '@/lib/helpers';
 
 // LANCAMENTO_FIELDS será gerado dinamicamente do AppContext
 
@@ -374,7 +375,7 @@ export default function OpcoesTab() {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `backup-financeiro-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `backup-financeiro-${localDateStr()}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

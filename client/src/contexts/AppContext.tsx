@@ -3,6 +3,7 @@ import type { AppSettings, StoreData, Category, DayEntry, MonthData, Debt, Store
 import { DEFAULT_CATEGORIES, DEFAULT_CAIXA_CATEGORIES, DEFAULT_FECHAMENTO_CATEGORIES } from '@/lib/types';
 import { generateId } from '@/lib/helpers';
 import { useSyncServer } from '@/hooks/useSyncServer';
+import { toast } from 'sonner';
 
 interface AppContextType {
   saldoDia: number;
@@ -197,8 +198,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [hasLoadedFromServer, setHasLoadedFromServer] = useState(false);
+  const [saveRetryTick, setSaveRetryTick] = useState(0);
 
-  const { loadFromServer, saveToServer } = useSyncServer();
+  const { loadFromServer, saveToServer, checkServerHealth } = useSyncServer();
   
   // Estado para dados de Caixa e Fechamento (sincronizados com servidor)
   // Estrutura: { loja1: { data: {...} }, loja2: { data: {...} } }
@@ -210,6 +212,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const lastServerSnapshotRef = useRef<string>('');
   const lastLocalChangeRef = useRef<number>(0);
   const suppressServerPushUntilRef = useRef<number>(0);
+  const pendingServerSaveRef = useRef(false);
+  const savingServerRef = useRef(false);
+  const saveSequenceRef = useRef(0);
+  const saveErrorNotifiedRef = useRef(false);
+  const saveRetryTimerRef = useRef<number | null>(null);
 
   // Detectar conexão online/offline
   useEffect(() => {
@@ -225,6 +232,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Verifica continuamente se o backend local continua respondendo.
+  // Isso cobre o caso em que o navegador ainda esta online, mas o servidor/terminal caiu.
+  useEffect(() => {
+    if (!hasInitialized) return;
+
+    let cancelled = false;
+
+    const checkBackend = async () => {
+      if (typeof window !== 'undefined' && !window.navigator.onLine) {
+        if (!cancelled) setIsOnline(false);
+        return;
+      }
+
+      const healthy = await checkServerHealth();
+      if (cancelled) return;
+
+      setIsOnline(healthy);
+
+      if (healthy && !hasLoadedFromServer) {
+        const serverData = await loadFromServer();
+        if (cancelled) return;
+
+        if (serverData) {
+          lastServerSnapshotRef.current = JSON.stringify({
+            settings: serverData.settings || {},
+            stores: serverData.stores || {},
+            debts: serverData.debts || [],
+            saldoDia: serverData.saldoDia || 0,
+            caixa: serverData.caixa || {},
+            fechamento: serverData.fechamento || {},
+            lancamentos: serverData.lancamentos || {},
+          });
+          applyServerData(serverData);
+          setHasLoadedFromServer(true);
+          setIsOnline(true);
+        } else {
+          setIsOnline(false);
+        }
+      }
+    };
+
+    checkBackend();
+    const timer = window.setInterval(checkBackend, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [hasInitialized, hasLoadedFromServer]);
+
   // Atualizar automaticamente com alteracoes vindas de outros clientes (desktop/web), sem F5
   useEffect(() => {
     if (!hasInitialized || !hasLoadedFromServer || !isOnline) return;
@@ -232,12 +289,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const pullLatest = async () => {
       if (document.visibilityState === 'hidden') return;
       // Evita sobrescrever alteracoes locais antes do save ao servidor concluir
-      if (Date.now() - lastLocalChangeRef.current < 1800) return;
+      if (pendingServerSaveRef.current || savingServerRef.current) return;
+      if (Date.now() - lastLocalChangeRef.current < 2500) return;
 
       try {
         setIsPullingServerData(true);
         const serverData = await loadFromServer();
         if (serverData) {
+          setIsOnline(true);
           const snapshot = JSON.stringify({
             settings: serverData.settings || {},
             stores: serverData.stores || {},
@@ -252,15 +311,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
             lastServerSnapshotRef.current = snapshot;
             applyServerData(serverData);
           }
+        } else {
+          setIsOnline(false);
         }
       } catch (e) {
+        setIsOnline(false);
         console.warn('[AppContext] Auto refresh failed:', e);
       } finally {
         setIsPullingServerData(false);
       }
     };
 
-    const timer = setInterval(pullLatest, 6000);
+    const timer = setInterval(pullLatest, 3000);
     const onFocus = () => { if (document.visibilityState === 'visible') pullLatest(); };
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
@@ -270,11 +332,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onFocus);
     };
-  }, [hasInitialized, hasLoadedFromServer, isOnline, loadFromServer, applyServerData]);
+  }, [hasInitialized, hasLoadedFromServer, isOnline, loadFromServer]);
 
   function applyServerData(serverData: any) {
     if (!serverData) return;
-    suppressServerPushUntilRef.current = Date.now() + 1800;
+    pendingServerSaveRef.current = false;
+    suppressServerPushUntilRef.current = Date.now() + 2500;
 
     const mergedSettings = { ...defaultSettings, ...(serverData.settings || {}) };
     setSettings(mergedSettings);
@@ -312,6 +375,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         if (serverData) {
           // Dados do servidor disponíveis
+          pendingServerSaveRef.current = false;
+          suppressServerPushUntilRef.current = Date.now() + 2500;
+          lastServerSnapshotRef.current = JSON.stringify({
+            settings: serverData.settings || {},
+            stores: serverData.stores || {},
+            debts: serverData.debts || [],
+            saldoDia: serverData.saldoDia || 0,
+            caixa: serverData.caixa || {},
+            fechamento: serverData.fechamento || {},
+            lancamentos: serverData.lancamentos || {},
+          });
+
           setSettings({ ...defaultSettings, ...(serverData.settings || {}) });
           
           // Garantir que stores sempre tenha as lojas padrão
@@ -359,10 +434,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Sincronizar com servidor quando dados mudam
   useEffect(() => {
-    if (!isLoading && hasInitialized && hasLoadedFromServer && isOnline && !isPullingServerData) {
+    if (!isLoading && hasInitialized && hasLoadedFromServer && !isPullingServerData) {
       const syncData = async () => {
         if (Date.now() < suppressServerPushUntilRef.current) return;
-        const success = await saveToServer({ 
+        const saveSequence = saveSequenceRef.current;
+        const payload = {
           settings, 
           stores, 
           debts, 
@@ -370,23 +446,76 @@ export function AppProvider({ children }: { children: ReactNode }) {
           caixa: caixaData,
           fechamento: fechamentoData,
           lancamentos: lancamentosData
-        });
+        };
+
+        savingServerRef.current = true;
+        const success = await saveToServer(payload);
+        savingServerRef.current = false;
         if (success) {
+          setIsOnline(true);
+          if (saveSequence >= saveSequenceRef.current) {
+            pendingServerSaveRef.current = false;
+          }
+          if (saveRetryTimerRef.current) {
+            window.clearTimeout(saveRetryTimerRef.current);
+            saveRetryTimerRef.current = null;
+          }
+          saveErrorNotifiedRef.current = false;
+          lastServerSnapshotRef.current = JSON.stringify(payload);
+          window.dispatchEvent(new CustomEvent('danado:server-save-success', {
+            detail: { timestamp: new Date().toISOString() },
+          }));
           console.log('[AppContext] Synced to server');
+        } else {
+          setIsOnline(false);
+          pendingServerSaveRef.current = true;
+          window.dispatchEvent(new CustomEvent('danado:server-save-error', {
+            detail: { timestamp: new Date().toISOString() },
+          }));
+          if (!saveRetryTimerRef.current) {
+            saveRetryTimerRef.current = window.setTimeout(() => {
+              saveRetryTimerRef.current = null;
+              setSaveRetryTick((value) => value + 1);
+            }, 2500);
+          }
+          if (!saveErrorNotifiedRef.current) {
+            saveErrorNotifiedRef.current = true;
+            toast.error('Falha ao salvar no servidor. Nao atualize a pagina ate a conexao voltar.');
+          }
         }
       };
 
-      // Sincronizar após 1 segundo de inatividade
-      const timer = setTimeout(syncData, 2200);
+      // Sincronizar rápido para não perder alterações ao dar F5 logo após editar
+      const timer = setTimeout(syncData, 650);
       return () => clearTimeout(timer);
     }
-  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, isLoading, hasInitialized, hasLoadedFromServer, isOnline, isPullingServerData]);
+  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, isLoading, hasInitialized, hasLoadedFromServer, isOnline, isPullingServerData, saveRetryTick]);
 
   // Marca quando houve edicao local para proteger contra pull prematuro
   useEffect(() => {
-    if (!hasInitialized || isPullingServerData) return;
+    if (!hasInitialized || !hasLoadedFromServer || isPullingServerData) return;
+    if (Date.now() < suppressServerPushUntilRef.current) return;
     lastLocalChangeRef.current = Date.now();
-  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, hasInitialized, isPullingServerData]);
+    saveSequenceRef.current += 1;
+    pendingServerSaveRef.current = true;
+  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, hasInitialized, hasLoadedFromServer, isPullingServerData]);
+
+  useEffect(() => {
+    const warnUnsavedChanges = (event: BeforeUnloadEvent) => {
+      if (!pendingServerSaveRef.current && !savingServerRef.current) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', warnUnsavedChanges);
+    return () => {
+      window.removeEventListener('beforeunload', warnUnsavedChanges);
+      if (saveRetryTimerRef.current) {
+        window.clearTimeout(saveRetryTimerRef.current);
+        saveRetryTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Sincronização com servidor é feita via useSyncServer (loadFromServer/saveToServer)
   // que já está configurado acima

@@ -4,16 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PurchaseEntry, PurchaseOptions } from '@/lib/types';
+import { localDateStr } from '@/lib/helpers';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
 const DEFAULT_PURCHASE_OPTIONS: PurchaseOptions = {
   groups: ['M', 'JB'],
   suppliers: [],
   institutions: [],
+  supplierDifTypes: {},
 };
+
+type PurchaseDifType = 'D' | 'I' | 'F';
 
 const emptyForm = {
   dueDate: '',
@@ -113,6 +117,31 @@ const sanitizeOptionList = (list: string[]) => {
   return out.sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
 };
 
+const normalizeDifType = (value: unknown): PurchaseDifType | undefined =>
+  value === 'D' || value === 'I' || value === 'F' ? value : undefined;
+
+const normalizeOptionMapKey = (value: string) => normalizeKey(sanitizeStoredText(value || ''));
+
+const sanitizeSupplierDifTypes = (map?: Record<string, PurchaseDifType>) => {
+  const out: Record<string, PurchaseDifType> = {};
+  Object.entries(map || {}).forEach(([key, value]) => {
+    const normalized = normalizeOptionMapKey(key);
+    const type = normalizeDifType(value);
+    if (normalized && type) out[normalized] = type;
+  });
+  return out;
+};
+
+const sanitizePurchaseOptions = (input?: Partial<PurchaseOptions>): PurchaseOptions => ({
+  groups: sanitizeOptionList(input?.groups || []),
+  suppliers: sanitizeOptionList(input?.suppliers || []),
+  institutions: sanitizeOptionList(input?.institutions || []),
+  supplierDifTypes: sanitizeSupplierDifTypes(input?.supplierDifTypes as Record<string, PurchaseDifType> | undefined),
+});
+
+const getMappedSupplierDif = (supplier: string, options?: PurchaseOptions): PurchaseDifType | '' =>
+  sanitizeSupplierDifTypes(options?.supplierDifTypes as Record<string, PurchaseDifType> | undefined)[normalizeOptionMapKey(supplier)] || '';
+
 const parseCsvLine = (line: string): string[] => {
   const out: string[] = [];
   let current = '';
@@ -172,6 +201,15 @@ const normalizeAmountInput = (raw: string) => {
   return `${cleaned},00`;
 };
 
+const sanitizeAmountTyping = (raw: string) => {
+  const cleaned = (raw || '').replace(/\./g, ',').replace(/[^0-9,]/g, '');
+  const commaIndex = cleaned.indexOf(',');
+  if (commaIndex === -1) return cleaned;
+  const intPart = cleaned.slice(0, commaIndex) || '0';
+  const decPart = cleaned.slice(commaIndex + 1).replace(/,/g, '').slice(0, 2);
+  return `${intPart},${decPart}`;
+};
+
 const difTypeColors: Record<'D' | 'I' | 'F', string> = {
   D: 'bg-blue-600 text-white',
   I: 'bg-amber-500 text-white',
@@ -193,11 +231,20 @@ export default function ComprasTab() {
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
   const [showRowEdit, setShowRowEdit] = useState(false);
   const [rowEditForm, setRowEditForm] = useState<PurchaseEntry | null>(null);
+  const [rowEditAmountText, setRowEditAmountText] = useState('');
   const [rowEditOriginalDueDate, setRowEditOriginalDueDate] = useState('');
   const [showClearMonthDialog, setShowClearMonthDialog] = useState(false);
   const [clearMonthPassword, setClearMonthPassword] = useState('');
   const [clearMonthConfirmText, setClearMonthConfirmText] = useState('');
   const [analyticsMode, setAnalyticsMode] = useState<'top' | 'dif'>('top');
+  const [savePendingMessage, setSavePendingMessage] = useState('');
+  const [saveFailureMessage, setSaveFailureMessage] = useState('');
+  const [showSaveFailureDialog, setShowSaveFailureDialog] = useState(false);
+  const purchaseSaveAttemptRef = useRef(false);
+  const purchaseSaveAttemptIdRef = useRef(0);
+  const purchaseSaveStartedAtRef = useRef(0);
+  const purchaseSaveSuccessMessageRef = useRef('');
+  const purchaseSaveTimeoutRef = useRef<number | null>(null);
   const dueDateRef = useRef<HTMLInputElement | null>(null);
   const groupRef = useRef<HTMLInputElement | null>(null);
   const supplierRef = useRef<HTMLInputElement | null>(null);
@@ -217,35 +264,28 @@ export default function ComprasTab() {
   const currentMonthKey = monthKey(selectedYear, selectedMonth);
   const allEntries = settings.purchaseEntries || {};
   const entries: PurchaseEntry[] = allEntries[currentMonthKey] || [];
-  const options: PurchaseOptions = useMemo(
-    () => ({
-      groups: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.groups, settings.purchaseOptions?.groups || [])),
-      suppliers: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.suppliers, settings.purchaseOptions?.suppliers || [])),
-      institutions: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.institutions, settings.purchaseOptions?.institutions || [])),
-    }),
-    [settings.purchaseOptions?.groups, settings.purchaseOptions?.suppliers, settings.purchaseOptions?.institutions]
-  );
+  const options: PurchaseOptions = useMemo(() => {
+    const current = sanitizePurchaseOptions(settings.purchaseOptions || DEFAULT_PURCHASE_OPTIONS);
+    return {
+      groups: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.groups, current.groups)),
+      suppliers: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.suppliers, current.suppliers)),
+      institutions: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.institutions, current.institutions)),
+      supplierDifTypes: current.supplierDifTypes || {},
+    };
+  }, [settings.purchaseOptions]);
 
   useEffect(() => {
     const current = settings.purchaseOptions || DEFAULT_PURCHASE_OPTIONS;
-    const next: PurchaseOptions = {
-      groups: sanitizeOptionList(current.groups || []),
-      suppliers: sanitizeOptionList(current.suppliers || []),
-      institutions: sanitizeOptionList(current.institutions || []),
-    };
+    const next = sanitizePurchaseOptions(current);
     const changed =
       JSON.stringify(current.groups || []) !== JSON.stringify(next.groups) ||
       JSON.stringify(current.suppliers || []) !== JSON.stringify(next.suppliers) ||
-      JSON.stringify(current.institutions || []) !== JSON.stringify(next.institutions);
+      JSON.stringify(current.institutions || []) !== JSON.stringify(next.institutions) ||
+      JSON.stringify(current.supplierDifTypes || {}) !== JSON.stringify(next.supplierDifTypes || {});
     if (!changed) return;
     setSettings((prev) => ({
       ...prev,
-      purchaseOptions: {
-        ...(prev.purchaseOptions || DEFAULT_PURCHASE_OPTIONS),
-        groups: next.groups,
-        suppliers: next.suppliers,
-        institutions: next.institutions,
-      },
+      purchaseOptions: next,
     }));
   }, [settings.purchaseOptions, setSettings]);
 
@@ -385,16 +425,300 @@ export default function ComprasTab() {
       });
   }, [allEntriesFlat, globalSearchTerm, globalSearchType]);
 
-  const saveSettingsEntries = (updater: (prev: Record<string, PurchaseEntry[]>) => Record<string, PurchaseEntry[]>) => {
+  const saveSettingsEntries = (
+    updater: (
+      prev: Record<string, PurchaseEntry[]>,
+      currentOptions: PurchaseOptions
+    ) => Record<string, PurchaseEntry[]>,
+    successMessage = 'Alteracao em compras salva no servidor.',
+    optionsUpdater?: (prev: PurchaseOptions) => PurchaseOptions
+  ) => {
+    const attemptId = markPurchaseSavePending(successMessage);
     setSettings((prev) => {
       const currentEntries = (prev.purchaseEntries || {}) as Record<string, PurchaseEntry[]>;
-      return { ...prev, purchaseEntries: updater(currentEntries) };
+      const currentOptions = sanitizePurchaseOptions(prev.purchaseOptions || DEFAULT_PURCHASE_OPTIONS);
+      const nextEntries = updater(currentEntries, currentOptions);
+      if (!optionsUpdater) {
+        void confirmPurchaseSave({ purchaseEntries: nextEntries }, attemptId);
+        return { ...prev, purchaseEntries: nextEntries };
+      }
+
+      const nextOptions = sanitizePurchaseOptions(optionsUpdater(currentOptions));
+      void confirmPurchaseSave({ purchaseEntries: nextEntries, purchaseOptions: nextOptions }, attemptId);
+      return { ...prev, purchaseEntries: nextEntries, purchaseOptions: nextOptions };
     });
   };
 
-  const saveOptions = (next: PurchaseOptions) => {
-    setSettings((prev) => ({ ...prev, purchaseOptions: next }));
+  const saveOptions = (next: PurchaseOptions, successMessage = 'Lista de compras salva no servidor.') => {
+    const clean = sanitizePurchaseOptions(next);
+    const attemptId = markPurchaseSavePending(successMessage);
+    setSettings((prev) => {
+      void confirmPurchaseSave({ purchaseOptions: clean }, attemptId);
+      return { ...prev, purchaseOptions: clean };
+    });
   };
+
+  const withEntryOptions = (
+    base: PurchaseOptions,
+    entry: Pick<PurchaseEntry, 'supplier' | 'financialInstitution' | 'difType'>
+  ) => {
+    const next = sanitizePurchaseOptions(base);
+    const supplier = sanitizeStoredText(entry.supplier || '');
+    const institution = sanitizeStoredText(entry.financialInstitution || '');
+
+    if (supplier && !next.suppliers.some((item) => normalizeKey(item) === normalizeKey(supplier))) {
+      next.suppliers = [...next.suppliers, supplier];
+    }
+
+    if (institution && !next.institutions.some((item) => normalizeKey(item) === normalizeKey(institution))) {
+      next.institutions = [...next.institutions, institution];
+    }
+
+    const mappedType = normalizeDifType(entry.difType);
+    if (supplier && mappedType) {
+      next.supplierDifTypes = {
+        ...(next.supplierDifTypes || {}),
+        [normalizeOptionMapKey(supplier)]: mappedType,
+      };
+    }
+
+    return sanitizePurchaseOptions(next);
+  };
+
+  const withEntriesOptions = (
+    base: PurchaseOptions,
+    list: Pick<PurchaseEntry, 'supplier' | 'financialInstitution' | 'difType'>[]
+  ) => list.reduce((acc, entry) => withEntryOptions(acc, entry), base);
+
+  const applySupplierDifToEntries = (
+    entriesByMonth: Record<string, PurchaseEntry[]>,
+    supplier: string,
+    difType: PurchaseDifType | undefined
+  ) => {
+    const key = normalizeOptionMapKey(supplier || '');
+    if (!key) return entriesByMonth;
+
+    const next: Record<string, PurchaseEntry[]> = {};
+    Object.entries(entriesByMonth).forEach(([month, monthEntries]) => {
+      next[month] = (monthEntries || []).map((entry) =>
+        normalizeOptionMapKey(entry.supplier || '') === key ? { ...entry, difType } : entry
+      );
+    });
+    return next;
+  };
+
+  const applySupplierToForm = (supplier: string) => {
+    const mappedType = getMappedSupplierDif(supplier, options);
+    setForm((prev) => ({
+      ...prev,
+      supplier,
+      difType: mappedType || prev.difType,
+    }));
+  };
+
+  const applySupplierToRowEdit = (supplier: string) => {
+    const mappedType = getMappedSupplierDif(supplier, options);
+    setRowEditForm((prev) =>
+      prev
+        ? {
+            ...prev,
+            supplier,
+            difType: mappedType || prev.difType,
+          }
+        : prev
+    );
+  };
+
+  const setSupplierDifOption = (supplier: string, difType: '' | PurchaseDifType) => {
+    const key = normalizeOptionMapKey(supplier);
+    if (!key) return;
+
+    saveSettingsEntries(
+      (prev) => {
+        const next: Record<string, PurchaseEntry[]> = {};
+        Object.entries(prev).forEach(([month, monthEntries]) => {
+          next[month] = (monthEntries || []).map((entry) => {
+            if (normalizeOptionMapKey(entry.supplier) !== key) return entry;
+            return {
+              ...entry,
+              difType: difType || undefined,
+            };
+          });
+        });
+        return next;
+      },
+      'Vinculo do fornecedor atualizado no servidor.',
+      (prevOptions) => {
+        const clean = sanitizePurchaseOptions(prevOptions);
+        const nextMap = { ...(clean.supplierDifTypes || {}) };
+        if (difType) nextMap[key] = difType;
+        else delete nextMap[key];
+        return sanitizePurchaseOptions({
+          ...clean,
+          supplierDifTypes: nextMap,
+        });
+      }
+    );
+
+    if (normalizeOptionMapKey(form.supplier) === key) {
+      setForm((prev) => ({ ...prev, difType }));
+    }
+
+    if (rowEditForm && normalizeOptionMapKey(rowEditForm.supplier) === key) {
+      setRowEditForm((prev) => (prev ? { ...prev, difType } : prev));
+    }
+  };
+
+  const syncSupplierDifFromEntry = (
+    entriesByMonth: Record<string, PurchaseEntry[]>,
+    entry: Pick<PurchaseEntry, 'supplier' | 'difType'>,
+    sourceOptions: PurchaseOptions = options
+  ) => {
+    const mappedType = normalizeDifType(entry.difType) || getMappedSupplierDif(entry.supplier || '', sourceOptions);
+    if (!entry.supplier || !mappedType) return entriesByMonth;
+    return applySupplierDifToEntries(entriesByMonth, entry.supplier, mappedType);
+  };
+
+  const clearPurchaseSaveTimeout = () => {
+    if (purchaseSaveTimeoutRef.current !== null) {
+      window.clearTimeout(purchaseSaveTimeoutRef.current);
+      purchaseSaveTimeoutRef.current = null;
+    }
+  };
+
+  const getPurchaseServerUrl = () => {
+    if (typeof window === 'undefined') return '';
+    const host = window.location.hostname;
+    const protocol = window.location.protocol;
+    if (window.location.port === '5173') return `${protocol}//${host}:3000`;
+    return `${protocol}//${host}${window.location.port ? `:${window.location.port}` : ''}`;
+  };
+
+  const showPurchaseSaveFailure = (attemptId?: number) => {
+    if (attemptId !== undefined && attemptId !== purchaseSaveAttemptIdRef.current) return;
+    clearPurchaseSaveTimeout();
+    purchaseSaveAttemptRef.current = false;
+    purchaseSaveSuccessMessageRef.current = '';
+    setSavePendingMessage('');
+    const time = new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    setSaveFailureMessage(
+      `Falha ao salvar compras no servidor (${time}). Nao atualize a pagina. Verifique a rede/terminal do servidor e salve novamente quando a conexao voltar.`
+    );
+    setShowSaveFailureDialog(true);
+  };
+
+  const checkPurchaseServerImmediately = async (attemptId: number) => {
+    const serverUrl = getPurchaseServerUrl();
+    if (!serverUrl) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 900);
+    try {
+      const response = await fetch(`${serverUrl}/api/health`, {
+        method: 'GET',
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        showPurchaseSaveFailure(attemptId);
+      }
+    } catch {
+      showPurchaseSaveFailure(attemptId);
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
+  const confirmPurchaseSave = async (
+    partialSettings: Partial<{
+      purchaseEntries: Record<string, PurchaseEntry[]>;
+      purchaseOptions: PurchaseOptions;
+    }>,
+    attemptId: number
+  ) => {
+    const serverUrl = getPurchaseServerUrl();
+    if (!serverUrl) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 1800);
+
+    try {
+      const response = await fetch(`${serverUrl}/api/sync/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        signal: controller.signal,
+        body: JSON.stringify({
+          source: 'site',
+          settings: partialSettings,
+        }),
+      });
+      if (!response.ok) {
+        showPurchaseSaveFailure(attemptId);
+        return;
+      }
+      const result = await response.json().catch(() => null);
+      if (!result?.success) {
+        showPurchaseSaveFailure(attemptId);
+        return;
+      }
+      if (attemptId !== purchaseSaveAttemptIdRef.current || !purchaseSaveAttemptRef.current) return;
+      clearPurchaseSaveTimeout();
+      purchaseSaveAttemptRef.current = false;
+      if (purchaseSaveSuccessMessageRef.current) {
+        toast.success(purchaseSaveSuccessMessageRef.current);
+      }
+      purchaseSaveSuccessMessageRef.current = '';
+      setSavePendingMessage('');
+      setSaveFailureMessage('');
+      setShowSaveFailureDialog(false);
+    } catch {
+      showPurchaseSaveFailure(attemptId);
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
+  const markPurchaseSavePending = (successMessage: string) => {
+    clearPurchaseSaveTimeout();
+    const attemptId = purchaseSaveAttemptIdRef.current + 1;
+    purchaseSaveAttemptIdRef.current = attemptId;
+    purchaseSaveStartedAtRef.current = Date.now();
+    purchaseSaveAttemptRef.current = true;
+    purchaseSaveSuccessMessageRef.current = successMessage;
+    setSaveFailureMessage('');
+    setShowSaveFailureDialog(false);
+    setSavePendingMessage('Aguardando confirmacao do servidor...');
+    void checkPurchaseServerImmediately(attemptId);
+
+    purchaseSaveTimeoutRef.current = window.setTimeout(() => {
+      if (!purchaseSaveAttemptRef.current) return;
+      if (purchaseSaveAttemptIdRef.current !== attemptId) return;
+      showPurchaseSaveFailure(attemptId);
+    }, 2500);
+    return attemptId;
+  };
+
+  useEffect(() => {
+    const handleServerSaveError = () => {
+      if (!purchaseSaveAttemptRef.current) return;
+      showPurchaseSaveFailure(purchaseSaveAttemptIdRef.current);
+    };
+
+    const handleServerSaveSuccess = () => {
+      // Compras confirma diretamente no /api/sync/save para evitar falso sucesso de outro sync.
+    };
+
+    window.addEventListener('danado:server-save-error', handleServerSaveError);
+    window.addEventListener('danado:server-save-success', handleServerSaveSuccess);
+    return () => {
+      clearPurchaseSaveTimeout();
+      window.removeEventListener('danado:server-save-error', handleServerSaveError);
+      window.removeEventListener('danado:server-save-success', handleServerSaveSuccess);
+    };
+  }, []);
 
   const clearForm = () => {
     setForm(emptyForm);
@@ -422,7 +746,7 @@ export default function ComprasTab() {
     return Number.isFinite(parsed) ? parsed : 0;
   };
 
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = localDateStr();
   const isEntryOverdue = (entry: PurchaseEntry) => {
     if (!entry?.dueDate) return false;
     if (entry?.paidDate) return false;
@@ -442,31 +766,35 @@ export default function ComprasTab() {
 
     const amount = form.amount.trim() ? parseAmount(form.amount) : 0;
     if (form.amount.trim() && amount < 0) return toast.error('Valor invalido.');
+    const cleanSupplier = sanitizeStoredText(form.supplier);
+    const cleanInstitution = sanitizeStoredText(form.financialInstitution);
+    const resolvedDifType = normalizeDifType(form.difType) || getMappedSupplierDif(cleanSupplier, options);
     const entry: PurchaseEntry = {
       id: editingId || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       dueDate: form.dueDate,
       group: form.group.trim() || 'M',
-      supplier: sanitizeStoredText(form.supplier),
+      supplier: cleanSupplier,
       documentNumber: form.documentNumber.trim(),
       issueDate: form.issueDate || '',
       installments: fixedInstallments,
       amount,
       paidDate: form.paidDate || undefined,
-      financialInstitution: sanitizeStoredText(form.financialInstitution),
-      difType: form.difType ? (form.difType as 'D' | 'I' | 'F') : undefined,
+      financialInstitution: cleanInstitution,
+      difType: resolvedDifType || undefined,
     };
 
     const targetMonth = form.dueDate.slice(0, 7);
 
-    saveSettingsEntries((prev) => {
+    saveSettingsEntries((prev, currentOptions) => {
       const monthItems = [...(prev[targetMonth] || [])];
       const idx = monthItems.findIndex((x) => x.id === entry.id);
       if (idx >= 0) monthItems[idx] = entry;
       else monthItems.push(entry);
-      return { ...prev, [targetMonth]: monthItems };
-    });
+      return syncSupplierDifFromEntry({ ...prev, [targetMonth]: monthItems }, entry, currentOptions);
+    }, editingId ? 'Compra atualizada no servidor.' : 'Compra adicionada no servidor.', (prevOptions) =>
+      withEntryOptions(prevOptions, entry)
+    );
 
-    toast.success(editingId ? 'Compra atualizada.' : 'Compra adicionada.');
     clearForm();
   };
 
@@ -488,6 +816,7 @@ export default function ComprasTab() {
 
   const openRowEdit = (entry: PurchaseEntry) => {
     setRowEditForm({ ...entry });
+    setRowEditAmountText(Number(entry.amount || 0).toFixed(2).replace('.', ','));
     setRowEditOriginalDueDate(entry.dueDate);
     setShowRowEdit(true);
   };
@@ -504,32 +833,35 @@ export default function ComprasTab() {
       return;
     }
 
+    const cleanSupplier = sanitizeStoredText(rowEditForm.supplier || '');
+    const cleanInstitution = sanitizeStoredText(rowEditForm.financialInstitution || '');
+    const resolvedDifType = normalizeDifType(rowEditForm.difType) || getMappedSupplierDif(cleanSupplier, options);
     const nextEntry: PurchaseEntry = {
       ...rowEditForm,
       amount: Number.isFinite(Number(rowEditForm.amount)) ? Number(rowEditForm.amount) : 0,
       group: (rowEditForm.group || '').trim() || 'M',
-      supplier: sanitizeStoredText(rowEditForm.supplier || ''),
+      supplier: cleanSupplier,
       documentNumber: (rowEditForm.documentNumber || '').trim(),
       issueDate: rowEditForm.issueDate || '',
       installments: fixedInstallments,
       paidDate: rowEditForm.paidDate || undefined,
-      financialInstitution: sanitizeStoredText(rowEditForm.financialInstitution || ''),
-      difType: rowEditForm.difType ? (rowEditForm.difType as 'D' | 'I' | 'F') : undefined,
+      financialInstitution: cleanInstitution,
+      difType: resolvedDifType || undefined,
     };
 
     const oldMonth = rowEditOriginalDueDate.slice(0, 7);
     const newMonth = nextEntry.dueDate.slice(0, 7);
 
-    saveSettingsEntries((prev) => {
+    saveSettingsEntries((prev, currentOptions) => {
       const next = { ...prev };
       next[oldMonth] = (next[oldMonth] || []).filter((x) => x.id !== nextEntry.id);
       next[newMonth] = [...(next[newMonth] || []), nextEntry];
-      return next;
-    });
+      return syncSupplierDifFromEntry(next, nextEntry, currentOptions);
+    }, 'Compra atualizada no servidor.', (prevOptions) => withEntryOptions(prevOptions, nextEntry));
 
-    toast.success('Compra atualizada.');
     setShowRowEdit(false);
     setRowEditForm(null);
+    setRowEditAmountText('');
     setRowEditOriginalDueDate('');
   };
 
@@ -538,9 +870,8 @@ export default function ComprasTab() {
     const targetMonth = entry.dueDate.slice(0, 7);
     saveSettingsEntries((prev) => {
       return { ...prev, [targetMonth]: (prev[targetMonth] || []).filter((x) => x.id !== entry.id) };
-    });
+    }, 'Compra excluida no servidor.');
     if (editingId === entry.id) clearForm();
-    toast.success('Compra excluida.');
   };
 
   const addOption = (field: 'groups' | 'suppliers' | 'institutions', value: string, reset: () => void) => {
@@ -551,9 +882,8 @@ export default function ComprasTab() {
       toast.error('Opcao ja existe.');
       return;
     }
-    saveOptions({ ...options, [field]: [...current, name] });
+    saveOptions({ ...options, [field]: [...current, name] }, 'Opcao adicionada no servidor.');
     reset();
-    toast.success('Opcao adicionada.');
   };
 
   const handleOptionEnter = (
@@ -623,26 +953,96 @@ export default function ComprasTab() {
 
   const exportCsvAnual = () => {
     const yearPrefix = `${selectedYear}-`;
-    const annualEntries = Object.entries(allEntries)
-      .filter(([month]) => month.startsWith(yearPrefix))
-      .flatMap(([, monthEntries]) => monthEntries || []);
+    const annualEntriesByMonth = Object.fromEntries(
+      Object.entries(allEntries)
+        .filter(([month]) => month.startsWith(yearPrefix))
+        .map(([month, monthEntries]) => [month, monthEntries || []])
+    );
+    const annualEntries = Object.values(annualEntriesByMonth).flatMap((monthEntries) => monthEntries || []);
 
-    if (annualEntries.length === 0) {
-      toast.error('Sem compras para exportar neste ano.');
+    const cleanOptions = sanitizePurchaseOptions(options);
+    const hasOptions =
+      cleanOptions.groups.length > 0 ||
+      cleanOptions.suppliers.length > 0 ||
+      cleanOptions.institutions.length > 0 ||
+      Object.keys(cleanOptions.supplierDifTypes || {}).length > 0;
+
+    if (annualEntries.length === 0 && !hasOptions) {
+      toast.error('Sem compras ou listas para gerar backup.');
       return;
     }
 
-    const lines = buildCsvLines(annualEntries);
-    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+    const backup = {
+      type: 'compras-annual-backup',
+      version: 2,
+      year: selectedYear,
+      exportedAt: new Date().toISOString(),
+      purchaseEntries: annualEntriesByMonth,
+      purchaseOptions: cleanOptions,
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `compras_${selectedYear}_anual.csv`;
+    a.download = `compras_backup_${selectedYear}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('CSV anual exportado.');
+    toast.success('Backup anual exportado.');
+  };
+
+  const exportPurchaseListsBackup = () => {
+    const cleanOptions = sanitizePurchaseOptions(options);
+    const backup = {
+      type: 'compras-lists-backup',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      purchaseOptions: cleanOptions,
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `compras_listas_backup_${selectedYear}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Backup das listas exportado.');
+  };
+
+  const importPurchaseListsBackup = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const content = String(reader.result || '').replace(/^\uFEFF/, '').trim();
+        if (!content.startsWith('{')) {
+          toast.error('Importe um backup JSON de listas.');
+          return;
+        }
+
+        const parsed = JSON.parse(content);
+        const importedOptions = sanitizePurchaseOptions(parsed.purchaseOptions || parsed);
+        const hasOptions =
+          importedOptions.groups.length > 0 ||
+          importedOptions.suppliers.length > 0 ||
+          importedOptions.institutions.length > 0 ||
+          Object.keys(importedOptions.supplierDifTypes || {}).length > 0;
+
+        if (!hasOptions) {
+          toast.error('Backup de listas sem dados.');
+          return;
+        }
+
+        saveOptions(importedOptions, 'Listas importadas no servidor.');
+      } catch {
+        toast.error('Erro ao importar backup de listas.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const importCsv = (file: File) => {
@@ -700,9 +1100,9 @@ export default function ComprasTab() {
           const monthRows = imported.filter((x) => x.dueDate.slice(0, 7) === currentMonthKey);
           next[currentMonthKey] = monthRows;
           return next;
-        });
-
-        toast.success(`CSV importado (${imported.length} linhas).`);
+        }, `CSV importado no servidor (${imported.length} linhas).`, (prevOptions) =>
+          withEntriesOptions(prevOptions, imported)
+        );
       } catch {
         toast.error('Erro ao importar CSV.');
       }
@@ -715,6 +1115,52 @@ export default function ComprasTab() {
     reader.onload = () => {
       try {
         const content = String(reader.result || '').replace(/^\uFEFF/, '');
+        const trimmed = content.trim();
+
+        if (trimmed.startsWith('{')) {
+          const parsed = JSON.parse(trimmed);
+          const importedOptions = sanitizePurchaseOptions(parsed.purchaseOptions || {});
+          const importedEntriesByMonth = parsed.purchaseEntries && typeof parsed.purchaseEntries === 'object'
+            ? (parsed.purchaseEntries as Record<string, PurchaseEntry[]>)
+            : {};
+          const months = Object.keys(importedEntriesByMonth).filter((month) => month.startsWith(`${selectedYear}-`));
+          const importedCount = months.reduce(
+            (total, month) => total + (Array.isArray(importedEntriesByMonth[month]) ? importedEntriesByMonth[month].length : 0),
+            0
+          );
+
+          saveSettingsEntries((prev) => {
+            const next = { ...prev };
+            Object.keys(next).forEach((month) => {
+              if (month.startsWith(`${selectedYear}-`)) next[month] = [];
+            });
+
+            months.forEach((month) => {
+              next[month] = (importedEntriesByMonth[month] || []).map((entry, index) => ({
+                ...entry,
+                id: entry.id || `${Date.now()}_${month}_${index}_${Math.random().toString(36).slice(2, 6)}`,
+                supplier: sanitizeStoredText(entry.supplier || ''),
+                financialInstitution: sanitizeStoredText(entry.financialInstitution || ''),
+                group: sanitizeStoredText(entry.group || ''),
+                difType: normalizeDifType(entry.difType) as PurchaseEntry['difType'],
+              }));
+            });
+            return next;
+          }, `Backup importado no servidor (${importedCount} compras).`, (prevOptions) => {
+            const prevClean = sanitizePurchaseOptions(prevOptions);
+            return sanitizePurchaseOptions({
+              groups: mergeUnique(prevClean.groups, importedOptions.groups),
+              suppliers: mergeUnique(prevClean.suppliers, importedOptions.suppliers),
+              institutions: mergeUnique(prevClean.institutions, importedOptions.institutions),
+              supplierDifTypes: {
+                ...(prevClean.supplierDifTypes || {}),
+                ...(importedOptions.supplierDifTypes || {}),
+              },
+            });
+          });
+          return;
+        }
+
         const rows = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
         if (rows.length < 2) {
           toast.error('CSV sem dados.');
@@ -773,9 +1219,9 @@ export default function ComprasTab() {
             next[month].push(entry);
           });
           return next;
-        });
-
-        toast.success(`CSV anual importado (${imported.length} linhas).`);
+        }, `CSV importado no servidor (${imported.length} linhas).`, (prevOptions) =>
+          withEntriesOptions(prevOptions, imported)
+        );
       } catch {
         toast.error('Erro ao importar CSV anual.');
       }
@@ -808,17 +1254,33 @@ export default function ComprasTab() {
 
     const oldNorm = normalizeKey(editingOption.oldValue);
     const nextList = current.map((item) => (normalizeKey(item) === oldNorm ? nextValue : item));
-    saveOptions({ ...options, [editingOption.field]: nextList });
+    const nextOptions: PurchaseOptions = { ...options, [editingOption.field]: nextList };
+    if (editingOption.field === 'suppliers') {
+      const nextMap = { ...(options.supplierDifTypes || {}) };
+      const oldKey = normalizeOptionMapKey(editingOption.oldValue);
+      const nextKey = normalizeOptionMapKey(nextValue);
+      if (oldKey !== nextKey) {
+        const mapped = nextMap[oldKey];
+        delete nextMap[oldKey];
+        if (mapped) nextMap[nextKey] = mapped;
+      }
+      nextOptions.supplierDifTypes = nextMap;
+    }
+    saveOptions(nextOptions, 'Item da lista atualizado no servidor.');
     setEditingOption(null);
-    toast.success('Item atualizado.');
   };
 
   const removeOption = (field: 'groups' | 'suppliers' | 'institutions', value: string) => {
     if (!confirm(`Excluir "${value}"?`)) return;
     const targetNorm = normalizeKey(value);
     const nextList = (options[field] || []).filter((item) => normalizeKey(item) !== targetNorm);
-    saveOptions({ ...options, [field]: nextList });
-    toast.success('Item removido.');
+    const nextOptions: PurchaseOptions = { ...options, [field]: nextList };
+    if (field === 'suppliers') {
+      const nextMap = { ...(options.supplierDifTypes || {}) };
+      delete nextMap[normalizeOptionMapKey(value)];
+      nextOptions.supplierDifTypes = nextMap;
+    }
+    saveOptions(nextOptions, 'Item removido da lista no servidor.');
   };
 
   const clearMonthEntries = () => {
@@ -832,16 +1294,51 @@ export default function ComprasTab() {
       return;
     }
 
-    saveSettingsEntries((prev) => ({ ...prev, [currentMonthKey]: [] }));
+    saveSettingsEntries((prev) => ({ ...prev, [currentMonthKey]: [] }), 'Compras do mes removidas no servidor.');
     if (editingId) clearForm();
     setShowClearMonthDialog(false);
     setClearMonthPassword('');
     setClearMonthConfirmText('');
-    toast.success('Compras do mes removidas.');
   };
 
   return (
     <div className="space-y-4 pb-24">
+      {savePendingMessage && !saveFailureMessage && (
+        <div className="rounded-xl border border-amber-500 bg-amber-50 p-3 text-amber-900 shadow-sm">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <div className="text-sm font-bold">Salvando compras</div>
+              <div className="text-sm font-semibold">{savePendingMessage}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {saveFailureMessage && (
+        <div className="rounded-xl border-2 border-red-700 bg-red-600 p-4 text-white shadow-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0" />
+            <div>
+              <div className="text-base font-bold">Falha ao salvar compras</div>
+              <div className="text-sm font-semibold">{saveFailureMessage}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      <Dialog open={showSaveFailureDialog} onOpenChange={setShowSaveFailureDialog}>
+        <DialogContent className="border-2 border-red-600">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">Falha ao salvar compras</DialogTitle>
+          </DialogHeader>
+          <div className="rounded-lg bg-red-50 p-4 text-sm font-semibold text-red-700">
+            {saveFailureMessage || 'A alteracao em compras nao foi confirmada pelo servidor.'}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            A informacao pode estar somente nesta tela. Nao atualize a pagina ate confirmar que o servidor voltou.
+          </p>
+          <Button onClick={() => setShowSaveFailureDialog(false)}>Entendi</Button>
+        </DialogContent>
+      </Dialog>
       <Card className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold">Compras</h3>
@@ -849,22 +1346,7 @@ export default function ComprasTab() {
             <label>
               <input
                 type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) importCsv(file);
-                  e.currentTarget.value = '';
-                }}
-              />
-              <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground">
-                <span>Importar CSV</span>
-              </Button>
-            </label>
-            <label>
-              <input
-                type="file"
-                accept=".csv,text/csv"
+                accept=".json,application/json,.csv,text/csv"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -873,14 +1355,11 @@ export default function ComprasTab() {
                 }}
               />
               <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground">
-                <span>Importar Anual</span>
+                <span>Importar</span>
               </Button>
             </label>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportCsv}>
-              Exportar CSV
-            </Button>
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportCsvAnual}>
-              Exportar Anual
+              Backup
             </Button>
             <Button
               size="sm"
@@ -923,7 +1402,7 @@ export default function ComprasTab() {
               ref={supplierRef}
               list="suppliers-list"
               value={form.supplier}
-              onChange={(e) => setForm((p) => ({ ...p, supplier: e.target.value }))}
+              onChange={(e) => applySupplierToForm(e.target.value)}
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={(e) => handleEnterAdvance(e, documentRef)}
             />
@@ -1268,7 +1747,34 @@ export default function ComprasTab() {
       <Dialog open={showManageOptions} onOpenChange={setShowManageOptions}>
         <DialogContent className="w-[96vw] sm:max-w-[96vw] lg:max-w-[1600px] mt-12">
           <DialogHeader>
-            <DialogTitle>Listas de Compras</DialogTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle>Listas de Compras</DialogTitle>
+              <div className="flex items-center gap-2">
+                <label>
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) importPurchaseListsBackup(file);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                  <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground">
+                    <span>Importar</span>
+                  </Button>
+                </label>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs text-muted-foreground"
+                  onClick={exportPurchaseListsBackup}
+                >
+                  Backup
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1306,14 +1812,36 @@ export default function ComprasTab() {
                 <Button onClick={() => addOption('suppliers', newSupplier, () => setNewSupplier(''))}>Adicionar</Button>
               </div>
               <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 pr-1">
-                {options.suppliers.map((item) => (
-                  <div key={`supplier-${item}`} className="flex items-center justify-between gap-2 bg-secondary/30 rounded px-2 py-1.5">
-                    <span className="text-sm break-words">{fixMojibakeSafe(item)}</span>
-                    <Button size="icon" variant="outline" onClick={() => removeOption('suppliers', item)}>
-                      <Trash2 className="w-3 h-3 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
+                {options.suppliers.map((item) => {
+                  const mapped = options.supplierDifTypes?.[normalizeOptionMapKey(item)];
+                  return (
+                    <div key={`supplier-${item}`} className="bg-secondary/30 rounded px-2 py-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm break-words">{fixMojibakeSafe(item)}</span>
+                        <Button size="icon" variant="outline" onClick={() => removeOption('suppliers', item)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                      <div className="mt-1 flex gap-1">
+                        {(['D', 'I', 'F'] as const).map((type) => (
+                          <button
+                            type="button"
+                            key={type}
+                            onClick={() => setSupplierDifOption(item, mapped === type ? '' : type)}
+                            className={`h-7 min-w-7 rounded-full border px-2 text-xs font-bold ${
+                              mapped === type
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-background text-muted-foreground'
+                            }`}
+                            title={type === 'D' ? 'Despesa' : type === 'I' ? 'Imposto' : 'Fornecedor'}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -1438,7 +1966,13 @@ export default function ComprasTab() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showRowEdit} onOpenChange={setShowRowEdit}>
+      <Dialog
+        open={showRowEdit}
+        onOpenChange={(open) => {
+          setShowRowEdit(open);
+          if (!open) setRowEditAmountText('');
+        }}
+      >
         <DialogContent className="w-[95vw] sm:max-w-[95vw] lg:max-w-[1200px]">
           <DialogHeader>
             <DialogTitle>Editar compra</DialogTitle>
@@ -1461,7 +1995,7 @@ export default function ComprasTab() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Fornecedor</label>
                 <Input
                   value={rowEditForm.supplier}
-                  onChange={(e) => setRowEditForm((p) => (p ? { ...p, supplier: e.target.value } : p))}
+                  onChange={(e) => applySupplierToRowEdit(e.target.value)}
                   onFocus={(e) => e.currentTarget.select()}
                 />
               </div>
@@ -1491,11 +2025,31 @@ export default function ComprasTab() {
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Valor</label>
                 <Input
-                  value={Number(rowEditForm.amount || 0).toFixed(2).replace('.', ',')}
-                  onChange={(e) =>
-                    setRowEditForm((p) => (p ? { ...p, amount: parseAmount(e.target.value.replace(/[^0-9,]/g, '')) } : p))
-                  }
+                  type="text"
+                  inputMode="decimal"
+                  value={rowEditAmountText}
+                  onChange={(e) => {
+                    const nextText = sanitizeAmountTyping(e.target.value);
+                    setRowEditAmountText(nextText);
+                    setRowEditForm((p) => (p ? { ...p, amount: parseAmount(nextText) } : p));
+                  }}
                   onFocus={(e) => e.currentTarget.select()}
+                  onBlur={() => {
+                    const fixed = normalizeAmountInput(rowEditAmountText);
+                    setRowEditAmountText(fixed);
+                    setRowEditForm((p) => (p ? { ...p, amount: parseAmount(fixed) } : p));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      return;
+                    }
+                    if (e.key === 'Enter') {
+                      const fixed = normalizeAmountInput(rowEditAmountText);
+                      setRowEditAmountText(fixed);
+                      setRowEditForm((p) => (p ? { ...p, amount: parseAmount(fixed) } : p));
+                    }
+                  }}
                 />
               </div>
               <div>

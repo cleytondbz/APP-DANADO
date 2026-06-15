@@ -54,6 +54,7 @@ export interface PurchaseOptions {
   groups: string[];
   suppliers: string[];
   institutions: string[];
+  supplierDifTypes?: Record<string, 'D' | 'I' | 'F'>;
 }
 
 export interface FieldMapping {

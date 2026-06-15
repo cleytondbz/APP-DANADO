@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Trash2, Edit2, Calendar, Banknote, FileText, CreditCar
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { addDaysToDateStr, localDateStr } from '@/lib/helpers';
 
 interface Sangria {
   id: string;
@@ -164,7 +165,7 @@ export default function CaixaTab() {
   const extraFechamentoCategoriaIds = fechamentoCategoriaIds.filter(id => !BASE_FECHAMENTO_CATEGORIAS.includes(id));
   
   const [activeTab, setActiveTab] = useState<CaixaTab>('caixa');
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const [data, setData] = useState(today);
   const currentFechamentoKey = `${currentStore}:${data}`;
   const [loadedFechamentoKey, setLoadedFechamentoKey] = useState(currentFechamentoKey);
@@ -1040,7 +1041,7 @@ export default function CaixaTab() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `backup-caixa-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `backup-caixa-${localDateStr()}.json`;
       link.click();
       URL.revokeObjectURL(url);
       toast.success('Backup exportado com sucesso!');
@@ -1487,10 +1488,7 @@ export default function CaixaTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const novaData = new Date(data);
-                  novaData.setDate(novaData.getDate() - 1);
-                  const novaDataStr = novaData.toISOString().split('T')[0];
-                  validarSenhaNavegacao(novaDataStr);
+                  validarSenhaNavegacao(addDaysToDateStr(data, -1));
                 }}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1510,10 +1508,7 @@ export default function CaixaTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const novaData = new Date(data);
-                  novaData.setDate(novaData.getDate() + 1);
-                  const novaDataStr = novaData.toISOString().split('T')[0];
-                  validarSenhaNavegacao(novaDataStr);
+                  validarSenhaNavegacao(addDaysToDateStr(data, 1));
                 }}
               >
                 <ChevronRight className="w-4 h-4" />
@@ -1669,10 +1664,7 @@ export default function CaixaTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const novaData = new Date(data);
-                  novaData.setDate(novaData.getDate() - 1);
-                  const novaDataStr = novaData.toISOString().split('T')[0];
-                  validarSenhaNavegacao(novaDataStr);
+                  validarSenhaNavegacao(addDaysToDateStr(data, -1));
                 }}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1694,10 +1686,7 @@ export default function CaixaTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const novaData = new Date(data);
-                  novaData.setDate(novaData.getDate() + 1);
-                  const novaDataStr = novaData.toISOString().split('T')[0];
-                  validarSenhaNavegacao(novaDataStr);
+                  validarSenhaNavegacao(addDaysToDateStr(data, 1));
                 }}
               >
                 <ChevronRight className="w-4 h-4" />

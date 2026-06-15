@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import { formatCurrency, formatDate } from '@/lib/helpers';
+import { formatCurrency, formatDate, localDateStr } from '@/lib/helpers';
 import { Plus, Search, CheckCircle2, Clock, Trash2, ChevronDown, ChevronUp, DollarSign, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -21,7 +21,7 @@ export default function DividasTab() {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(localDateStr());
   const [payAmount, setPayAmount] = useState('');
 
 
@@ -50,7 +50,7 @@ export default function DividasTab() {
     const a = parseFloat(amount.replace(',', '.'));
     if (!a || a <= 0) { toast.error('Valor inválido'); return; }
     addDebt(name.trim(), desc.trim(), a, date);
-    setName(''); setDesc(''); setAmount(''); setDate(new Date().toISOString().split('T')[0]);
+    setName(''); setDesc(''); setAmount(''); setDate(localDateStr());
     setShowAdd(false);
     toast.success('Dívida adicionada!');
   };
@@ -73,7 +73,7 @@ export default function DividasTab() {
     if (showEdit) {
       updateDebt(showEdit, { personName: name.trim(), description: desc.trim(), amount: a, date });
       setShowEdit(null);
-      setName(''); setDesc(''); setAmount(''); setDate(new Date().toISOString().split('T')[0]);
+      setName(''); setDesc(''); setAmount(''); setDate(localDateStr());
       toast.success('Dívida atualizada!');
     }
   };

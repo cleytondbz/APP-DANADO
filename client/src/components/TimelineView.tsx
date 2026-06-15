@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TimelineEntry } from '@/lib/types';
+import { localDateStr } from '@/lib/helpers';
 
 export function TimelineView() {
   const { getTimeline, clearTimeline } = useApp();
@@ -67,7 +68,7 @@ export function TimelineView() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `timeline_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `timeline_${localDateStr()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
