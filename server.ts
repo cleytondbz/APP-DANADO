@@ -1232,7 +1232,11 @@ async function pushDataToCloud() {
       cloudSyncQueue = null;
       persistCloudSyncQueue();
     }
-    console.log(`[CloudSync] Confirmado pela nuvem: ${queued.id}`);
+    // Confirmações são muito frequentes; exibir somente quando o modo de
+    // diagnóstico estiver habilitado para não poluir o terminal.
+    if (DEBUG_SYNC) {
+      console.log(`[CloudSync] Confirmado pela nuvem: ${queued.id}`);
+    }
   } catch (error: any) {
     if (cloudSyncQueue?.id === queued.id) {
       const attempts = queued.attempts + 1;
@@ -1815,6 +1819,34 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       }
     }
     delete (incomingSettings as any).syncPreference;
+    const isAuthenticatedCloudPush = hasSyncTokenAuth && !!cloudSyncId;
+    const mergeRemoteLogs = (current: any[] = [], incoming: any[] = [], limit: number) => {
+      const merged = new Map<string, any>();
+      [...current, ...incoming].forEach((item: any) => {
+        const key = String(
+          item?.id ||
+          `${item?.timestamp || ''}|${item?.storeId || ''}|${item?.date || ''}|${item?.action || ''}|${item?.details || item?.description || ''}`
+        );
+        merged.set(key, item);
+      });
+      return Array.from(merged.values())
+        .sort((a: any, b: any) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
+        .slice(-limit);
+    };
+    if (isAuthenticatedCloudPush) {
+      if (Array.isArray(incomingSettings.accessLogs)) {
+        dataStore.settings = {
+          ...(dataStore.settings || {}),
+          accessLogs: mergeRemoteLogs(dataStore.settings?.accessLogs || [], incomingSettings.accessLogs, 300),
+        };
+      }
+      if (Array.isArray(incomingSettings.timeline)) {
+        dataStore.settings = {
+          ...(dataStore.settings || {}),
+          timeline: mergeRemoteLogs(dataStore.settings?.timeline || [], incomingSettings.timeline, 800),
+        };
+      }
+    }
     // accessLogs/timeline são autoritativos no servidor para evitar perda por sobrescrita de sync concorrente.
     delete (incomingSettings as any).accessLogs;
     delete (incomingSettings as any).timeline;
