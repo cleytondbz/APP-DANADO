@@ -1068,6 +1068,7 @@ function buildProgramAnnotationAuditLogs(
 const defaultDataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const resolvedDataFile = process.env.DATA_FILE || path.join(defaultDataDir, 'data.json');
 const DATA_FILE = path.resolve(resolvedDataFile);
+const CLOUD_SYNC_QUEUE_FILE = path.join(path.dirname(DATA_FILE), 'cloud-sync-pending.json');
 
 try {
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
@@ -1098,82 +1099,186 @@ function saveDataToFile(data: Record<string, any>) {
   }
 }
 
+type CloudSyncQueue = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  attempts: number;
+  nextAttemptAt: number;
+  lastError?: string;
+  payload: Record<string, any>;
+};
+
 let cloudPushTimer: NodeJS.Timeout | null = null;
 let cloudPushInFlight = false;
 let cloudPushQueued = false;
+let cloudSyncQueue: CloudSyncQueue | null = null;
+
+const createCloudSyncId = () =>
+  `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+const buildCloudSyncPayload = (cloudSyncId: string) => ({
+  cloudSyncId,
+  source: 'site',
+  settings: dataStore.settings || {},
+  stores: dataStore.stores || {},
+  debts: dataStore.debts || [],
+  saldoDia: dataStore.saldoDia || 0,
+  caixa: dataStore.caixa || {},
+  fechamento: dataStore.fechamento || {},
+  lancamentos: dataStore.lancamentos || {},
+});
+
+const persistCloudSyncQueue = () => {
+  try {
+    if (!cloudSyncQueue) {
+      if (fs.existsSync(CLOUD_SYNC_QUEUE_FILE)) fs.unlinkSync(CLOUD_SYNC_QUEUE_FILE);
+      return;
+    }
+    fs.mkdirSync(path.dirname(CLOUD_SYNC_QUEUE_FILE), { recursive: true });
+    const tempFile = `${CLOUD_SYNC_QUEUE_FILE}.tmp`;
+    fs.writeFileSync(tempFile, JSON.stringify(cloudSyncQueue, null, 2), 'utf-8');
+    try {
+      fs.renameSync(tempFile, CLOUD_SYNC_QUEUE_FILE);
+    } catch {
+      fs.copyFileSync(tempFile, CLOUD_SYNC_QUEUE_FILE);
+      fs.unlinkSync(tempFile);
+    }
+  } catch (error) {
+    console.error('[CloudSync] Falha ao persistir fila:', error);
+  }
+};
+
+const loadCloudSyncQueue = () => {
+  try {
+    if (!fs.existsSync(CLOUD_SYNC_QUEUE_FILE)) return;
+    const parsed = JSON.parse(fs.readFileSync(CLOUD_SYNC_QUEUE_FILE, 'utf-8'));
+    if (parsed?.id && parsed?.payload && typeof parsed.payload === 'object') {
+      parsed.payload.cloudSyncId = parsed.id;
+      cloudSyncQueue = {
+        ...parsed,
+        attempts: Number(parsed.attempts || 0),
+        nextAttemptAt: Number(parsed.nextAttemptAt || 0),
+      };
+      console.log(`[CloudSync] Envio pendente restaurado: ${cloudSyncQueue?.id}`);
+    }
+  } catch (error) {
+    console.error('[CloudSync] Falha ao restaurar fila:', error);
+  }
+};
+
+const cloudRetryDelay = (attempts: number) => {
+  const steps = [5_000, 15_000, 30_000, 60_000, 120_000, 300_000];
+  return steps[Math.min(Math.max(attempts - 1, 0), steps.length - 1)];
+};
+
+function armCloudPush(delayMs: number) {
+  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) return;
+  if (cloudPushTimer) clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(() => {
+    cloudPushTimer = null;
+    void pushDataToCloud();
+  }, Math.max(0, delayMs));
+}
 
 async function pushDataToCloud() {
-  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) return;
+  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN || !cloudSyncQueue) return;
   if (cloudPushInFlight) {
     cloudPushQueued = true;
     return;
   }
 
+  const queued = cloudSyncQueue;
+  const waitMs = queued.nextAttemptAt - Date.now();
+  if (waitMs > 0) {
+    armCloudPush(waitMs);
+    return;
+  }
+
   cloudPushInFlight = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25_000);
   try {
-    const payload = {
-      source: 'site',
-      settings: dataStore.settings || {},
-      stores: dataStore.stores || {},
-      debts: dataStore.debts || [],
-      saldoDia: dataStore.saldoDia || 0,
-      caixa: dataStore.caixa || {},
-      fechamento: dataStore.fechamento || {},
-      lancamentos: dataStore.lancamentos || {},
-    };
-
-    const maxAttempts = 3;
-    let lastStatus = 0;
-    let lastText = '';
-    let sent = false;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const resp = await fetch(CLOUD_SYNC_URL, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-sync-token': CLOUD_SYNC_TOKEN,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (resp.ok) {
-        sent = true;
-        if (DEBUG_SYNC) {
-          console.log('[CloudSync] Dados enviados para nuvem');
-        }
-        break;
-      }
-
-      lastStatus = resp.status;
-      lastText = await resp.text().catch(() => '');
-      const retryable = [502, 503, 504].includes(resp.status);
-      if (!retryable || attempt === maxAttempts) break;
-
-      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+    const resp = await fetch(CLOUD_SYNC_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-sync-token': CLOUD_SYNC_TOKEN,
+        'x-cloud-sync-id': queued.id,
+      },
+      body: JSON.stringify(queued.payload),
+      signal: controller.signal,
+    });
+    const responseText = await resp.text().catch(() => '');
+    let responseBody: any = null;
+    try {
+      responseBody = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      responseBody = null;
     }
 
-    if (!sent) {
-      console.error('[CloudSync] Falha ao enviar dados:', lastStatus, lastText);
+    const confirmed =
+      resp.ok &&
+      responseBody?.success === true &&
+      responseBody?.cloudSyncId === queued.id;
+
+    if (!confirmed) {
+      throw new Error(
+        `HTTP ${resp.status}; confirmacao=${String(responseBody?.cloudSyncId || 'ausente')}; ${responseText.slice(0, 300)}`
+      );
     }
-  } catch (err) {
-    console.error('[CloudSync] Erro de envio:', err);
+
+    if (cloudSyncQueue?.id === queued.id) {
+      cloudSyncQueue = null;
+      persistCloudSyncQueue();
+    }
+    console.log(`[CloudSync] Confirmado pela nuvem: ${queued.id}`);
+  } catch (error: any) {
+    if (cloudSyncQueue?.id === queued.id) {
+      const attempts = queued.attempts + 1;
+      const delay = cloudRetryDelay(attempts);
+      cloudSyncQueue = {
+        ...queued,
+        attempts,
+        nextAttemptAt: Date.now() + delay,
+        lastError: String(error?.message || error),
+      };
+      persistCloudSyncQueue();
+      console.error(
+        `[CloudSync] Envio pendente ${queued.id}; tentativa ${attempts}; nova tentativa em ${Math.round(delay / 1000)}s:`,
+        error?.message || error,
+      );
+    }
   } finally {
+    clearTimeout(timeout);
     cloudPushInFlight = false;
     if (cloudPushQueued) {
       cloudPushQueued = false;
-      scheduleCloudPush();
+      armCloudPush(250);
+    } else if (cloudSyncQueue) {
+      armCloudPush(Math.max(250, cloudSyncQueue.nextAttemptAt - Date.now()));
     }
   }
 }
 
 function scheduleCloudPush() {
   if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) return;
-  if (cloudPushTimer) clearTimeout(cloudPushTimer);
-  cloudPushTimer = setTimeout(() => {
-    cloudPushTimer = null;
-    void pushDataToCloud();
-  }, 700);
+  const now = getLocalDateTimeString();
+  const id = createCloudSyncId();
+  cloudSyncQueue = {
+    id,
+    createdAt: cloudSyncQueue?.createdAt || now,
+    updatedAt: now,
+    attempts: 0,
+    nextAttemptAt: Date.now() + 700,
+    payload: buildCloudSyncPayload(id),
+  };
+  persistCloudSyncQueue();
+  if (cloudPushInFlight) {
+    cloudPushQueued = true;
+    return;
+  }
+  armCloudPush(700);
 }
 
 // Middleware
@@ -1332,6 +1437,10 @@ const loadedData = loadDataFromFile();
 if (loadedData) {
   dataStore = loadedData;
   console.log('[Server] Dados carregados do arquivo');
+}
+loadCloudSyncQueue();
+if (cloudSyncQueue) {
+  armCloudPush(Math.max(500, cloudSyncQueue.nextAttemptAt - Date.now()));
 }
 // ==================== APIs REST ====================
 
@@ -1501,6 +1610,7 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     senhaUsuarioAcao,
     senha_usuario_acao,
     syncMeta,
+    cloudSyncId,
   } = req.body;
   if (DEBUG_SYNC) {
     console.log('[DEBUG] Sync/Save recebido');
@@ -1969,7 +2079,13 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     machineName: sanitizeLogText(machineName),
     syncMeta: ensureSyncMeta(),
   });
-  res.json({ success: true, timestamp: getLocalDateTimeString(), ignoredFields, syncMeta: ensureSyncMeta() });
+  res.json({
+    success: true,
+    timestamp: getLocalDateTimeString(),
+    ignoredFields,
+    syncMeta: ensureSyncMeta(),
+    cloudSyncId: sanitizeLogText(cloudSyncId || req.headers['x-cloud-sync-id']),
+  });
 });
 
 // Carregar dados do AppContext (sem userId, sincroniza tudo)
