@@ -176,8 +176,15 @@ export default function FechamentoCompactoTab() {
             {renderValorCard(valores[2].label, valores[2].value, valores[2].icon, valores[2].accent)}
             {renderValorCard(valores[3].label, valores[3].value, valores[3].icon, valores[3].accent)}
           </div>
-          <div className="grid grid-cols-1">
+          <div className="grid grid-cols-2 gap-2">
             {renderValorCard(valores[4].label, valores[4].value, valores[4].icon, valores[4].accent)}
+            <Card className="p-3 border-l-4 border-l-red-500">
+              <div className="flex items-center gap-2 mb-1">
+                <Banknote className="w-4 h-4 text-red-600" />
+                <span className="text-xs font-semibold text-muted-foreground">Total de Sangrias</span>
+              </div>
+              <p className="text-lg font-bold text-red-600">{formatCurrency(totalSangrias)}</p>
+            </Card>
           </div>
           {extraValores.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -220,22 +227,14 @@ export default function FechamentoCompactoTab() {
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 lg:grid-cols-4 gap-1.5">
-          <Card className="p-2 bg-blue-50 dark:bg-blue-950/30">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">Total de Vendas</p>
-            <p className="text-base font-bold text-blue-600">{formatCurrency(totalVendas)}</p>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-3 gap-2">
+          <Card className="col-span-2 p-4 bg-primary/10 border-2 border-primary/30">
+            <p className="text-xs font-bold text-muted-foreground uppercase">Total Geral</p>
+            <p className="text-2xl font-extrabold text-primary">{formatCurrency(totalGeral)}</p>
           </Card>
-          <Card className="p-2 bg-red-50 dark:bg-red-950/30">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">Total de Sangrias</p>
-            <p className="text-base font-bold text-red-600">{formatCurrency(totalSangrias)}</p>
-          </Card>
-          <Card className="p-2 bg-green-50 dark:bg-green-950/30">
+          <Card className="p-2 bg-green-50/60 dark:bg-green-950/20 flex flex-col justify-center">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase">Saldo Dinheiro</p>
-            <p className="text-base font-bold text-green-600">{formatCurrency(saldoDinheiro)}</p>
-          </Card>
-          <Card className="p-2 bg-primary/10">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">Total Geral</p>
-            <p className="text-base font-bold text-primary">{formatCurrency(totalGeral)}</p>
+            <p className="text-sm font-bold text-green-600">{formatCurrency(saldoDinheiro)}</p>
           </Card>
         </motion.div>
       </div>

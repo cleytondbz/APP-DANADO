@@ -1,9 +1,10 @@
 import { useApp } from '@/contexts/AppContext';
 import type { MainTab } from '@/lib/types';
 import { useEffect, lazy, Suspense } from 'react';
-import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { MONTH_NAMES } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 const DashboardTab = lazy(() => import('./DashboardTab'));
 const LancamentosTab = lazy(() => import('./LancamentosTab'));
@@ -54,6 +55,17 @@ export default function MainLayout() {
           <ArrowLeft className="w-4 h-4 text-primary" />
         </button>
         <div className="flex-1 flex items-center justify-center gap-3">
+          {!isAndroidAppMode && tab === 'compras' && (
+            <Button
+              type="button"
+              size="sm"
+              className="h-9 gap-2 px-4"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-purchase-form'))}
+            >
+              <Plus className="h-4 w-4" />
+              Adicionar
+            </Button>
+          )}
           <div className="inline-flex rounded-lg border border-primary/30 bg-primary/10 p-1">
             <button
               onClick={() => setCurrentStore('loja1')}

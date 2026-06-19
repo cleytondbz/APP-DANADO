@@ -221,6 +221,7 @@ export default function ComprasTab() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showManageOptions, setShowManageOptions] = useState(false);
+  const [showAddPurchase, setShowAddPurchase] = useState(false);
   const [newGroup, setNewGroup] = useState('');
   const [newSupplier, setNewSupplier] = useState('');
   const [newInstitution, setNewInstitution] = useState('');
@@ -255,6 +256,16 @@ export default function ComprasTab() {
   const paidDateRef = useRef<HTMLInputElement | null>(null);
   const institutionRef = useRef<HTMLInputElement | null>(null);
   const difSelectorRef = useRef<HTMLDivElement | null>(null);
+  const rowDueDateRef = useRef<HTMLInputElement | null>(null);
+  const rowGroupRef = useRef<HTMLInputElement | null>(null);
+  const rowSupplierRef = useRef<HTMLInputElement | null>(null);
+  const rowDocumentRef = useRef<HTMLInputElement | null>(null);
+  const rowIssueDateRef = useRef<HTMLInputElement | null>(null);
+  const rowInstallmentsRef = useRef<HTMLInputElement | null>(null);
+  const rowAmountRef = useRef<HTMLInputElement | null>(null);
+  const rowPaidDateRef = useRef<HTMLInputElement | null>(null);
+  const rowInstitutionRef = useRef<HTMLInputElement | null>(null);
+  const rowDifSelectorRef = useRef<HTMLDivElement | null>(null);
   const [editingOption, setEditingOption] = useState<null | {
     field: 'groups' | 'suppliers' | 'institutions';
     oldValue: string;
@@ -273,6 +284,33 @@ export default function ComprasTab() {
       supplierDifTypes: current.supplierDifTypes || {},
     };
   }, [settings.purchaseOptions]);
+
+  useEffect(() => {
+    const openPurchaseForm = () => {
+      clearForm();
+      const today = localDateStr();
+      setShowAddPurchase(true);
+      setRowEditForm({
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        dueDate: today,
+        group: 'M',
+        supplier: '',
+        documentNumber: '',
+        issueDate: today,
+        installments: '01/01',
+        amount: 0,
+        paidDate: undefined,
+        financialInstitution: '',
+        difType: 'D',
+      });
+      setRowEditAmountText('');
+      setRowEditOriginalDueDate('');
+      setShowRowEdit(true);
+      window.setTimeout(() => rowDueDateRef.current?.focus(), 80);
+    };
+    window.addEventListener('open-purchase-form', openPurchaseForm);
+    return () => window.removeEventListener('open-purchase-form', openPurchaseForm);
+  }, []);
 
   useEffect(() => {
     const current = settings.purchaseOptions || DEFAULT_PURCHASE_OPTIONS;
@@ -815,6 +853,7 @@ export default function ComprasTab() {
   };
 
   const openRowEdit = (entry: PurchaseEntry) => {
+    setShowAddPurchase(false);
     setRowEditForm({ ...entry });
     setRowEditAmountText(Number(entry.amount || 0).toFixed(2).replace('.', ','));
     setRowEditOriginalDueDate(entry.dueDate);
@@ -854,12 +893,15 @@ export default function ComprasTab() {
 
     saveSettingsEntries((prev, currentOptions) => {
       const next = { ...prev };
-      next[oldMonth] = (next[oldMonth] || []).filter((x) => x.id !== nextEntry.id);
-      next[newMonth] = [...(next[newMonth] || []), nextEntry];
+      if (oldMonth) {
+        next[oldMonth] = (next[oldMonth] || []).filter((x) => x.id !== nextEntry.id);
+      }
+      next[newMonth] = [...(next[newMonth] || []).filter((x) => x.id !== nextEntry.id), nextEntry];
       return syncSupplierDifFromEntry(next, nextEntry, currentOptions);
-    }, 'Compra atualizada no servidor.', (prevOptions) => withEntryOptions(prevOptions, nextEntry));
+    }, showAddPurchase ? 'Compra adicionada no servidor.' : 'Compra atualizada no servidor.', (prevOptions) => withEntryOptions(prevOptions, nextEntry));
 
     setShowRowEdit(false);
+    setShowAddPurchase(false);
     setRowEditForm(null);
     setRowEditAmountText('');
     setRowEditOriginalDueDate('');
@@ -1550,10 +1592,12 @@ export default function ComprasTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <Card className="p-4 xl:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-            <div className="p-2 rounded bg-secondary/50">Total mes: <b>{formatCurrency(totalMonth)}</b></div>
-            <div className="p-2 rounded bg-secondary/50">Pago mes: <b>{formatCurrency(paidMonth)}</b></div>
-            <div className="p-2 rounded bg-secondary/50">Pendente: <b>{formatCurrency(pendingMonth)}</b></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="p-4 rounded-lg bg-secondary/50 text-base">Total mes: <b className="text-lg">{formatCurrency(totalMonth)}</b></div>
+            <div className="p-4 rounded-lg bg-secondary/50 text-base">Pago mes: <b className="text-lg">{formatCurrency(paidMonth)}</b></div>
+            <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-base text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+              Pendente: <b className="text-lg">{formatCurrency(pendingMonth)}</b>
+            </div>
           </div>
           <div className="mt-4 max-w-[900px] mx-auto">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Pesquisa</label>
@@ -1970,61 +2014,76 @@ export default function ComprasTab() {
         open={showRowEdit}
         onOpenChange={(open) => {
           setShowRowEdit(open);
-          if (!open) setRowEditAmountText('');
+          if (!open) {
+            setShowAddPurchase(false);
+            setRowEditAmountText('');
+          }
         }}
       >
-        <DialogContent className="w-[95vw] sm:max-w-[95vw] lg:max-w-[1200px]">
+        <DialogContent className="w-[98vw] !max-w-[98vw] sm:!max-w-[98vw]">
           <DialogHeader>
-            <DialogTitle>Editar compra</DialogTitle>
+            <DialogTitle>{showAddPurchase ? 'Adicionar compra' : 'Editar compra'}</DialogTitle>
           </DialogHeader>
           {rowEditForm && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+            <div className="grid grid-cols-9 gap-2">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Vencimento</label>
-                <Input type="date" value={rowEditForm.dueDate} onChange={(e) => setRowEditForm((p) => (p ? { ...p, dueDate: e.target.value } : p))} />
+                <Input ref={rowDueDateRef} type="date" value={rowEditForm.dueDate} onChange={(e) => setRowEditForm((p) => (p ? { ...p, dueDate: e.target.value } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowGroupRef)} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Loja</label>
                 <Input
+                  ref={rowGroupRef}
+                  list="group-list"
                   value={rowEditForm.group}
                   onChange={(e) => setRowEditForm((p) => (p ? { ...p, group: e.target.value } : p))}
                   onFocus={(e) => e.currentTarget.select()}
+                  onKeyDown={(e) => handleEnterAdvance(e, rowSupplierRef)}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Fornecedor</label>
                 <Input
+                  ref={rowSupplierRef}
+                  list="suppliers-list"
                   value={rowEditForm.supplier}
                   onChange={(e) => applySupplierToRowEdit(e.target.value)}
                   onFocus={(e) => e.currentTarget.select()}
+                  onKeyDown={(e) => handleEnterAdvance(e, rowDocumentRef)}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Boleto / Documento</label>
                 <Input
+                  ref={rowDocumentRef}
                   value={rowEditForm.documentNumber}
                   onChange={(e) => setRowEditForm((p) => (p ? { ...p, documentNumber: e.target.value } : p))}
                   onFocus={(e) => e.currentTarget.select()}
+                  onKeyDown={(e) => handleEnterAdvance(e, rowIssueDateRef)}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Emissao</label>
-                <Input type="date" value={rowEditForm.issueDate} onChange={(e) => setRowEditForm((p) => (p ? { ...p, issueDate: e.target.value } : p))} />
+                <Input ref={rowIssueDateRef} type="date" value={rowEditForm.issueDate} onChange={(e) => setRowEditForm((p) => (p ? { ...p, issueDate: e.target.value } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowInstallmentsRef)} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Parcela</label>
                 <Input
+                  ref={rowInstallmentsRef}
                   value={rowEditForm.installments}
                   onChange={(e) => setRowEditForm((p) => (p ? { ...p, installments: normalizeInstallments(e.target.value) } : p))}
                   onFocus={(e) => e.currentTarget.select()}
                   onBlur={(e) =>
                     setRowEditForm((p) => (p ? { ...p, installments: toInstallmentsFixed(e.target.value) || p.installments } : p))
                   }
+                  onKeyDown={(e) => handleEnterAdvance(e, rowAmountRef)}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Valor</label>
                 <Input
+                  ref={rowAmountRef}
                   type="text"
                   inputMode="decimal"
                   value={rowEditAmountText}
@@ -2045,28 +2104,56 @@ export default function ComprasTab() {
                       return;
                     }
                     if (e.key === 'Enter') {
+                      e.preventDefault();
                       const fixed = normalizeAmountInput(rowEditAmountText);
                       setRowEditAmountText(fixed);
                       setRowEditForm((p) => (p ? { ...p, amount: parseAmount(fixed) } : p));
+                      rowPaidDateRef.current?.focus();
                     }
                   }}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Pago (data)</label>
-                <Input type="date" value={rowEditForm.paidDate || ''} onChange={(e) => setRowEditForm((p) => (p ? { ...p, paidDate: e.target.value || undefined } : p))} />
+                <Input ref={rowPaidDateRef} type="date" value={rowEditForm.paidDate || ''} onChange={(e) => setRowEditForm((p) => (p ? { ...p, paidDate: e.target.value || undefined } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowInstitutionRef)} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Instituicao Financeira</label>
                 <Input
+                  ref={rowInstitutionRef}
+                  list="institutions-list"
                   value={rowEditForm.financialInstitution}
                   onChange={(e) => setRowEditForm((p) => (p ? { ...p, financialInstitution: e.target.value } : p))}
                   onFocus={(e) => e.currentTarget.select()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      rowDifSelectorRef.current?.focus();
+                    }
+                  }}
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">D / I / F</label>
-                <div className="flex gap-2 h-10 items-center">
+                <div
+                  ref={rowDifSelectorRef}
+                  tabIndex={0}
+                  className="flex gap-2 h-10 items-center outline-none"
+                  onKeyDown={(e) => {
+                    const order: Array<'D' | 'I' | 'F'> = ['D', 'I', 'F'];
+                    const current = order.indexOf((rowEditForm.difType as 'D' | 'I' | 'F') || 'D');
+                    if (e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      setRowEditForm((p) => (p ? { ...p, difType: order[(current + 1) % order.length] } : p));
+                    } else if (e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      setRowEditForm((p) => (p ? { ...p, difType: order[(current - 1 + order.length) % order.length] } : p));
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      saveRowEdit();
+                    }
+                  }}
+                >
                   {(['D', 'I', 'F'] as const).map((opt) => (
                     <button
                       key={opt}
@@ -2085,13 +2172,14 @@ export default function ComprasTab() {
                 </div>
               </div>
             </div>
+            </div>
           )}
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowRowEdit(false)}>
               Cancelar
             </Button>
             <Button className="flex-1" onClick={saveRowEdit}>
-              Salvar
+              {showAddPurchase ? 'Adicionar' : 'Salvar'}
             </Button>
           </div>
         </DialogContent>
