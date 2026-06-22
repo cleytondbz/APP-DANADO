@@ -16,6 +16,10 @@ const SYNC_TOKEN = process.env.SYNC_TOKEN || '';
 const CLOUD_SYNC_URL = process.env.CLOUD_SYNC_URL || '';
 const CLOUD_SYNC_TOKEN = process.env.CLOUD_SYNC_TOKEN || '';
 const ENABLE_CLOUD_PUSH = process.env.ENABLE_CLOUD_PUSH === '1';
+const CLOUD_KEEPALIVE_MS = Math.max(
+  60_000,
+  Number(process.env.CLOUD_KEEPALIVE_MS || 10 * 60_000),
+);
 const normalizeAuthValue = (v: unknown) =>
   String(v ?? '')
     .trim()
@@ -1069,6 +1073,8 @@ const defaultDataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const resolvedDataFile = process.env.DATA_FILE || path.join(defaultDataDir, 'data.json');
 const DATA_FILE = path.resolve(resolvedDataFile);
 const CLOUD_SYNC_QUEUE_FILE = path.join(path.dirname(DATA_FILE), 'cloud-sync-pending.json');
+const DAILY_BACKUP_DIR = path.resolve(process.cwd(), 'backups-diarios');
+let lastDailyBackupDate = '';
 
 try {
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
@@ -1096,6 +1102,42 @@ function saveDataToFile(data: Record<string, any>) {
     scheduleCloudPush();
   } catch (error) {
     console.error('[Server] Erro ao salvar dados:', error);
+  }
+}
+
+function createDailyBackup(reason = 'automatico') {
+  try {
+    const now = new Date();
+    const pad = (value: number, size = 2) => String(value).padStart(size, '0');
+    const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeKey = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const unique = Math.random().toString(36).slice(2, 8);
+    fs.mkdirSync(DAILY_BACKUP_DIR, { recursive: true });
+    const fileName = `backup-completo-${dateKey}_${timeKey}-${unique}.json`;
+    const filePath = path.join(DAILY_BACKUP_DIR, fileName);
+    const snapshot = {
+      backupType: 'completo-diario',
+      reason,
+      createdAt: getLocalDateTimeString(),
+      sourceFile: DATA_FILE,
+      data: dataStore,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), 'utf-8');
+    lastDailyBackupDate = dateKey;
+    console.log(`[Backup] Backup diario criado: ${filePath}`);
+    return filePath;
+  } catch (error) {
+    console.error('[Backup] Falha ao criar backup diario:', error);
+    return null;
+  }
+}
+
+function checkDailyBackupSchedule() {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  if (now.getHours() === 20 && now.getMinutes() === 0 && lastDailyBackupDate !== dateKey) {
+    createDailyBackup('agendado-20h');
   }
 }
 
@@ -1160,7 +1202,7 @@ const loadCloudSyncQueue = () => {
         attempts: Number(parsed.attempts || 0),
         nextAttemptAt: Number(parsed.nextAttemptAt || 0),
       };
-      console.log(`[CloudSync] Envio pendente restaurado: ${cloudSyncQueue?.id}`);
+      console.log(`[${getLocalDateTimeString()}] [CloudSync] Envio pendente restaurado: ${cloudSyncQueue?.id}`);
     }
   } catch (error) {
     console.error('[CloudSync] Falha ao restaurar fila:', error);
@@ -1249,7 +1291,7 @@ async function pushDataToCloud() {
       };
       persistCloudSyncQueue();
       console.error(
-        `[CloudSync] Envio pendente ${queued.id}; tentativa ${attempts}; nova tentativa em ${Math.round(delay / 1000)}s:`,
+        `[${getLocalDateTimeString()}] [CloudSync] Envio pendente ${queued.id}; tentativa ${attempts}; nova tentativa em ${Math.round(delay / 1000)}s:`,
         error?.message || error,
       );
     }
@@ -1283,6 +1325,31 @@ function scheduleCloudPush() {
     return;
   }
   armCloudPush(700);
+}
+
+function startCloudSyncKeepAlive() {
+  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) {
+    console.log('[CloudSync] Sincronizacao automatica com a nuvem desativada.');
+    return;
+  }
+
+  const reconcile = () => {
+    if (cloudSyncQueue) {
+      armCloudPush(Math.max(250, cloudSyncQueue.nextAttemptAt - Date.now()));
+      return;
+    }
+    scheduleCloudPush();
+  };
+
+  // Envia o estado atual logo depois que o servidor inicia, sem depender
+  // de o navegador abrir o localhost.
+  setTimeout(reconcile, 2_000);
+
+  // Mantem o Render ativo e reconcilia periodicamente todo o estado local.
+  setInterval(reconcile, CLOUD_KEEPALIVE_MS);
+  console.log(
+    `[CloudSync] Sincronizacao autonoma ativa a cada ${Math.round(CLOUD_KEEPALIVE_MS / 60_000)} minuto(s).`,
+  );
 }
 
 // Middleware
@@ -1837,13 +1904,15 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       if (Array.isArray(incomingSettings.accessLogs)) {
         dataStore.settings = {
           ...(dataStore.settings || {}),
-          accessLogs: mergeRemoteLogs(dataStore.settings?.accessLogs || [], incomingSettings.accessLogs, 300),
+          // O localhost é a fonte autoritativa das ocorrências. Substituir a
+          // lista permite propagar também exclusões e limpezas para o Render.
+          accessLogs: incomingSettings.accessLogs.slice(-300),
         };
       }
       if (Array.isArray(incomingSettings.timeline)) {
         dataStore.settings = {
           ...(dataStore.settings || {}),
-          timeline: mergeRemoteLogs(dataStore.settings?.timeline || [], incomingSettings.timeline, 800),
+          timeline: incomingSettings.timeline.slice(-800),
         };
       }
     }
@@ -2401,9 +2470,28 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Conexões podem ser encerradas pelo cliente durante o envio (queda de rede,
+// fechamento do programa ou suspensão do computador). Mantém o terminal
+// legível sem ocultar outros erros reais.
+app.use((error: any, req: Request, res: Response, next: any) => {
+  const aborted =
+    error?.type === 'request.aborted' ||
+    error?.code === 'ECONNABORTED' ||
+    String(error?.message || '').toLowerCase() === 'request aborted';
+  if (!aborted) return next(error);
+  console.warn(
+    `[${getLocalDateTimeString()}] [HTTP] Requisicao interrompida pelo cliente: ${req.method} ${req.originalUrl || req.url}`
+  );
+  if (!res.headersSent) res.status(400).json({ success: false, error: 'request_aborted' });
+});
+
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] Running on http://0.0.0.0:${PORT}`);
   console.log(`[Server] API available at http://0.0.0.0:${PORT}/api`);
+  console.log(`[Backup] Backup completo diario agendado para 20:00 em: ${DAILY_BACKUP_DIR}`);
+  checkDailyBackupSchedule();
+  setInterval(checkDailyBackupSchedule, 30_000);
+  startCloudSyncKeepAlive();
 });
