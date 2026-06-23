@@ -1,10 +1,11 @@
 import { useApp } from '@/contexts/AppContext';
 import type { MainTab } from '@/lib/types';
-import { useEffect, lazy, Suspense } from 'react';
-import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useEffect, lazy, Suspense, useState } from 'react';
+import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { MONTH_NAMES } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const DashboardTab = lazy(() => import('./DashboardTab'));
 const LancamentosTab = lazy(() => import('./LancamentosTab'));
@@ -23,6 +24,7 @@ const tabs: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
 
 export default function MainLayout() {
   const { tab, setTab, setScreen, currentStore, setCurrentStore, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useApp();
+  const [purchaseSearch, setPurchaseSearch] = useState('');
   const isAndroidAppMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('app') === 'android';
   const availableTabs = isAndroidAppMode
     ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'fechamentoCompacto')
@@ -48,6 +50,11 @@ export default function MainLayout() {
     setSelectedYear(y);
   };
 
+  const updatePurchaseSearch = (value: string) => {
+    setPurchaseSearch(value);
+    window.dispatchEvent(new CustomEvent('purchase-search-change', { detail: value }));
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
@@ -66,28 +73,40 @@ export default function MainLayout() {
               Adicionar
             </Button>
           )}
-          <div className="inline-flex rounded-lg border border-primary/30 bg-primary/10 p-1">
-            <button
-              onClick={() => setCurrentStore('loja1')}
-              className={`px-5 py-1.5 text-sm font-bold rounded-md transition-colors ${
-                currentStore === 'loja1'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-primary hover:bg-primary/15'
-              }`}
-            >
-              Loja 1
-            </button>
-            <button
-              onClick={() => setCurrentStore('loja2')}
-              className={`px-5 py-1.5 text-sm font-bold rounded-md transition-colors ${
-                currentStore === 'loja2'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-primary hover:bg-primary/15'
-              }`}
-            >
-              Loja 2
-            </button>
-          </div>
+          {!isAndroidAppMode && tab === 'compras' ? (
+            <div className="relative w-full max-w-xl">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={purchaseSearch}
+                onChange={(e) => updatePurchaseSearch(e.target.value)}
+                placeholder="Pesquisar compras..."
+                className="h-9 bg-background pl-9"
+              />
+            </div>
+          ) : (
+            <div className="inline-flex rounded-lg border border-primary/30 bg-primary/10 p-1">
+              <button
+                onClick={() => setCurrentStore('loja1')}
+                className={`px-5 py-1.5 text-sm font-bold rounded-md transition-colors ${
+                  currentStore === 'loja1'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-primary hover:bg-primary/15'
+                }`}
+              >
+                Loja 1
+              </button>
+              <button
+                onClick={() => setCurrentStore('loja2')}
+                className={`px-5 py-1.5 text-sm font-bold rounded-md transition-colors ${
+                  currentStore === 'loja2'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-primary hover:bg-primary/15'
+                }`}
+              >
+                Loja 2
+              </button>
+            </div>
+          )}
           <div className="inline-flex items-center rounded-lg border border-border bg-card px-2 py-1 gap-2">
             <button onClick={() => navMonth(-1)} className="p-1 rounded hover:bg-secondary">
               <ChevronLeft className="w-4 h-4 text-primary" />
