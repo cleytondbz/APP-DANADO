@@ -29,6 +29,7 @@ const WEB_LOGIN_USER = normalizeAuthValue(process.env.WEB_LOGIN_USER || '');
 const WEB_LOGIN_PASS = normalizeAuthValue(process.env.WEB_LOGIN_PASS || '');
 const APP_BYPASS_TOKEN = process.env.APP_BYPASS_TOKEN || '';
 const SESSION_COOKIE = 'danado_session';
+const LOGS_DIR = path.resolve(process.cwd(), 'data', 'logs');
 const SYNC_AUDIT_FILE = path.resolve(process.cwd(), 'data', 'sync-audit.log');
 const CAIXA_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'caixa-movements.log');
 const PURCHASE_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'purchase-movements.log');
@@ -155,11 +156,31 @@ const mergeStoreBranch = (
   return next;
 };
 
+const logMonthFromPayload = (payload: Record<string, any>) => {
+  const raw = String(payload?.ts || payload?.createdAt || payload?.timestamp || '');
+  const dateMatch = raw.match(/^(\d{4})-(\d{2})/);
+  if (dateMatch) return `${dateMatch[1]}-${dateMatch[2]}`;
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    const date = new Date(numeric);
+    if (!Number.isNaN(date.getTime())) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+  }
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const appendMonthlyLog = (type: 'sync-audit' | 'caixa-movements' | 'purchase-movements', payload: Record<string, any>) => {
+  const monthKey = logMonthFromPayload(payload);
+  const folder = path.join(LOGS_DIR, type);
+  if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+  fs.appendFileSync(path.join(folder, `${type}-${monthKey}.log`), `${JSON.stringify(payload)}\n`, 'utf-8');
+};
+
 const appendSyncAudit = (payload: Record<string, any>) => {
   try {
-    const folder = path.dirname(SYNC_AUDIT_FILE);
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    fs.appendFileSync(SYNC_AUDIT_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+    appendMonthlyLog('sync-audit', payload);
   } catch (e) {
     console.error('[SyncAudit] Falha ao gravar log:', e);
   }
@@ -207,9 +228,7 @@ const sanitizeLogText = (value: any) =>
 
 const appendCaixaMovementLog = (payload: Record<string, any>) => {
   try {
-    const folder = path.dirname(CAIXA_MOVEMENTS_FILE);
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    fs.appendFileSync(CAIXA_MOVEMENTS_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+    appendMonthlyLog('caixa-movements', payload);
   } catch (e) {
     console.error('[CaixaMovements] Falha ao gravar log:', e);
   }
@@ -217,9 +236,7 @@ const appendCaixaMovementLog = (payload: Record<string, any>) => {
 
 const appendPurchaseMovementLog = (payload: Record<string, any>) => {
   try {
-    const folder = path.dirname(PURCHASE_MOVEMENTS_FILE);
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    fs.appendFileSync(PURCHASE_MOVEMENTS_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+    appendMonthlyLog('purchase-movements', payload);
   } catch (e) {
     console.error('[PurchaseMovements] Falha ao gravar log:', e);
   }
@@ -1072,22 +1089,270 @@ function buildProgramAnnotationAuditLogs(
 const defaultDataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const resolvedDataFile = process.env.DATA_FILE || path.join(defaultDataDir, 'data.json');
 const DATA_FILE = path.resolve(resolvedDataFile);
+const DATA_DIR = path.dirname(DATA_FILE);
 const CLOUD_SYNC_QUEUE_FILE = path.join(path.dirname(DATA_FILE), 'cloud-sync-pending.json');
 const DAILY_BACKUP_DIR = path.resolve(process.cwd(), 'backups-diarios');
 let lastDailyBackupDate = '';
 
 try {
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+  fs.mkdirSync(DATA_DIR, { recursive: true });
 } catch (error) {
   console.error('[Server] Erro ao preparar pasta de dados:', error);
 }
 
 // Função para carregar dados do arquivo
+const SPLIT_STORAGE_VERSION = 1;
+const splitDirs = {
+  caixa: path.join(DATA_DIR, 'caixa'),
+  fechamento: path.join(DATA_DIR, 'fechamento'),
+  lancamentos: path.join(DATA_DIR, 'lancamentos'),
+  compras: path.join(DATA_DIR, 'compras'),
+  migracaoBackup: path.join(DATA_DIR, 'migracao-backup'),
+};
+
+const pad2 = (value: number | string) => String(value).padStart(2, '0');
+
+function safeFilePart(value: any) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'sem-chave';
+}
+
+function safeWriteJson(filePath: string, data: any) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const tmp = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tmp, filePath);
+}
+
+function readJsonFile(filePath: string) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (error) {
+    console.error(`[Storage] Erro ao ler ${filePath}:`, error);
+    return null;
+  }
+}
+
+function listJsonFiles(dir: string) {
+  try {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter((name) => name.toLowerCase().endsWith('.json'))
+      .map((name) => path.join(dir, name));
+  } catch (error) {
+    console.error(`[Storage] Erro ao listar ${dir}:`, error);
+    return [];
+  }
+}
+
+function clearJsonFiles(dir: string) {
+  fs.mkdirSync(dir, { recursive: true });
+  for (const filePath of listJsonFiles(dir)) fs.unlinkSync(filePath);
+}
+
+function periodFromDate(dateKey: string, mode: 'semester' | 'year' | 'month') {
+  const match = String(dateKey || '').match(/^(\d{4})-(\d{2})/);
+  const year = match?.[1] || 'sem-ano';
+  const month = Number(match?.[2] || 1);
+  if (mode === 'month') return `${year}-${pad2(month)}`;
+  if (mode === 'year') return year;
+  return `${year}-${month <= 6 ? '01_06' : '07_12'}`;
+}
+
+function splitStoreDateBranch(branch: any, mode: 'semester' | 'year') {
+  const grouped: Record<string, any> = {};
+  if (!branch || typeof branch !== 'object') return grouped;
+  for (const [storeId, byDate] of Object.entries(branch)) {
+    if (!byDate || typeof byDate !== 'object') continue;
+    for (const [dateKey, value] of Object.entries(byDate as Record<string, any>)) {
+      const period = periodFromDate(dateKey, mode);
+      const fileKey = `${safeFilePart(storeId)}-${period}`;
+      grouped[fileKey] ||= {};
+      grouped[fileKey][storeId] ||= {};
+      grouped[fileKey][storeId][dateKey] = value;
+    }
+  }
+  return grouped;
+}
+
+function writeStoreDateBranch(dir: string, branch: any, mode: 'semester' | 'year') {
+  clearJsonFiles(dir);
+  const grouped = splitStoreDateBranch(branch, mode);
+  for (const [fileKey, payload] of Object.entries(grouped)) {
+    safeWriteJson(path.join(dir, `${fileKey}.json`), payload);
+  }
+}
+
+function readStoreDateBranch(dir: string) {
+  const merged: Record<string, any> = {};
+  for (const filePath of listJsonFiles(dir)) {
+    const payload = readJsonFile(filePath);
+    if (!payload || typeof payload !== 'object') continue;
+    for (const [storeId, byDate] of Object.entries(payload)) {
+      merged[storeId] ||= {};
+      Object.assign(merged[storeId], byDate || {});
+    }
+  }
+  return merged;
+}
+
+function splitPurchaseEntriesByYear(purchaseEntries: any) {
+  const grouped: Record<string, any> = {};
+  if (!purchaseEntries || typeof purchaseEntries !== 'object') return grouped;
+  for (const [monthKey, entries] of Object.entries(purchaseEntries)) {
+    const year = String(monthKey).match(/^(\d{4})-/)?.[1] || 'sem-ano';
+    grouped[year] ||= {};
+    grouped[year][monthKey] = entries;
+  }
+  return grouped;
+}
+
+function writePurchaseEntries(purchaseEntries: any) {
+  clearJsonFiles(splitDirs.compras);
+  const grouped = splitPurchaseEntriesByYear(purchaseEntries);
+  for (const [year, payload] of Object.entries(grouped)) {
+    safeWriteJson(path.join(splitDirs.compras, `compras-${safeFilePart(year)}.json`), payload);
+  }
+}
+
+function readPurchaseEntries() {
+  const merged: Record<string, any> = {};
+  for (const filePath of listJsonFiles(splitDirs.compras)) {
+    const payload = readJsonFile(filePath);
+    if (!payload || typeof payload !== 'object') continue;
+    Object.assign(merged, payload);
+  }
+  return merged;
+}
+
+function readPurchaseEntriesByYear(year: string | number) {
+  const filePath = path.join(splitDirs.compras, `compras-${safeFilePart(year)}.json`);
+  const payload = readJsonFile(filePath);
+  return payload && typeof payload === 'object' ? payload : {};
+}
+
+function readPurchaseEntriesByMonth(monthKey: string) {
+  const year = String(monthKey || '').match(/^(\d{4})-\d{2}$/)?.[1];
+  if (!year) return [];
+  const yearEntries = readPurchaseEntriesByYear(year);
+  const entries = (yearEntries as Record<string, any[]>)[monthKey];
+  return Array.isArray(entries) ? entries : [];
+}
+
+function readStoreDateBranchPeriod(dir: string, storeId: string, period: string) {
+  const filePath = path.join(dir, `${safeFilePart(storeId)}-${safeFilePart(period)}.json`);
+  const payload = readJsonFile(filePath);
+  if (!payload || typeof payload !== 'object') return {};
+  return (payload as Record<string, any>)[storeId] || {};
+}
+
+function filterStoreDateBranchByMonth(branch: Record<string, any>, monthKey: string) {
+  const out: Record<string, any> = {};
+  Object.entries(branch || {}).forEach(([dateKey, value]) => {
+    if (String(dateKey).startsWith(`${monthKey}-`)) out[dateKey] = value;
+  });
+  return out;
+}
+
+function sanitizeSettingsForBootstrap(settings: any = {}) {
+  const light = { ...(settings || {}) };
+  delete light.purchaseEntries;
+  return {
+    ...light,
+    accessLogs: (light.accessLogs || []).map((item: any) => ({
+      ...item,
+      details: sanitizeLogText(item?.details),
+      description: sanitizeLogText(item?.description),
+      userName: sanitizeLogText(item?.userName),
+      field: sanitizeLogText(item?.field),
+    })),
+    timeline: (light.timeline || []).map((item: any) => ({
+      ...item,
+      details: sanitizeLogText(item?.details),
+      description: sanitizeLogText(item?.description),
+      userName: sanitizeLogText(item?.userName),
+      field: sanitizeLogText(item?.field),
+    })),
+  };
+}
+
+function hasLegacyHeavyData(data: Record<string, any>) {
+  return Boolean(
+    (data?.caixa && Object.keys(data.caixa || {}).length > 0) ||
+    (data?.fechamento && Object.keys(data.fechamento || {}).length > 0) ||
+    (data?.lancamentos && Object.keys(data.lancamentos || {}).length > 0) ||
+    (data?.settings?.purchaseEntries && Object.keys(data.settings.purchaseEntries || {}).length > 0)
+  );
+}
+
+function backupLegacyDataFileIfNeeded(data: Record<string, any>) {
+  try {
+    if (!hasLegacyHeavyData(data)) return;
+    const marker = path.join(splitDirs.migracaoBackup, 'migracao-v1.marker');
+    if (fs.existsSync(marker)) return;
+    fs.mkdirSync(splitDirs.migracaoBackup, { recursive: true });
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}_${pad2(now.getHours())}-${pad2(now.getMinutes())}-${pad2(now.getSeconds())}`;
+    const backupPath = path.join(splitDirs.migracaoBackup, `data-antigo-${stamp}.json`);
+    if (fs.existsSync(DATA_FILE)) fs.copyFileSync(DATA_FILE, backupPath);
+    else safeWriteJson(backupPath, data);
+    fs.writeFileSync(marker, backupPath, 'utf-8');
+    console.log(`[Storage] Backup da estrutura antiga criado: ${backupPath}`);
+  } catch (error) {
+    console.error('[Storage] Falha ao criar backup da estrutura antiga:', error);
+  }
+}
+
+function buildLightDataFile(data: Record<string, any>) {
+  const settings = { ...(data.settings || {}) };
+  delete (settings as any).purchaseEntries;
+  const light = {
+    ...data,
+    settings,
+    _storage: {
+      version: SPLIT_STORAGE_VERSION,
+      split: true,
+      updatedAt: getLocalDateTimeString(),
+      folders: {
+        caixa: 'data/caixa',
+        fechamento: 'data/fechamento',
+        lancamentos: 'data/lancamentos',
+        compras: 'data/compras',
+      },
+    },
+  };
+  delete (light as any).caixa;
+  delete (light as any).fechamento;
+  delete (light as any).lancamentos;
+  return light;
+}
+
+function materializeSplitData(baseData: Record<string, any>) {
+  const caixa = readStoreDateBranch(splitDirs.caixa);
+  const fechamento = readStoreDateBranch(splitDirs.fechamento);
+  const lancamentos = readStoreDateBranch(splitDirs.lancamentos);
+  const purchaseEntries = readPurchaseEntries();
+  const settings = { ...(baseData.settings || {}) };
+  if (Object.keys(purchaseEntries).length > 0) settings.purchaseEntries = purchaseEntries;
+  return {
+    ...baseData,
+    settings,
+    caixa: Object.keys(caixa).length > 0 ? caixa : (baseData.caixa || {}),
+    fechamento: Object.keys(fechamento).length > 0 ? fechamento : (baseData.fechamento || {}),
+    lancamentos: Object.keys(lancamentos).length > 0 ? lancamentos : (baseData.lancamentos || {}),
+  };
+}
+
 function loadDataFromFile() {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const data = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(data);
+      return materializeSplitData(JSON.parse(data));
     }
   } catch (error) {
     console.error('[Server] Erro ao carregar dados:', error);
@@ -1098,7 +1363,12 @@ function loadDataFromFile() {
 // Função para salvar dados no arquivo
 function saveDataToFile(data: Record<string, any>) {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    backupLegacyDataFileIfNeeded(data);
+    writeStoreDateBranch(splitDirs.caixa, data.caixa || {}, 'semester');
+    writeStoreDateBranch(splitDirs.fechamento, data.fechamento || {}, 'year');
+    writeStoreDateBranch(splitDirs.lancamentos, data.lancamentos || {}, 'year');
+    writePurchaseEntries(data.settings?.purchaseEntries || {});
+    safeWriteJson(DATA_FILE, buildLightDataFile(data));
     scheduleCloudPush();
   } catch (error) {
     console.error('[Server] Erro ao salvar dados:', error);
@@ -1508,6 +1778,8 @@ const loadedData = loadDataFromFile();
 if (loadedData) {
   dataStore = loadedData;
   console.log('[Server] Dados carregados do arquivo');
+  saveDataToFile(dataStore);
+  console.log('[Storage] Estrutura de dados separada carregada/atualizada');
 }
 loadCloudSyncQueue();
 if (cloudSyncQueue) {
@@ -2250,6 +2522,174 @@ app.get('/api/sync/load/:userId', (_req: Request, res: Response) => {
       _syncMeta: syncMeta,
     },
     timestamp: getLocalDateTimeString()
+  });
+});
+
+// Carregamento leve para telas que nao precisam do historico completo.
+// Mantem /api/sync/load intacto para compatibilidade com programas e app antigo.
+app.get('/api/sync/bootstrap', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: {
+      settings: sanitizeSettingsForBootstrap(dataStore.settings || {}),
+      stores: dataStore.stores || {},
+      debts: dataStore.debts || [],
+      saldoDia: dataStore.saldoDia || 0,
+      _syncMeta: ensureSyncMeta(),
+    },
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/compras/:year', (req: Request, res: Response) => {
+  const year = String(req.params.year || '');
+  res.json({
+    success: true,
+    year,
+    data: readPurchaseEntriesByYear(year),
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/compras/:year/:month', (req: Request, res: Response) => {
+  const year = String(req.params.year || '');
+  const month = pad2(req.params.month || '');
+  const monthKey = `${year}-${month}`;
+  res.json({
+    success: true,
+    monthKey,
+    data: readPurchaseEntriesByMonth(monthKey),
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.post('/api/compras/options', (req: Request, res: Response) => {
+  const incomingOptions = req.body?.purchaseOptions || req.body?.options || {};
+  dataStore.settings = {
+    ...(dataStore.settings || {}),
+    purchaseOptions: sanitizePurchaseOptionsForServer(incomingOptions, dataStore.settings?.purchaseOptions),
+  };
+  saveDataToFile(dataStore);
+  res.json({
+    success: true,
+    data: dataStore.settings.purchaseOptions,
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.post('/api/compras/:year/:month', (req: Request, res: Response) => {
+  const year = String(req.params.year || '');
+  const month = pad2(req.params.month || '');
+  const monthKey = `${year}-${month}`;
+  const entries = Array.isArray(req.body?.entries)
+    ? req.body.entries
+    : Array.isArray(req.body?.purchaseEntries)
+      ? req.body.purchaseEntries
+      : [];
+
+  dataStore.settings = {
+    ...(dataStore.settings || {}),
+    purchaseEntries: {
+      ...(dataStore.settings?.purchaseEntries || {}),
+      [monthKey]: entries,
+    },
+  };
+
+  if (req.body?.purchaseOptions || req.body?.options) {
+    dataStore.settings.purchaseOptions = sanitizePurchaseOptionsForServer(
+      req.body.purchaseOptions || req.body.options,
+      dataStore.settings?.purchaseOptions,
+    );
+  }
+
+  saveDataToFile(dataStore);
+  res.json({
+    success: true,
+    monthKey,
+    count: entries.length,
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/periodo/:branch/:storeId/:year/:month', (req: Request, res: Response) => {
+  const branch = String(req.params.branch || '');
+  const storeId = String(req.params.storeId || '');
+  const year = String(req.params.year || '');
+  const month = pad2(req.params.month || '');
+  const monthKey = `${year}-${month}`;
+  const semester = `${year}-${Number(month) <= 6 ? '01_06' : '07_12'}`;
+
+  if (!['caixa', 'fechamento', 'lancamentos'].includes(branch)) {
+    return res.status(400).json({ success: false, error: 'branch_invalido' });
+  }
+
+  if (branch === 'caixa') {
+    const bySemester = readStoreDateBranchPeriod(splitDirs.caixa, storeId, semester);
+    return res.json({
+      success: true,
+      branch,
+      storeId,
+      monthKey,
+      data: filterStoreDateBranchByMonth(bySemester, monthKey),
+      timestamp: getLocalDateTimeString(),
+    });
+  }
+
+  const dir = branch === 'fechamento' ? splitDirs.fechamento : splitDirs.lancamentos;
+  const byYear = readStoreDateBranchPeriod(dir, storeId, year);
+  return res.json({
+    success: true,
+    branch,
+    storeId,
+    monthKey,
+    data: filterStoreDateBranchByMonth(byYear, monthKey),
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/dashboard/:year', (req: Request, res: Response) => {
+  const year = Number(req.params.year || 0);
+  if (!Number.isFinite(year) || year < 1900) {
+    return res.status(400).json({ success: false, error: 'ano_invalido' });
+  }
+
+  const monthRows = Array.from({ length: 12 }, (_v, idx) => {
+    const month = idx + 1;
+    const monthKey = `${year}-${pad2(month)}`;
+    const compras = readPurchaseEntriesByMonth(monthKey).reduce(
+      (sum, item: any) => sum + Number(item?.amount || 0),
+      0,
+    );
+
+    const vendasPorLoja: Record<string, number> = {};
+    Object.entries(dataStore.stores || {}).forEach(([storeId, store]: [string, any]) => {
+      const monthData = (store?.months || []).find((m: any) => Number(m?.year) === year && Number(m?.month) === month);
+      const categories = Array.isArray(store?.categories) ? store.categories : [];
+      const vendas = (monthData?.entries || []).reduce((sum: number, entry: any) => {
+        const entryTotal = categories.reduce((entrySum: number, cat: any) => {
+          if (cat?.operation === 'null') return entrySum;
+          const value = Number(entry?.values?.[cat?.id] || 0);
+          return entrySum + (cat?.operation === 'subtract' ? -value : value);
+        }, 0);
+        return sum + entryTotal;
+      }, 0);
+      vendasPorLoja[storeId] = vendas;
+    });
+
+    return {
+      month,
+      monthKey,
+      compras,
+      vendasPorLoja,
+      vendas: Object.values(vendasPorLoja).reduce((sum, value) => sum + Number(value || 0), 0),
+    };
+  });
+
+  res.json({
+    success: true,
+    year,
+    data: monthRows,
+    timestamp: getLocalDateTimeString(),
   });
 });
 
