@@ -34,6 +34,17 @@ const emptyForm = {
 
 const monthKey = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
 
+const parseInstallmentParts = (value: string) => {
+  const fixed = toInstallmentsFixed(value);
+  const match = fixed.match(/^(\d{2})\/(\d{2})$/);
+  if (!match) return { current: 1, total: 1, fixed };
+  return {
+    current: Math.max(1, Number(match[1] || 1)),
+    total: Math.max(1, Number(match[2] || 1)),
+    fixed,
+  };
+};
+
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
@@ -234,10 +245,10 @@ export default function ComprasTab() {
   const [rowEditForm, setRowEditForm] = useState<PurchaseEntry | null>(null);
   const [rowEditAmountText, setRowEditAmountText] = useState('');
   const [rowEditOriginalDueDate, setRowEditOriginalDueDate] = useState('');
+  const [rowExtraDueDates, setRowExtraDueDates] = useState<string[]>([]);
   const [showClearMonthDialog, setShowClearMonthDialog] = useState(false);
   const [clearMonthPassword, setClearMonthPassword] = useState('');
   const [clearMonthConfirmText, setClearMonthConfirmText] = useState('');
-  const [analyticsMode, setAnalyticsMode] = useState<'top' | 'dif'>('top');
   const [savePendingMessage, setSavePendingMessage] = useState('');
   const [saveFailureMessage, setSaveFailureMessage] = useState('');
   const [showSaveFailureDialog, setShowSaveFailureDialog] = useState(false);
@@ -275,6 +286,42 @@ export default function ComprasTab() {
   const currentMonthKey = monthKey(selectedYear, selectedMonth);
   const allEntries = settings.purchaseEntries || {};
   const entries: PurchaseEntry[] = allEntries[currentMonthKey] || [];
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const loadMonthEntries = async () => {
+      try {
+        const response = await fetch(`/api/compras/${selectedYear}/${String(selectedMonth).padStart(2, '0')}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (cancelled || !result?.success || !Array.isArray(result.data)) return;
+
+        setSettings((prev) => ({
+          ...prev,
+          purchaseEntries: {
+            ...(prev.purchaseEntries || {}),
+            [currentMonthKey]: result.data,
+          },
+        }));
+      } catch (error) {
+        if ((error as Error)?.name !== 'AbortError') {
+          console.warn('[Compras] Falha ao carregar mês parcial:', error);
+        }
+      }
+    };
+
+    loadMonthEntries();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [selectedYear, selectedMonth, currentMonthKey, setSettings]);
+
   const options: PurchaseOptions = useMemo(() => {
     const current = sanitizePurchaseOptions(settings.purchaseOptions || DEFAULT_PURCHASE_OPTIONS);
     return {
@@ -305,12 +352,46 @@ export default function ComprasTab() {
       });
       setRowEditAmountText('');
       setRowEditOriginalDueDate('');
+      setRowExtraDueDates([]);
       setShowRowEdit(true);
       window.setTimeout(() => rowDueDateRef.current?.focus(), 80);
     };
     window.addEventListener('open-purchase-form', openPurchaseForm);
     return () => window.removeEventListener('open-purchase-form', openPurchaseForm);
   }, []);
+
+  useEffect(() => {
+    const updateSearch = (event: Event) => {
+      setSearchField('all');
+      setSearchTerm(String((event as CustomEvent<string>).detail || ''));
+    };
+    window.addEventListener('purchase-search-change', updateSearch);
+    return () => window.removeEventListener('purchase-search-change', updateSearch);
+  }, []);
+
+  useEffect(() => {
+    const openGlobalSearch = () => setShowGlobalSearch(true);
+    window.addEventListener('open-purchase-global-search', openGlobalSearch);
+    return () => window.removeEventListener('open-purchase-global-search', openGlobalSearch);
+  }, []);
+
+  const rowInstallmentInfo = useMemo(
+    () => parseInstallmentParts(rowEditForm?.installments || '01/01'),
+    [rowEditForm?.installments]
+  );
+  const rowExtraCount = showAddPurchase && rowEditForm
+    ? Math.max(0, rowInstallmentInfo.total - rowInstallmentInfo.current)
+    : 0;
+
+  useEffect(() => {
+    if (!showAddPurchase || !rowEditForm) {
+      setRowExtraDueDates([]);
+      return;
+    }
+    setRowExtraDueDates((prev) =>
+      Array.from({ length: rowExtraCount }, (_item, index) => prev[index] || '')
+    );
+  }, [showAddPurchase, rowEditForm?.id, rowExtraCount]);
 
   useEffect(() => {
     const current = settings.purchaseOptions || DEFAULT_PURCHASE_OPTIONS;
@@ -476,13 +557,19 @@ export default function ComprasTab() {
       const currentEntries = (prev.purchaseEntries || {}) as Record<string, PurchaseEntry[]>;
       const currentOptions = sanitizePurchaseOptions(prev.purchaseOptions || DEFAULT_PURCHASE_OPTIONS);
       const nextEntries = updater(currentEntries, currentOptions);
+      const changedMonths = Object.keys({ ...currentEntries, ...nextEntries }).filter(
+        (month) => JSON.stringify(currentEntries[month] || []) !== JSON.stringify(nextEntries[month] || [])
+      );
+      const changedEntries = Object.fromEntries(
+        changedMonths.map((month) => [month, nextEntries[month] || []])
+      ) as Record<string, PurchaseEntry[]>;
       if (!optionsUpdater) {
-        void confirmPurchaseSave({ purchaseEntries: nextEntries }, attemptId);
+        void confirmPurchaseSave({ purchaseEntries: changedEntries }, attemptId);
         return { ...prev, purchaseEntries: nextEntries };
       }
 
       const nextOptions = sanitizePurchaseOptions(optionsUpdater(currentOptions));
-      void confirmPurchaseSave({ purchaseEntries: nextEntries, purchaseOptions: nextOptions }, attemptId);
+      void confirmPurchaseSave({ purchaseEntries: changedEntries, purchaseOptions: nextOptions }, attemptId);
       return { ...prev, purchaseEntries: nextEntries, purchaseOptions: nextOptions };
     });
   };
@@ -603,7 +690,7 @@ export default function ComprasTab() {
     }
 
     if (rowEditForm && normalizeOptionMapKey(rowEditForm.supplier) === key) {
-      setRowEditForm((prev) => (prev ? { ...prev, difType } : prev));
+      setRowEditForm((prev) => (prev ? { ...prev, difType: difType || undefined } : prev));
     }
   };
 
@@ -680,28 +767,59 @@ export default function ComprasTab() {
     const serverUrl = getPurchaseServerUrl();
     if (!serverUrl) return;
     const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 1800);
+    const timer = window.setTimeout(() => controller.abort(), 4500);
 
     try {
-      const response = await fetch(`${serverUrl}/api/sync/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-        signal: controller.signal,
-        body: JSON.stringify({
-          source: 'site',
-          settings: partialSettings,
-        }),
-      });
-      if (!response.ok) {
-        showPurchaseSaveFailure(attemptId);
-        return;
+      const monthEntries = partialSettings.purchaseEntries || {};
+      const monthKeys = Object.keys(monthEntries);
+
+      for (const monthKey of monthKeys) {
+        const [year, month] = monthKey.split('-');
+        if (!year || !month) continue;
+        const response = await fetch(`${serverUrl}/api/compras/${year}/${month}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          signal: controller.signal,
+          body: JSON.stringify({
+            source: 'site',
+            entries: monthEntries[monthKey] || [],
+            ...(partialSettings.purchaseOptions ? { purchaseOptions: partialSettings.purchaseOptions } : {}),
+          }),
+        });
+        if (!response.ok) {
+          showPurchaseSaveFailure(attemptId);
+          return;
+        }
+        const result = await response.json().catch(() => null);
+        if (!result?.success) {
+          showPurchaseSaveFailure(attemptId);
+          return;
+        }
       }
-      const result = await response.json().catch(() => null);
-      if (!result?.success) {
-        showPurchaseSaveFailure(attemptId);
-        return;
+
+      if (partialSettings.purchaseOptions && monthKeys.length === 0) {
+        const response = await fetch(`${serverUrl}/api/compras/options`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          signal: controller.signal,
+          body: JSON.stringify({
+            source: 'site',
+            purchaseOptions: partialSettings.purchaseOptions,
+          }),
+        });
+        if (!response.ok) {
+          showPurchaseSaveFailure(attemptId);
+          return;
+        }
+        const result = await response.json().catch(() => null);
+        if (!result?.success) {
+          showPurchaseSaveFailure(attemptId);
+          return;
+        }
       }
+
       if (attemptId !== purchaseSaveAttemptIdRef.current || !purchaseSaveAttemptRef.current) return;
       clearPurchaseSaveTimeout();
       purchaseSaveAttemptRef.current = false;
@@ -871,6 +989,13 @@ export default function ComprasTab() {
       toast.error('Parcela deve estar no formato 01/05 ou 10/10.');
       return;
     }
+    const installmentInfo = parseInstallmentParts(fixedInstallments);
+    const extraCount = Math.max(0, installmentInfo.total - installmentInfo.current);
+    const filledExtraDueDates = showAddPurchase && extraCount > 0
+      ? rowExtraDueDates.slice(0, extraCount)
+          .map((dueDate, index) => ({ dueDate, index }))
+          .filter((item) => !!item.dueDate)
+      : [];
 
     const cleanSupplier = sanitizeStoredText(rowEditForm.supplier || '');
     const cleanInstitution = sanitizeStoredText(rowEditForm.financialInstitution || '');
@@ -893,18 +1018,60 @@ export default function ComprasTab() {
 
     saveSettingsEntries((prev, currentOptions) => {
       const next = { ...prev };
-      if (oldMonth) {
-        next[oldMonth] = (next[oldMonth] || []).filter((x) => x.id !== nextEntry.id);
+
+      if (showAddPurchase && filledExtraDueDates.length > 0) {
+        const totalText = String(installmentInfo.total).padStart(2, '0');
+        const entriesToCreate: PurchaseEntry[] = [
+          nextEntry,
+          ...filledExtraDueDates.map(({ dueDate, index }) => ({
+            ...nextEntry,
+            id: `${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`,
+            dueDate,
+            paidDate: undefined,
+            installments: `${String(installmentInfo.current + index + 1).padStart(2, '0')}/${totalText}`,
+          })),
+        ];
+        entriesToCreate[0] = {
+          ...entriesToCreate[0],
+          installments: `${String(installmentInfo.current).padStart(2, '0')}/${totalText}`,
+        };
+
+        entriesToCreate.forEach((entry) => {
+          const month = entry.dueDate.slice(0, 7);
+          next[month] = [...(next[month] || []).filter((item) => item.id !== entry.id), entry];
+        });
+
+        return entriesToCreate.reduce(
+          (acc, entry) => syncSupplierDifFromEntry(acc, entry, currentOptions),
+          next
+        );
       }
-      next[newMonth] = [...(next[newMonth] || []).filter((x) => x.id !== nextEntry.id), nextEntry];
+
+      const dueDateChanged = rowEditOriginalDueDate !== nextEntry.dueDate;
+
+      if (!showAddPurchase && !dueDateChanged && oldMonth === newMonth) {
+        next[newMonth] = (next[newMonth] || []).map((entry) =>
+          entry.id === nextEntry.id ? nextEntry : entry
+        );
+      } else {
+        if (oldMonth) {
+          next[oldMonth] = (next[oldMonth] || []).filter((x) => x.id !== nextEntry.id);
+        }
+        next[newMonth] = [...(next[newMonth] || []).filter((x) => x.id !== nextEntry.id), nextEntry];
+      }
       return syncSupplierDifFromEntry(next, nextEntry, currentOptions);
-    }, showAddPurchase ? 'Compra adicionada no servidor.' : 'Compra atualizada no servidor.', (prevOptions) => withEntryOptions(prevOptions, nextEntry));
+    }, showAddPurchase && filledExtraDueDates.length > 0
+      ? `${filledExtraDueDates.length + 1} parcelas adicionadas no servidor.`
+      : showAddPurchase ? 'Compra adicionada no servidor.' : 'Compra atualizada no servidor.',
+      (prevOptions) => withEntryOptions(prevOptions, nextEntry)
+    );
 
     setShowRowEdit(false);
     setShowAddPurchase(false);
     setRowEditForm(null);
     setRowEditAmountText('');
     setRowEditOriginalDueDate('');
+    setRowExtraDueDates([]);
   };
 
   const removeEntry = (entry: PurchaseEntry) => {
@@ -991,6 +1158,27 @@ export default function ComprasTab() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success('CSV exportado.');
+  };
+
+  const exportCsvAnualFile = () => {
+    const annualEntries = Object.entries(allEntries)
+      .filter(([month]) => month.startsWith(`${selectedYear}-`))
+      .flatMap(([, monthEntries]) => monthEntries || []);
+    if (annualEntries.length === 0) {
+      toast.error('Sem compras para exportar em CSV.');
+      return;
+    }
+    const lines = buildCsvLines(annualEntries);
+    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `compras_backup_${selectedYear}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Backup CSV anual exportado.');
   };
 
   const exportCsvAnual = () => {
@@ -1385,10 +1573,32 @@ export default function ComprasTab() {
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold">Compras</h3>
           <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/70 p-1">
+              <select
+                value={searchField}
+                onChange={(e) => setSearchField(e.target.value as typeof searchField)}
+                className="h-7 w-[112px] rounded-md border border-input bg-background px-2 text-[11px]"
+                title="Campo da pesquisa local"
+              >
+                <option value="all">Tudo</option>
+                <option value="dueDate">Vencimento</option>
+                <option value="supplier">Fornecedor</option>
+                <option value="document">Documento</option>
+                <option value="issueDate">Emissao</option>
+                <option value="amount">Valor</option>
+                <option value="institution">Instituicao</option>
+              </select>
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Filtro local"
+                className="h-7 w-[170px] px-2 text-xs"
+              />
+            </div>
             <label>
               <input
                 type="file"
-                accept=".json,application/json,.csv,text/csv"
+                accept=".json,application/json"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -1402,6 +1612,24 @@ export default function ComprasTab() {
             </label>
             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportCsvAnual}>
               Backup
+            </Button>
+            <label>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) importCsvAnual(file);
+                  e.currentTarget.value = '';
+                }}
+              />
+              <Button asChild size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-muted-foreground">
+                <span>Importar CSV</span>
+              </Button>
+            </label>
+            <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-muted-foreground" onClick={exportCsvAnualFile}>
+              Backup CSV
             </Button>
             <Button
               size="sm"
@@ -1590,74 +1818,48 @@ export default function ComprasTab() {
 
       </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <Card className="p-4 xl:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="p-4 rounded-lg bg-secondary/50 text-base">Total mes: <b className="text-lg">{formatCurrency(totalMonth)}</b></div>
-            <div className="p-4 rounded-lg bg-secondary/50 text-base">Pago mes: <b className="text-lg">{formatCurrency(paidMonth)}</b></div>
-            <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-base text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
-              Pendente: <b className="text-lg">{formatCurrency(pendingMonth)}</b>
+      <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr_440px] gap-4 items-stretch">
+        <Card className="p-4">
+          <div className="space-y-3">
+            <div className="rounded-xl bg-secondary/50 p-4">
+              <p className="text-sm font-bold text-muted-foreground uppercase">Total mes</p>
+              <p className="mt-1 text-2xl font-black font-mono-num">{formatCurrency(totalMonth)}</p>
+            </div>
+            <div className="rounded-xl bg-emerald-50 p-4 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+              <p className="text-sm font-bold uppercase">Pago mes</p>
+              <p className="mt-1 text-2xl font-black font-mono-num">{formatCurrency(paidMonth)}</p>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+              <p className="text-sm font-bold uppercase">Pendente</p>
+              <p className="mt-1 text-2xl font-black font-mono-num">{formatCurrency(pendingMonth)}</p>
             </div>
           </div>
-          <div className="mt-4 max-w-[900px] mx-auto">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Pesquisa</label>
-            <div className="flex gap-2">
-              <select
-                value={searchField}
-                onChange={(e) => setSearchField(e.target.value as any)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm min-w-[170px]"
-              >
-                <option value="all">Todos os campos</option>
-                <option value="dueDate">Vencimento</option>
-                <option value="supplier">Fornecedor</option>
-                <option value="document">Boleto/Documento</option>
-                <option value="issueDate">Emissao</option>
-                <option value="amount">Valor</option>
-                <option value="institution">Instituicao</option>
-              </select>
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Digite para pesquisar"
-              />
-              <Button variant="outline" onClick={() => setShowGlobalSearch(true)}>Pesquisa global</Button>
-            </div>
+          <div className="mt-3 flex items-center justify-end gap-2 lg:hidden">
+            <select
+              value={searchField}
+              onChange={(e) => setSearchField(e.target.value as typeof searchField)}
+              className="h-8 w-[120px] rounded-md border border-input bg-background px-2 text-xs"
+            >
+              <option value="all">Tudo</option>
+              <option value="dueDate">Vencimento</option>
+              <option value="supplier">Fornecedor</option>
+              <option value="document">Documento</option>
+              <option value="issueDate">Emissao</option>
+              <option value="amount">Valor</option>
+              <option value="institution">Instituicao</option>
+            </select>
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filtro local"
+              className="h-8 max-w-[190px] px-2 text-xs"
+            />
           </div>
         </Card>
 
-        <Card className="p-2.5">
-          <div className="flex items-center justify-between mb-1.5">
-            <h4 className="text-[11px] font-bold">
-              {analyticsMode === 'top' ? 'Top 20 fornecedores do mes' : 'Distribuicao D / I / F'}
-            </h4>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setAnalyticsMode((p) => (p === 'top' ? 'dif' : 'top'))}>
-              Inverter
-            </Button>
-          </div>
-          {analyticsMode === 'top' ? (
-            supplierChartData.length > 0 ? (
-              <div className="h-[240px] overflow-y-auto pr-1 space-y-1.5">
-                {supplierChartData.slice(0, 20).map((item, index) => {
-                  const max = supplierChartData[0]?.total || 1;
-                  const width = Math.max(6, (item.total / max) * 100);
-                  return (
-                    <div key={`${item.supplier}-${index}`} className="rounded border border-border/60 p-1.5">
-                      <div className="flex items-center justify-between gap-2 text-[10px]">
-                        <span className="font-semibold truncate">{index + 1}. {item.supplier}</span>
-                        <span className="font-bold whitespace-nowrap">{formatCurrency(item.total)}</span>
-                      </div>
-                      <div className="mt-1 h-1.5 rounded bg-muted overflow-hidden">
-                        <div className="h-full rounded bg-blue-600" style={{ width: `${width}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">Sem dados no mes.</p>
-            )
-          ) : difChartData.length > 0 ? (
-            <div className="h-[168px]">
+        <Card className="p-3">
+          {difChartData.length > 0 ? (
+            <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -1666,7 +1868,7 @@ export default function ComprasTab() {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={55}
+                    outerRadius={118}
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {difChartData.map((item, index) => (
@@ -1678,7 +1880,32 @@ export default function ComprasTab() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">Sem letras D/I/F no mes.</p>
+            <p className="text-xs text-muted-foreground">Sem dados no mes.</p>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <h4 className="text-sm font-bold mb-2">Top 20 fornecedores do mes</h4>
+          {supplierChartData.length > 0 ? (
+            <div className="h-[250px] overflow-y-auto pr-1 space-y-1.5">
+              {supplierChartData.slice(0, 20).map((item, index) => {
+                const max = supplierChartData[0]?.total || 1;
+                const width = Math.max(6, (item.total / max) * 100);
+                return (
+                  <div key={`${item.supplier}-${index}`} className="rounded border border-border/60 p-2">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold truncate">{index + 1}. {item.supplier}</span>
+                      <span className="font-bold whitespace-nowrap">{formatCurrency(item.total)}</span>
+                    </div>
+                    <div className="mt-1.5 h-2 rounded bg-muted overflow-hidden">
+                      <div className="h-full rounded bg-blue-600" style={{ width: `${width}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Sem dados no mes.</p>
           )}
         </Card>
       </div>
@@ -2017,6 +2244,7 @@ export default function ComprasTab() {
           if (!open) {
             setShowAddPurchase(false);
             setRowEditAmountText('');
+            setRowExtraDueDates([]);
           }
         }}
       >
@@ -2172,6 +2400,38 @@ export default function ComprasTab() {
                 </div>
               </div>
             </div>
+            {showAddPurchase && rowExtraCount > 0 && (
+              <div className="mt-2 rounded-lg border border-border bg-secondary/15 px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold">Vencimentos das próximas parcelas</p>
+                  <p className="text-xs text-muted-foreground">Opcional. Preencha apenas as parcelas que quiser criar agora.</p>
+                </div>
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {Array.from({ length: rowExtraCount }, (_item, index) => {
+                    const parcelaNumero = rowInstallmentInfo.current + index + 1;
+                    const totalText = String(rowInstallmentInfo.total).padStart(2, '0');
+                    return (
+                      <div key={`extra-due-${index}`}>
+                        <label className="text-xs font-bold text-muted-foreground uppercase">
+                          {String(parcelaNumero).padStart(2, '0')}/{totalText}
+                        </label>
+                        <Input
+                          type="date"
+                          value={rowExtraDueDates[index] || ''}
+                          className="h-11 text-base font-semibold"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setRowExtraDueDates((prev) =>
+                              Array.from({ length: rowExtraCount }, (_unused, i) => (i === index ? value : prev[i] || ''))
+                            );
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             </div>
           )}
           <div className="flex gap-2">

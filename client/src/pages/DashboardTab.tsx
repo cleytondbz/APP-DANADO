@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency, getDaysInMonth, getDayOfWeek } from '@/lib/helpers';
 import { CHART_HEX, DAY_NAMES_FULL } from '@/lib/types';
@@ -48,6 +48,40 @@ export default function DashboardTab() {
   const [selCat, setSelCat] = useState<string | null>(null);
   const [selDays, setSelDays] = useState<number[]>([0,1,2,3,4,5,6]);
   const [chartType, setChartType] = useState<'line' | 'bar' | 'area'>('bar');
+  const [annualDashboardSummary, setAnnualDashboardSummary] = useState<Array<{
+    month: number;
+    monthKey: string;
+    compras: number;
+    vendas: number;
+    vendasPorLoja?: Record<string, number>;
+  }> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const loadDashboardSummary = async () => {
+      try {
+        const response = await fetch(`/api/dashboard/${selectedYear}`, { signal: controller.signal });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (cancelled || !result?.success || !Array.isArray(result.data)) return;
+        setAnnualDashboardSummary(result.data);
+      } catch (error) {
+        if ((error as Error)?.name !== 'AbortError') {
+          console.warn('[Dashboard] Falha ao carregar resumo anual parcial:', error);
+        }
+      }
+    };
+
+    setAnnualDashboardSummary(null);
+    loadDashboardSummary();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [selectedYear]);
   const [pieChartType, setPieChartType] = useState<'pie' | 'donut'>('pie');
 
   // Get previous month data for comparison
@@ -115,6 +149,13 @@ export default function DashboardTab() {
 
   const comprasVsVendasData = useMemo(() => {
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    if (annualDashboardSummary?.length) {
+      return months.map((name, idx) => {
+        const row = annualDashboardSummary.find((item) => item.month === idx + 1);
+        return { name, compras: row?.compras || 0, vendas: row?.vendas || 0 };
+      });
+    }
+
     const getStoreMonthTotal = (storeId: 'loja1' | 'loja2', year: number, month: number) => {
       const store = stores[storeId];
       if (!store) return 0;
@@ -138,7 +179,7 @@ export default function DashboardTab() {
       const vendas = getStoreMonthTotal('loja1', selectedYear, month) + getStoreMonthTotal('loja2', selectedYear, month);
       return { name, compras, vendas };
     });
-  }, [settings.purchaseEntries, stores, selectedYear]);
+  }, [annualDashboardSummary, settings.purchaseEntries, stores, selectedYear]);
 
   const dowData = useMemo(() => {
     const dt: Record<number, { total: number; count: number }> = {};
