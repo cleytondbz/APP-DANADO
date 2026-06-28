@@ -46,6 +46,14 @@ pids
 *.pid.lock
 data/cloud-sync-pending.json
 data/cloud-sync-pending.json.tmp
+data/caixa/*.json
+data/compras/*.json
+data/fechamento/*.json
+data/lancamentos/*.json
+data/backups-importacao/
+data/logs/
+backups-diarios/
+*.tmp-*
 
 # Coverage directory used by tools like istanbul
 coverage/
