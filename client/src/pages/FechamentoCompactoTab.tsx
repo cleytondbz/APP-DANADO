@@ -114,7 +114,7 @@ export default function FechamentoCompactoTab() {
   const totalSangrias = sangrias.reduce((sum, sangria) => sum + sangria.valor, 0);
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
   const saldoDinheiro = parseCommaNumber(dinheiro) + parseCommaNumber(sobra) - totalSangrias - totalDespesas;
-  const totalGeral = totalVendas - totalSangrias - totalDespesas;
+  const totalGeral = totalVendas - totalDespesas;
 
   const accessLogs = getAccessLogs();
   const todayLogs = accessLogs.filter(log => {
@@ -176,14 +176,18 @@ export default function FechamentoCompactoTab() {
             {renderValorCard(valores[2].label, valores[2].value, valores[2].icon, valores[2].accent)}
             {renderValorCard(valores[3].label, valores[3].value, valores[3].icon, valores[3].accent)}
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {renderValorCard(valores[4].label, valores[4].value, valores[4].icon, valores[4].accent)}
-            <Card className="p-3 border-l-4 border-l-red-500">
-              <div className="flex items-center gap-2 mb-1">
-                <Banknote className="w-4 h-4 text-red-600" />
-                <span className="text-xs font-semibold text-muted-foreground">Total de Sangrias</span>
-              </div>
-              <p className="text-lg font-bold text-red-600">{formatCurrency(totalSangrias)}</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            <Card className="p-2 border-l-4 border-l-amber-500 min-w-0">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase">Sobra</p>
+              <p className="text-sm font-bold text-amber-600 truncate">{formatCurrency(valores[4].value)}</p>
+            </Card>
+            <Card className="p-2 border-l-4 border-l-red-500 min-w-0">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase">Total Sangria</p>
+              <p className="text-sm font-bold text-red-600 truncate">{formatCurrency(totalSangrias)}</p>
+            </Card>
+            <Card className="p-2 border-l-4 border-l-green-500 bg-green-50/60 dark:bg-green-950/20 min-w-0">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase">Saldo Dinheiro</p>
+              <p className="text-sm font-bold text-green-600 truncate">{formatCurrency(saldoDinheiro)}</p>
             </Card>
           </div>
           {extraValores.length > 0 && (
@@ -227,14 +231,10 @@ export default function FechamentoCompactoTab() {
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-3 gap-2">
-          <Card className="col-span-2 p-4 bg-primary/10 border-2 border-primary/30">
-            <p className="text-xs font-bold text-muted-foreground uppercase">Total Geral</p>
-            <p className="text-2xl font-extrabold text-primary">{formatCurrency(totalGeral)}</p>
-          </Card>
-          <Card className="p-2 bg-green-50/60 dark:bg-green-950/20 flex flex-col justify-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">Saldo Dinheiro</p>
-            <p className="text-sm font-bold text-green-600">{formatCurrency(saldoDinheiro)}</p>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card className="p-4 md:p-5 bg-primary/10 border-2 border-primary/30 flex items-center justify-between gap-4">
+            <p className="text-lg md:text-xl font-extrabold text-primary uppercase">Total Geral</p>
+            <p className="text-2xl md:text-3xl font-extrabold text-primary text-right">{formatCurrency(totalGeral)}</p>
           </Card>
         </motion.div>
       </div>

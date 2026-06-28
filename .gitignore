@@ -44,6 +44,8 @@ pids
 *.pid
 *.seed
 *.pid.lock
+data/cloud-sync-pending.json
+data/cloud-sync-pending.json.tmp
 
 # Coverage directory used by tools like istanbul
 coverage/

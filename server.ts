@@ -16,6 +16,10 @@ const SYNC_TOKEN = process.env.SYNC_TOKEN || '';
 const CLOUD_SYNC_URL = process.env.CLOUD_SYNC_URL || '';
 const CLOUD_SYNC_TOKEN = process.env.CLOUD_SYNC_TOKEN || '';
 const ENABLE_CLOUD_PUSH = process.env.ENABLE_CLOUD_PUSH === '1';
+const CLOUD_KEEPALIVE_MS = Math.max(
+  60_000,
+  Number(process.env.CLOUD_KEEPALIVE_MS || 10 * 60_000),
+);
 const normalizeAuthValue = (v: unknown) =>
   String(v ?? '')
     .trim()
@@ -25,6 +29,7 @@ const WEB_LOGIN_USER = normalizeAuthValue(process.env.WEB_LOGIN_USER || '');
 const WEB_LOGIN_PASS = normalizeAuthValue(process.env.WEB_LOGIN_PASS || '');
 const APP_BYPASS_TOKEN = process.env.APP_BYPASS_TOKEN || '';
 const SESSION_COOKIE = 'danado_session';
+const LOGS_DIR = path.resolve(process.cwd(), 'data', 'logs');
 const SYNC_AUDIT_FILE = path.resolve(process.cwd(), 'data', 'sync-audit.log');
 const CAIXA_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'caixa-movements.log');
 const PURCHASE_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'purchase-movements.log');
@@ -151,11 +156,31 @@ const mergeStoreBranch = (
   return next;
 };
 
+const logMonthFromPayload = (payload: Record<string, any>) => {
+  const raw = String(payload?.ts || payload?.createdAt || payload?.timestamp || '');
+  const dateMatch = raw.match(/^(\d{4})-(\d{2})/);
+  if (dateMatch) return `${dateMatch[1]}-${dateMatch[2]}`;
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    const date = new Date(numeric);
+    if (!Number.isNaN(date.getTime())) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+  }
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const appendMonthlyLog = (type: 'sync-audit' | 'caixa-movements' | 'purchase-movements', payload: Record<string, any>) => {
+  const monthKey = logMonthFromPayload(payload);
+  const folder = path.join(LOGS_DIR, type);
+  if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+  fs.appendFileSync(path.join(folder, `${type}-${monthKey}.log`), `${JSON.stringify(payload)}\n`, 'utf-8');
+};
+
 const appendSyncAudit = (payload: Record<string, any>) => {
   try {
-    const folder = path.dirname(SYNC_AUDIT_FILE);
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    fs.appendFileSync(SYNC_AUDIT_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+    appendMonthlyLog('sync-audit', payload);
   } catch (e) {
     console.error('[SyncAudit] Falha ao gravar log:', e);
   }
@@ -203,9 +228,7 @@ const sanitizeLogText = (value: any) =>
 
 const appendCaixaMovementLog = (payload: Record<string, any>) => {
   try {
-    const folder = path.dirname(CAIXA_MOVEMENTS_FILE);
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    fs.appendFileSync(CAIXA_MOVEMENTS_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+    appendMonthlyLog('caixa-movements', payload);
   } catch (e) {
     console.error('[CaixaMovements] Falha ao gravar log:', e);
   }
@@ -213,9 +236,7 @@ const appendCaixaMovementLog = (payload: Record<string, any>) => {
 
 const appendPurchaseMovementLog = (payload: Record<string, any>) => {
   try {
-    const folder = path.dirname(PURCHASE_MOVEMENTS_FILE);
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-    fs.appendFileSync(PURCHASE_MOVEMENTS_FILE, `${JSON.stringify(payload)}\n`, 'utf-8');
+    appendMonthlyLog('purchase-movements', payload);
   } catch (e) {
     console.error('[PurchaseMovements] Falha ao gravar log:', e);
   }
@@ -1068,20 +1089,242 @@ function buildProgramAnnotationAuditLogs(
 const defaultDataDir = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const resolvedDataFile = process.env.DATA_FILE || path.join(defaultDataDir, 'data.json');
 const DATA_FILE = path.resolve(resolvedDataFile);
+const DATA_DIR = path.dirname(DATA_FILE);
 const CLOUD_SYNC_QUEUE_FILE = path.join(path.dirname(DATA_FILE), 'cloud-sync-pending.json');
+const DAILY_BACKUP_DIR = path.resolve(process.cwd(), 'backups-diarios');
+let lastDailyBackupDate = '';
 
 try {
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+  fs.mkdirSync(DATA_DIR, { recursive: true });
 } catch (error) {
   console.error('[Server] Erro ao preparar pasta de dados:', error);
 }
 
 // Função para carregar dados do arquivo
+const SPLIT_STORAGE_VERSION = 1;
+const splitDirs = {
+  caixa: path.join(DATA_DIR, 'caixa'),
+  fechamento: path.join(DATA_DIR, 'fechamento'),
+  lancamentos: path.join(DATA_DIR, 'lancamentos'),
+  compras: path.join(DATA_DIR, 'compras'),
+};
+
+const pad2 = (value: number | string) => String(value).padStart(2, '0');
+
+function safeFilePart(value: any) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'sem-chave';
+}
+
+function safeWriteJson(filePath: string, data: any) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const tmp = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tmp, filePath);
+}
+
+function readJsonFile(filePath: string) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (error) {
+    console.error(`[Storage] Erro ao ler ${filePath}:`, error);
+    return null;
+  }
+}
+
+function listJsonFiles(dir: string) {
+  try {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter((name) => name.toLowerCase().endsWith('.json'))
+      .map((name) => path.join(dir, name));
+  } catch (error) {
+    console.error(`[Storage] Erro ao listar ${dir}:`, error);
+    return [];
+  }
+}
+
+function clearJsonFiles(dir: string) {
+  fs.mkdirSync(dir, { recursive: true });
+  for (const filePath of listJsonFiles(dir)) fs.unlinkSync(filePath);
+}
+
+function periodFromDate(dateKey: string, mode: 'semester' | 'year' | 'month') {
+  const match = String(dateKey || '').match(/^(\d{4})-(\d{2})/);
+  const year = match?.[1] || 'sem-ano';
+  const month = Number(match?.[2] || 1);
+  if (mode === 'month') return `${year}-${pad2(month)}`;
+  if (mode === 'year') return year;
+  return `${year}-${month <= 6 ? '01_06' : '07_12'}`;
+}
+
+function splitStoreDateBranch(branch: any, mode: 'semester' | 'year') {
+  const grouped: Record<string, any> = {};
+  if (!branch || typeof branch !== 'object') return grouped;
+  for (const [storeId, byDate] of Object.entries(branch)) {
+    if (!byDate || typeof byDate !== 'object') continue;
+    for (const [dateKey, value] of Object.entries(byDate as Record<string, any>)) {
+      const period = periodFromDate(dateKey, mode);
+      const fileKey = `${safeFilePart(storeId)}-${period}`;
+      grouped[fileKey] ||= {};
+      grouped[fileKey][storeId] ||= {};
+      grouped[fileKey][storeId][dateKey] = value;
+    }
+  }
+  return grouped;
+}
+
+function writeStoreDateBranch(dir: string, branch: any, mode: 'semester' | 'year') {
+  clearJsonFiles(dir);
+  const grouped = splitStoreDateBranch(branch, mode);
+  for (const [fileKey, payload] of Object.entries(grouped)) {
+    safeWriteJson(path.join(dir, `${fileKey}.json`), payload);
+  }
+}
+
+function readStoreDateBranch(dir: string) {
+  const merged: Record<string, any> = {};
+  for (const filePath of listJsonFiles(dir)) {
+    const payload = readJsonFile(filePath);
+    if (!payload || typeof payload !== 'object') continue;
+    for (const [storeId, byDate] of Object.entries(payload)) {
+      merged[storeId] ||= {};
+      Object.assign(merged[storeId], byDate || {});
+    }
+  }
+  return merged;
+}
+
+function splitPurchaseEntriesByYear(purchaseEntries: any) {
+  const grouped: Record<string, any> = {};
+  if (!purchaseEntries || typeof purchaseEntries !== 'object') return grouped;
+  for (const [monthKey, entries] of Object.entries(purchaseEntries)) {
+    const year = String(monthKey).match(/^(\d{4})-/)?.[1] || 'sem-ano';
+    grouped[year] ||= {};
+    grouped[year][monthKey] = entries;
+  }
+  return grouped;
+}
+
+function writePurchaseEntries(purchaseEntries: any) {
+  clearJsonFiles(splitDirs.compras);
+  const grouped = splitPurchaseEntriesByYear(purchaseEntries);
+  for (const [year, payload] of Object.entries(grouped)) {
+    safeWriteJson(path.join(splitDirs.compras, `compras-${safeFilePart(year)}.json`), payload);
+  }
+}
+
+function readPurchaseEntries() {
+  const merged: Record<string, any> = {};
+  for (const filePath of listJsonFiles(splitDirs.compras)) {
+    const payload = readJsonFile(filePath);
+    if (!payload || typeof payload !== 'object') continue;
+    Object.assign(merged, payload);
+  }
+  return merged;
+}
+
+function readPurchaseEntriesByYear(year: string | number) {
+  const filePath = path.join(splitDirs.compras, `compras-${safeFilePart(year)}.json`);
+  const payload = readJsonFile(filePath);
+  return payload && typeof payload === 'object' ? payload : {};
+}
+
+function readPurchaseEntriesByMonth(monthKey: string) {
+  const year = String(monthKey || '').match(/^(\d{4})-\d{2}$/)?.[1];
+  if (!year) return [];
+  const yearEntries = readPurchaseEntriesByYear(year);
+  const entries = (yearEntries as Record<string, any[]>)[monthKey];
+  return Array.isArray(entries) ? entries : [];
+}
+
+function readStoreDateBranchPeriod(dir: string, storeId: string, period: string) {
+  const filePath = path.join(dir, `${safeFilePart(storeId)}-${safeFilePart(period)}.json`);
+  const payload = readJsonFile(filePath);
+  if (!payload || typeof payload !== 'object') return {};
+  return (payload as Record<string, any>)[storeId] || {};
+}
+
+function filterStoreDateBranchByMonth(branch: Record<string, any>, monthKey: string) {
+  const out: Record<string, any> = {};
+  Object.entries(branch || {}).forEach(([dateKey, value]) => {
+    if (String(dateKey).startsWith(`${monthKey}-`)) out[dateKey] = value;
+  });
+  return out;
+}
+
+function sanitizeSettingsForBootstrap(settings: any = {}) {
+  const light = { ...(settings || {}) };
+  delete light.purchaseEntries;
+  return {
+    ...light,
+    accessLogs: (light.accessLogs || []).map((item: any) => ({
+      ...item,
+      details: sanitizeLogText(item?.details),
+      description: sanitizeLogText(item?.description),
+      userName: sanitizeLogText(item?.userName),
+      field: sanitizeLogText(item?.field),
+    })),
+    timeline: (light.timeline || []).map((item: any) => ({
+      ...item,
+      details: sanitizeLogText(item?.details),
+      description: sanitizeLogText(item?.description),
+      userName: sanitizeLogText(item?.userName),
+      field: sanitizeLogText(item?.field),
+    })),
+  };
+}
+
+function buildLightDataFile(data: Record<string, any>) {
+  const settings = { ...(data.settings || {}) };
+  delete (settings as any).purchaseEntries;
+  const light = {
+    ...data,
+    settings,
+    _storage: {
+      version: SPLIT_STORAGE_VERSION,
+      split: true,
+      updatedAt: getLocalDateTimeString(),
+      folders: {
+        caixa: 'data/caixa',
+        fechamento: 'data/fechamento',
+        lancamentos: 'data/lancamentos',
+        compras: 'data/compras',
+      },
+    },
+  };
+  delete (light as any).caixa;
+  delete (light as any).fechamento;
+  delete (light as any).lancamentos;
+  return light;
+}
+
+function materializeSplitData(baseData: Record<string, any>) {
+  const caixa = readStoreDateBranch(splitDirs.caixa);
+  const fechamento = readStoreDateBranch(splitDirs.fechamento);
+  const lancamentos = readStoreDateBranch(splitDirs.lancamentos);
+  const purchaseEntries = readPurchaseEntries();
+  const settings = { ...(baseData.settings || {}) };
+  if (Object.keys(purchaseEntries).length > 0) settings.purchaseEntries = purchaseEntries;
+  return {
+    ...baseData,
+    settings,
+    caixa,
+    fechamento,
+    lancamentos,
+  };
+}
+
 function loadDataFromFile() {
   try {
     if (fs.existsSync(DATA_FILE)) {
       const data = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(data);
+      return materializeSplitData(JSON.parse(data));
     }
   } catch (error) {
     console.error('[Server] Erro ao carregar dados:', error);
@@ -1092,10 +1335,50 @@ function loadDataFromFile() {
 // Função para salvar dados no arquivo
 function saveDataToFile(data: Record<string, any>) {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    writeStoreDateBranch(splitDirs.caixa, data.caixa || {}, 'semester');
+    writeStoreDateBranch(splitDirs.fechamento, data.fechamento || {}, 'year');
+    writeStoreDateBranch(splitDirs.lancamentos, data.lancamentos || {}, 'year');
+    writePurchaseEntries(data.settings?.purchaseEntries || {});
+    safeWriteJson(DATA_FILE, buildLightDataFile(data));
     scheduleCloudPush();
   } catch (error) {
     console.error('[Server] Erro ao salvar dados:', error);
+  }
+}
+
+function createDailyBackup(reason = 'automatico') {
+  try {
+    const now = new Date();
+    const pad = (value: number, size = 2) => String(value).padStart(size, '0');
+    const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeKey = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const unique = Math.random().toString(36).slice(2, 8);
+    fs.mkdirSync(DAILY_BACKUP_DIR, { recursive: true });
+    const fileName = `backup-completo-${dateKey}_${timeKey}-${unique}.json`;
+    const filePath = path.join(DAILY_BACKUP_DIR, fileName);
+    const snapshot = {
+      backupType: 'completo-diario',
+      reason,
+      createdAt: getLocalDateTimeString(),
+      sourceFile: DATA_FILE,
+      data: dataStore,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), 'utf-8');
+    lastDailyBackupDate = dateKey;
+    console.log(`[Backup] Backup diario criado: ${filePath}`);
+    return filePath;
+  } catch (error) {
+    console.error('[Backup] Falha ao criar backup diario:', error);
+    return null;
+  }
+}
+
+function checkDailyBackupSchedule() {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const dateKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  if (now.getHours() === 20 && now.getMinutes() === 0 && lastDailyBackupDate !== dateKey) {
+    createDailyBackup('agendado-20h');
   }
 }
 
@@ -1160,7 +1443,7 @@ const loadCloudSyncQueue = () => {
         attempts: Number(parsed.attempts || 0),
         nextAttemptAt: Number(parsed.nextAttemptAt || 0),
       };
-      console.log(`[CloudSync] Envio pendente restaurado: ${cloudSyncQueue?.id}`);
+      console.log(`[${getLocalDateTimeString()}] [CloudSync] Envio pendente restaurado: ${cloudSyncQueue?.id}`);
     }
   } catch (error) {
     console.error('[CloudSync] Falha ao restaurar fila:', error);
@@ -1249,7 +1532,7 @@ async function pushDataToCloud() {
       };
       persistCloudSyncQueue();
       console.error(
-        `[CloudSync] Envio pendente ${queued.id}; tentativa ${attempts}; nova tentativa em ${Math.round(delay / 1000)}s:`,
+        `[${getLocalDateTimeString()}] [CloudSync] Envio pendente ${queued.id}; tentativa ${attempts}; nova tentativa em ${Math.round(delay / 1000)}s:`,
         error?.message || error,
       );
     }
@@ -1283,6 +1566,31 @@ function scheduleCloudPush() {
     return;
   }
   armCloudPush(700);
+}
+
+function startCloudSyncKeepAlive() {
+  if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) {
+    console.log('[CloudSync] Sincronizacao automatica com a nuvem desativada.');
+    return;
+  }
+
+  const reconcile = () => {
+    if (cloudSyncQueue) {
+      armCloudPush(Math.max(250, cloudSyncQueue.nextAttemptAt - Date.now()));
+      return;
+    }
+    scheduleCloudPush();
+  };
+
+  // Envia o estado atual logo depois que o servidor inicia, sem depender
+  // de o navegador abrir o localhost.
+  setTimeout(reconcile, 2_000);
+
+  // Mantem o Render ativo e reconcilia periodicamente todo o estado local.
+  setInterval(reconcile, CLOUD_KEEPALIVE_MS);
+  console.log(
+    `[CloudSync] Sincronizacao autonoma ativa a cada ${Math.round(CLOUD_KEEPALIVE_MS / 60_000)} minuto(s).`,
+  );
 }
 
 // Middleware
@@ -1441,6 +1749,8 @@ const loadedData = loadDataFromFile();
 if (loadedData) {
   dataStore = loadedData;
   console.log('[Server] Dados carregados do arquivo');
+  saveDataToFile(dataStore);
+  console.log('[Storage] Estrutura de dados separada carregada/atualizada');
 }
 loadCloudSyncQueue();
 if (cloudSyncQueue) {
@@ -1837,13 +2147,15 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       if (Array.isArray(incomingSettings.accessLogs)) {
         dataStore.settings = {
           ...(dataStore.settings || {}),
-          accessLogs: mergeRemoteLogs(dataStore.settings?.accessLogs || [], incomingSettings.accessLogs, 300),
+          // O localhost é a fonte autoritativa das ocorrências. Substituir a
+          // lista permite propagar também exclusões e limpezas para o Render.
+          accessLogs: incomingSettings.accessLogs.slice(-300),
         };
       }
       if (Array.isArray(incomingSettings.timeline)) {
         dataStore.settings = {
           ...(dataStore.settings || {}),
-          timeline: mergeRemoteLogs(dataStore.settings?.timeline || [], incomingSettings.timeline, 800),
+          timeline: incomingSettings.timeline.slice(-800),
         };
       }
     }
@@ -2184,6 +2496,174 @@ app.get('/api/sync/load/:userId', (_req: Request, res: Response) => {
   });
 });
 
+// Carregamento leve para telas que nao precisam do historico completo.
+// Mantem /api/sync/load intacto para compatibilidade com programas e app antigo.
+app.get('/api/sync/bootstrap', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: {
+      settings: sanitizeSettingsForBootstrap(dataStore.settings || {}),
+      stores: dataStore.stores || {},
+      debts: dataStore.debts || [],
+      saldoDia: dataStore.saldoDia || 0,
+      _syncMeta: ensureSyncMeta(),
+    },
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/compras/:year', (req: Request, res: Response) => {
+  const year = String(req.params.year || '');
+  res.json({
+    success: true,
+    year,
+    data: readPurchaseEntriesByYear(year),
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/compras/:year/:month', (req: Request, res: Response) => {
+  const year = String(req.params.year || '');
+  const month = pad2(req.params.month || '');
+  const monthKey = `${year}-${month}`;
+  res.json({
+    success: true,
+    monthKey,
+    data: readPurchaseEntriesByMonth(monthKey),
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.post('/api/compras/options', (req: Request, res: Response) => {
+  const incomingOptions = req.body?.purchaseOptions || req.body?.options || {};
+  dataStore.settings = {
+    ...(dataStore.settings || {}),
+    purchaseOptions: sanitizePurchaseOptionsForServer(incomingOptions, dataStore.settings?.purchaseOptions),
+  };
+  saveDataToFile(dataStore);
+  res.json({
+    success: true,
+    data: dataStore.settings.purchaseOptions,
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.post('/api/compras/:year/:month', (req: Request, res: Response) => {
+  const year = String(req.params.year || '');
+  const month = pad2(req.params.month || '');
+  const monthKey = `${year}-${month}`;
+  const entries = Array.isArray(req.body?.entries)
+    ? req.body.entries
+    : Array.isArray(req.body?.purchaseEntries)
+      ? req.body.purchaseEntries
+      : [];
+
+  dataStore.settings = {
+    ...(dataStore.settings || {}),
+    purchaseEntries: {
+      ...(dataStore.settings?.purchaseEntries || {}),
+      [monthKey]: entries,
+    },
+  };
+
+  if (req.body?.purchaseOptions || req.body?.options) {
+    dataStore.settings.purchaseOptions = sanitizePurchaseOptionsForServer(
+      req.body.purchaseOptions || req.body.options,
+      dataStore.settings?.purchaseOptions,
+    );
+  }
+
+  saveDataToFile(dataStore);
+  res.json({
+    success: true,
+    monthKey,
+    count: entries.length,
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/periodo/:branch/:storeId/:year/:month', (req: Request, res: Response) => {
+  const branch = String(req.params.branch || '');
+  const storeId = String(req.params.storeId || '');
+  const year = String(req.params.year || '');
+  const month = pad2(req.params.month || '');
+  const monthKey = `${year}-${month}`;
+  const semester = `${year}-${Number(month) <= 6 ? '01_06' : '07_12'}`;
+
+  if (!['caixa', 'fechamento', 'lancamentos'].includes(branch)) {
+    return res.status(400).json({ success: false, error: 'branch_invalido' });
+  }
+
+  if (branch === 'caixa') {
+    const bySemester = readStoreDateBranchPeriod(splitDirs.caixa, storeId, semester);
+    return res.json({
+      success: true,
+      branch,
+      storeId,
+      monthKey,
+      data: filterStoreDateBranchByMonth(bySemester, monthKey),
+      timestamp: getLocalDateTimeString(),
+    });
+  }
+
+  const dir = branch === 'fechamento' ? splitDirs.fechamento : splitDirs.lancamentos;
+  const byYear = readStoreDateBranchPeriod(dir, storeId, year);
+  return res.json({
+    success: true,
+    branch,
+    storeId,
+    monthKey,
+    data: filterStoreDateBranchByMonth(byYear, monthKey),
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
+app.get('/api/dashboard/:year', (req: Request, res: Response) => {
+  const year = Number(req.params.year || 0);
+  if (!Number.isFinite(year) || year < 1900) {
+    return res.status(400).json({ success: false, error: 'ano_invalido' });
+  }
+
+  const monthRows = Array.from({ length: 12 }, (_v, idx) => {
+    const month = idx + 1;
+    const monthKey = `${year}-${pad2(month)}`;
+    const compras = readPurchaseEntriesByMonth(monthKey).reduce(
+      (sum, item: any) => sum + Number(item?.amount || 0),
+      0,
+    );
+
+    const vendasPorLoja: Record<string, number> = {};
+    Object.entries(dataStore.stores || {}).forEach(([storeId, store]: [string, any]) => {
+      const monthData = (store?.months || []).find((m: any) => Number(m?.year) === year && Number(m?.month) === month);
+      const categories = Array.isArray(store?.categories) ? store.categories : [];
+      const vendas = (monthData?.entries || []).reduce((sum: number, entry: any) => {
+        const entryTotal = categories.reduce((entrySum: number, cat: any) => {
+          if (cat?.operation === 'null') return entrySum;
+          const value = Number(entry?.values?.[cat?.id] || 0);
+          return entrySum + (cat?.operation === 'subtract' ? -value : value);
+        }, 0);
+        return sum + entryTotal;
+      }, 0);
+      vendasPorLoja[storeId] = vendas;
+    });
+
+    return {
+      month,
+      monthKey,
+      compras,
+      vendasPorLoja,
+      vendas: Object.values(vendasPorLoja).reduce((sum, value) => sum + Number(value || 0), 0),
+    };
+  });
+
+  res.json({
+    success: true,
+    year,
+    data: monthRows,
+    timestamp: getLocalDateTimeString(),
+  });
+});
+
 // ==================== SYNC ENDPOINTS (Desktop App) ====================
 
 // Health check para o programa desktop
@@ -2401,9 +2881,28 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Conexões podem ser encerradas pelo cliente durante o envio (queda de rede,
+// fechamento do programa ou suspensão do computador). Mantém o terminal
+// legível sem ocultar outros erros reais.
+app.use((error: any, req: Request, res: Response, next: any) => {
+  const aborted =
+    error?.type === 'request.aborted' ||
+    error?.code === 'ECONNABORTED' ||
+    String(error?.message || '').toLowerCase() === 'request aborted';
+  if (!aborted) return next(error);
+  console.warn(
+    `[${getLocalDateTimeString()}] [HTTP] Requisicao interrompida pelo cliente: ${req.method} ${req.originalUrl || req.url}`
+  );
+  if (!res.headersSent) res.status(400).json({ success: false, error: 'request_aborted' });
+});
+
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Server] Running on http://0.0.0.0:${PORT}`);
   console.log(`[Server] API available at http://0.0.0.0:${PORT}/api`);
+  console.log(`[Backup] Backup completo diario agendado para 20:00 em: ${DAILY_BACKUP_DIR}`);
+  checkDailyBackupSchedule();
+  setInterval(checkDailyBackupSchedule, 30_000);
+  startCloudSyncKeepAlive();
 });

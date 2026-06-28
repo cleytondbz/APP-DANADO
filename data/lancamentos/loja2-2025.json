@@ -1,0 +1,5072 @@
+{
+  "loja2": {
+    "2025-01-02": {
+      "date": "2025-01-02",
+      "values": {
+        "dinheiro": 1020.75,
+        "pix": 1389.5,
+        "sobra": 23.75,
+        "cartao": 1730.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-03": {
+      "date": "2025-01-03",
+      "values": {
+        "dinheiro": 572.25,
+        "pix": 680.3,
+        "sobra": 24.25,
+        "cartao": 1029.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-04": {
+      "date": "2025-01-04",
+      "values": {
+        "dinheiro": 784.3,
+        "pix": 2717.9,
+        "sobra": 25.7,
+        "cartao": 3736.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-05": {
+      "date": "2025-01-05",
+      "values": {
+        "dinheiro": 968.5,
+        "pix": 400.3,
+        "sobra": 5.7,
+        "cartao": 1262.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-06": {
+      "date": "2025-01-06",
+      "values": {
+        "dinheiro": 631,
+        "pix": 2005.9,
+        "sobra": 36.55,
+        "cartao": 2126.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-07": {
+      "date": "2025-01-07",
+      "values": {
+        "dinheiro": 1389.5,
+        "pix": 1549.6,
+        "sobra": 124.1,
+        "cartao": 2501,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1100
+      },
+      "source": "manual"
+    },
+    "2025-01-08": {
+      "date": "2025-01-08",
+      "values": {
+        "dinheiro": 759.2,
+        "pix": 1701.1,
+        "sobra": 27.1,
+        "cartao": 2946,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-09": {
+      "date": "2025-01-09",
+      "values": {
+        "dinheiro": 1030.25,
+        "pix": 2193.5,
+        "sobra": 107.75,
+        "cartao": 4947.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-10": {
+      "date": "2025-01-10",
+      "values": {
+        "dinheiro": 530.5,
+        "pix": 2231.5,
+        "sobra": 43.75,
+        "cartao": 3067.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-11": {
+      "date": "2025-01-11",
+      "values": {
+        "dinheiro": 1429.5,
+        "pix": 1808.4,
+        "sobra": 130.75,
+        "cartao": 3852.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-01-12": {
+      "date": "2025-01-12",
+      "values": {
+        "dinheiro": 905.25,
+        "pix": 1017.3,
+        "sobra": 4.75,
+        "cartao": 2549.45,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-13": {
+      "date": "2025-01-13",
+      "values": {
+        "dinheiro": 986.5,
+        "pix": 1564.6,
+        "sobra": 21.5,
+        "cartao": 3089.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-14": {
+      "date": "2025-01-14",
+      "values": {
+        "dinheiro": 553.3,
+        "pix": 1903.2,
+        "sobra": 31.5,
+        "cartao": 2352.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-15": {
+      "date": "2025-01-15",
+      "values": {
+        "dinheiro": 408,
+        "pix": 2566.1,
+        "sobra": 50.05,
+        "cartao": 2935.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-16": {
+      "date": "2025-01-16",
+      "values": {
+        "dinheiro": 1023.4,
+        "pix": 1421.5,
+        "sobra": 49.3,
+        "cartao": 2263.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 90,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-17": {
+      "date": "2025-01-17",
+      "values": {
+        "dinheiro": 545.75,
+        "pix": 1191.2,
+        "sobra": 9.5,
+        "cartao": 2370.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-18": {
+      "date": "2025-01-18",
+      "values": {
+        "dinheiro": 547.5,
+        "pix": 1760.2,
+        "sobra": 66,
+        "cartao": 3709.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-19": {
+      "date": "2025-01-19",
+      "values": {
+        "dinheiro": 311.4,
+        "pix": 434.3,
+        "sobra": 2774.4,
+        "cartao": 32.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-20": {
+      "date": "2025-01-20",
+      "values": {
+        "dinheiro": 695,
+        "pix": 2062.3,
+        "sobra": 90,
+        "cartao": 2251.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 600
+      },
+      "source": "manual"
+    },
+    "2025-01-21": {
+      "date": "2025-01-21",
+      "values": {
+        "dinheiro": 555,
+        "pix": 960.4,
+        "sobra": 38.75,
+        "cartao": 1493.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-22": {
+      "date": "2025-01-22",
+      "values": {
+        "dinheiro": 1151.75,
+        "pix": 1740.4,
+        "sobra": 83.5,
+        "cartao": 2107,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-23": {
+      "date": "2025-01-23",
+      "values": {
+        "dinheiro": 665,
+        "pix": 999.7,
+        "sobra": 35.25,
+        "cartao": 2845.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-24": {
+      "date": "2025-01-24",
+      "values": {
+        "dinheiro": 915.75,
+        "pix": 871.3,
+        "sobra": 76.25,
+        "cartao": 1659.25,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 500
+      },
+      "source": "manual"
+    },
+    "2025-01-25": {
+      "date": "2025-01-25",
+      "values": {
+        "dinheiro": 819.75,
+        "pix": 1760,
+        "sobra": 59,
+        "cartao": 2235.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-26": {
+      "date": "2025-01-26",
+      "values": {
+        "dinheiro": 257,
+        "pix": 1381.7,
+        "sobra": 28.75,
+        "cartao": 2225,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-27": {
+      "date": "2025-01-27",
+      "values": {
+        "dinheiro": 907.25,
+        "pix": 1298.8,
+        "sobra": 15,
+        "cartao": 2621.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-28": {
+      "date": "2025-01-28",
+      "values": {
+        "dinheiro": 983.9,
+        "pix": 1626.6,
+        "sobra": 8.25,
+        "cartao": 2105.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 800
+      },
+      "source": "manual"
+    },
+    "2025-01-29": {
+      "date": "2025-01-29",
+      "values": {
+        "dinheiro": 940.5,
+        "pix": 2379.9,
+        "sobra": 112.6,
+        "cartao": 2249.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-30": {
+      "date": "2025-01-30",
+      "values": {
+        "dinheiro": 621.6,
+        "pix": 1791.8,
+        "sobra": 38.75,
+        "cartao": 4859.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 390,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-01-31": {
+      "date": "2025-01-31",
+      "values": {
+        "dinheiro": 1071.1,
+        "pix": 887.6,
+        "sobra": 15.55,
+        "cartao": 2373.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-01": {
+      "date": "2025-02-01",
+      "values": {
+        "dinheiro": 375.9,
+        "pix": 1146.8,
+        "sobra": 59.5,
+        "cartao": 3860.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-02": {
+      "date": "2025-02-02",
+      "values": {
+        "dinheiro": 497.4,
+        "pix": 473.8,
+        "sobra": 21.15,
+        "cartao": 2006.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-03": {
+      "date": "2025-02-03",
+      "values": {
+        "dinheiro": 960.1,
+        "pix": 982.35,
+        "sobra": 7.8,
+        "cartao": 3212.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 12,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-04": {
+      "date": "2025-02-04",
+      "values": {
+        "dinheiro": 560.15,
+        "pix": 1391.6,
+        "sobra": 22.6,
+        "cartao": 2146.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-05": {
+      "date": "2025-02-05",
+      "values": {
+        "dinheiro": 534.5,
+        "pix": 1537.1,
+        "sobra": 112.5,
+        "cartao": 2136.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-06": {
+      "date": "2025-02-06",
+      "values": {
+        "dinheiro": 433.25,
+        "pix": 1102.5,
+        "sobra": 34.75,
+        "cartao": 3226.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-07": {
+      "date": "2025-02-07",
+      "values": {
+        "dinheiro": 374.45,
+        "pix": 1194.1,
+        "sobra": 87.4,
+        "cartao": 1871.45,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-08": {
+      "date": "2025-02-08",
+      "values": {
+        "dinheiro": 974.8,
+        "pix": 1590,
+        "sobra": 84.8,
+        "cartao": 4922.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 600
+      },
+      "source": "manual"
+    },
+    "2025-02-09": {
+      "date": "2025-02-09",
+      "values": {
+        "dinheiro": 298.75,
+        "pix": 445.9,
+        "sobra": 10.5,
+        "cartao": 1386.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-10": {
+      "date": "2025-02-10",
+      "values": {
+        "dinheiro": 773.5,
+        "pix": 1427.9,
+        "sobra": 46.5,
+        "cartao": 1978.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-11": {
+      "date": "2025-02-11",
+      "values": {
+        "dinheiro": 566.25,
+        "pix": 1495,
+        "sobra": 76.75,
+        "cartao": 2542.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-12": {
+      "date": "2025-02-12",
+      "values": {
+        "dinheiro": 742,
+        "pix": 1179.1,
+        "sobra": 8.25,
+        "cartao": 3735.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-13": {
+      "date": "2025-02-13",
+      "values": {
+        "dinheiro": 991.5,
+        "pix": 1059.5,
+        "sobra": 28.25,
+        "cartao": 1025.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 300
+      },
+      "source": "manual"
+    },
+    "2025-02-14": {
+      "date": "2025-02-14",
+      "values": {
+        "dinheiro": 341.3,
+        "pix": 1002.2,
+        "sobra": 48.75,
+        "cartao": 2943.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-15": {
+      "date": "2025-02-15",
+      "values": {
+        "dinheiro": 671.8,
+        "pix": 1639.9,
+        "sobra": 167.2,
+        "cartao": 3388.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-16": {
+      "date": "2025-02-16",
+      "values": {
+        "dinheiro": 710.2,
+        "pix": 1226.1,
+        "sobra": 23.8,
+        "cartao": 2545.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-17": {
+      "date": "2025-02-17",
+      "values": {
+        "dinheiro": 1197.4,
+        "pix": 874.9,
+        "sobra": 3.6,
+        "cartao": 2772.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 250
+      },
+      "source": "manual"
+    },
+    "2025-02-18": {
+      "date": "2025-02-18",
+      "values": {
+        "dinheiro": 1236.45,
+        "pix": 1318,
+        "sobra": 72.65,
+        "cartao": 1510.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-19": {
+      "date": "2025-02-19",
+      "values": {
+        "dinheiro": 677.1,
+        "pix": 1753.6,
+        "sobra": 15.85,
+        "cartao": 2551.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-20": {
+      "date": "2025-02-20",
+      "values": {
+        "dinheiro": 691.8,
+        "pix": 1259.89,
+        "sobra": 4.1,
+        "cartao": 3341.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-21": {
+      "date": "2025-02-21",
+      "values": {
+        "dinheiro": 763.8,
+        "pix": 1097.5,
+        "sobra": 22.7,
+        "cartao": 1784.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-22": {
+      "date": "2025-02-22",
+      "values": {
+        "dinheiro": 1178.5,
+        "pix": 1458.6,
+        "sobra": 83.75,
+        "cartao": 3376.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-23": {
+      "date": "2025-02-23",
+      "values": {
+        "dinheiro": 514.25,
+        "pix": 533.2,
+        "sobra": 49.75,
+        "cartao": 2237.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-24": {
+      "date": "2025-02-24",
+      "values": {
+        "dinheiro": 621.4,
+        "pix": 1021.2,
+        "sobra": 3.1,
+        "cartao": 1350.65,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-25": {
+      "date": "2025-02-25",
+      "values": {
+        "dinheiro": 1124.15,
+        "pix": 1261.7,
+        "sobra": 19.85,
+        "cartao": 3452.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-26": {
+      "date": "2025-02-26",
+      "values": {
+        "dinheiro": 1028.75,
+        "pix": 1247.9,
+        "sobra": 82.95,
+        "cartao": 1540.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-27": {
+      "date": "2025-02-27",
+      "values": {
+        "dinheiro": 651.5,
+        "pix": 904.3,
+        "sobra": 55.8,
+        "cartao": 4106.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-02-28": {
+      "date": "2025-02-28",
+      "values": {
+        "dinheiro": 1335.75,
+        "pix": 1850.5,
+        "sobra": 19.8,
+        "cartao": 2957.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-01": {
+      "date": "2025-03-01",
+      "values": {
+        "dinheiro": 1110.3,
+        "pix": 2175.3,
+        "sobra": 69.8,
+        "cartao": 2538,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-02": {
+      "date": "2025-03-02",
+      "values": {
+        "dinheiro": 715,
+        "pix": 758.9,
+        "sobra": 14.3,
+        "cartao": 1408.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-03": {
+      "date": "2025-03-03",
+      "values": {
+        "dinheiro": 493.2,
+        "pix": 471.4,
+        "sobra": 51.25,
+        "cartao": 2902,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-03-04": {
+      "date": "2025-03-04",
+      "values": {
+        "dinheiro": 75.9,
+        "pix": 256.3,
+        "sobra": 0.45,
+        "cartao": 1185.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-05": {
+      "date": "2025-03-05",
+      "values": {
+        "dinheiro": 602.2,
+        "pix": 938.3,
+        "sobra": 0.1,
+        "cartao": 787.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-06": {
+      "date": "2025-03-06",
+      "values": {
+        "dinheiro": 1113.4,
+        "pix": 1850,
+        "sobra": 10.85,
+        "cartao": 1733.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 200
+      },
+      "source": "manual"
+    },
+    "2025-03-07": {
+      "date": "2025-03-07",
+      "values": {
+        "dinheiro": 1031.35,
+        "pix": 1793.7,
+        "sobra": 39.65,
+        "cartao": 5870.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-08": {
+      "date": "2025-03-08",
+      "values": {
+        "dinheiro": 1435.5,
+        "pix": 2775.19,
+        "sobra": 91,
+        "cartao": 3661.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-09": {
+      "date": "2025-03-09",
+      "values": {
+        "dinheiro": 372.35,
+        "pix": 1284.2,
+        "sobra": 0.15,
+        "cartao": 2008.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 40,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-10": {
+      "date": "2025-03-10",
+      "values": {
+        "dinheiro": 705.05,
+        "pix": 1514.5,
+        "sobra": 106.7,
+        "cartao": 2170.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-11": {
+      "date": "2025-03-11",
+      "values": {
+        "dinheiro": 1586,
+        "pix": 1046.6,
+        "sobra": 0,
+        "cartao": 2618.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-12": {
+      "date": "2025-03-12",
+      "values": {
+        "dinheiro": 597.75,
+        "pix": 1373.8,
+        "sobra": 5,
+        "cartao": 2983.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 10
+      },
+      "source": "manual"
+    },
+    "2025-03-13": {
+      "date": "2025-03-13",
+      "values": {
+        "dinheiro": 1320.25,
+        "pix": 1650.9,
+        "sobra": 14,
+        "cartao": 1361.01,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-14": {
+      "date": "2025-03-14",
+      "values": {
+        "dinheiro": 416,
+        "pix": 742.3,
+        "sobra": 18.75,
+        "cartao": 2301.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-15": {
+      "date": "2025-03-15",
+      "values": {
+        "dinheiro": 332,
+        "pix": 1106,
+        "sobra": 9.75,
+        "cartao": 4929.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-16": {
+      "date": "2025-03-16",
+      "values": {
+        "dinheiro": 400.8,
+        "pix": 1936.4,
+        "sobra": 6,
+        "cartao": 1639.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-17": {
+      "date": "2025-03-17",
+      "values": {
+        "dinheiro": 706.95,
+        "pix": 2989.6,
+        "sobra": 31.05,
+        "cartao": 3771.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 550
+      },
+      "source": "manual"
+    },
+    "2025-03-18": {
+      "date": "2025-03-18",
+      "values": {
+        "dinheiro": 320.3,
+        "pix": 3249.99,
+        "sobra": 23,
+        "cartao": 2383.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-19": {
+      "date": "2025-03-19",
+      "values": {
+        "dinheiro": 538.5,
+        "pix": 1315.8,
+        "sobra": 50,
+        "cartao": 1612.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-20": {
+      "date": "2025-03-20",
+      "values": {
+        "dinheiro": 502,
+        "pix": 905.7,
+        "sobra": 10,
+        "cartao": 2936.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 400
+      },
+      "source": "manual"
+    },
+    "2025-03-21": {
+      "date": "2025-03-21",
+      "values": {
+        "dinheiro": 745,
+        "pix": 2560.6,
+        "sobra": 0,
+        "cartao": 1829.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-22": {
+      "date": "2025-03-22",
+      "values": {
+        "dinheiro": 787.7,
+        "pix": 1358.8,
+        "sobra": 114,
+        "cartao": 3529.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 800
+      },
+      "source": "manual"
+    },
+    "2025-03-23": {
+      "date": "2025-03-23",
+      "values": {
+        "dinheiro": 840.05,
+        "pix": 1688.7,
+        "sobra": 28,
+        "cartao": 2347.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 800
+      },
+      "source": "manual"
+    },
+    "2025-03-24": {
+      "date": "2025-03-24",
+      "values": {
+        "dinheiro": 923,
+        "pix": 1687.7,
+        "sobra": 30,
+        "cartao": 3984.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-25": {
+      "date": "2025-03-25",
+      "values": {
+        "dinheiro": 402.5,
+        "pix": 1406.8,
+        "sobra": 7,
+        "cartao": 2056.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-26": {
+      "date": "2025-03-26",
+      "values": {
+        "dinheiro": 978.4,
+        "pix": 1999.3,
+        "sobra": 29.1,
+        "cartao": 5704.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 250
+      },
+      "source": "manual"
+    },
+    "2025-03-27": {
+      "date": "2025-03-27",
+      "values": {
+        "dinheiro": 808,
+        "pix": 905.5,
+        "sobra": 10,
+        "cartao": 2529.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-28": {
+      "date": "2025-03-28",
+      "values": {
+        "dinheiro": 438,
+        "pix": 1459,
+        "sobra": 0,
+        "cartao": 1929.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-29": {
+      "date": "2025-03-29",
+      "values": {
+        "dinheiro": 897.5,
+        "pix": 2543.3,
+        "sobra": 81.5,
+        "cartao": 3670,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 600
+      },
+      "source": "manual"
+    },
+    "2025-03-30": {
+      "date": "2025-03-30",
+      "values": {
+        "dinheiro": 279.1,
+        "pix": 1067.3,
+        "sobra": 8.75,
+        "cartao": 2050,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-03-31": {
+      "date": "2025-03-31",
+      "values": {
+        "dinheiro": 264,
+        "pix": 1983.15,
+        "sobra": 81.5,
+        "cartao": 2895.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-01": {
+      "date": "2025-04-01",
+      "values": {
+        "dinheiro": 701.4,
+        "pix": 2811.5,
+        "sobra": 1.35,
+        "cartao": 3060.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-02": {
+      "date": "2025-04-02",
+      "values": {
+        "dinheiro": 1042.6,
+        "pix": 1631.55,
+        "sobra": 19,
+        "cartao": 2183.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-03": {
+      "date": "2025-04-03",
+      "values": {
+        "dinheiro": 683.6,
+        "pix": 2050.04,
+        "sobra": 0,
+        "cartao": 3432.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-04": {
+      "date": "2025-04-04",
+      "values": {
+        "dinheiro": 1108,
+        "pix": 3785.3,
+        "sobra": 52.3,
+        "cartao": 3960.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-05": {
+      "date": "2025-04-05",
+      "values": {
+        "dinheiro": 661,
+        "pix": 2595.8,
+        "sobra": 41.2,
+        "cartao": 4788.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-06": {
+      "date": "2025-04-06",
+      "values": {
+        "dinheiro": 512.5,
+        "pix": 1175.3,
+        "sobra": 19.75,
+        "cartao": 3910,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-07": {
+      "date": "2025-04-07",
+      "values": {
+        "dinheiro": 964.25,
+        "pix": 1833.85,
+        "sobra": 40.5,
+        "cartao": 2431.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-08": {
+      "date": "2025-04-08",
+      "values": {
+        "dinheiro": 1389.75,
+        "pix": 2015,
+        "sobra": 27,
+        "cartao": 3009.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-09": {
+      "date": "2025-04-09",
+      "values": {
+        "dinheiro": 751.75,
+        "pix": 2047.4,
+        "sobra": 0,
+        "cartao": 2210.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 55,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-10": {
+      "date": "2025-04-10",
+      "values": {
+        "dinheiro": 1052.9,
+        "pix": 1455.7,
+        "sobra": 33.1,
+        "cartao": 1678,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-11": {
+      "date": "2025-04-11",
+      "values": {
+        "dinheiro": 563.5,
+        "pix": 2057.66,
+        "sobra": 25,
+        "cartao": 2346.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-12": {
+      "date": "2025-04-12",
+      "values": {
+        "dinheiro": 956.5,
+        "pix": 1466.9,
+        "sobra": 84.75,
+        "cartao": 10139.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-13": {
+      "date": "2025-04-13",
+      "values": {
+        "dinheiro": 525.5,
+        "pix": 1148.7,
+        "sobra": 30,
+        "cartao": 2449.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-14": {
+      "date": "2025-04-14",
+      "values": {
+        "dinheiro": 1849.55,
+        "pix": 1272.2,
+        "sobra": 0.5,
+        "cartao": 2115.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-15": {
+      "date": "2025-04-15",
+      "values": {
+        "dinheiro": 1660,
+        "pix": 1502.8,
+        "sobra": 32,
+        "cartao": 1927.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-16": {
+      "date": "2025-04-16",
+      "values": {
+        "dinheiro": 1266,
+        "pix": 622.3,
+        "sobra": 9,
+        "cartao": 3820.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-17": {
+      "date": "2025-04-17",
+      "values": {
+        "dinheiro": 969,
+        "pix": 2661.09,
+        "sobra": 40.75,
+        "cartao": 3261.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-18": {
+      "date": "2025-04-18",
+      "values": {
+        "dinheiro": 441.4,
+        "pix": 1020.81,
+        "sobra": 0,
+        "cartao": 1635.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-19": {
+      "date": "2025-04-19",
+      "values": {
+        "dinheiro": 559.6,
+        "pix": 2437,
+        "sobra": 2.05,
+        "cartao": 2571.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-20": {
+      "date": "2025-04-20",
+      "values": {
+        "dinheiro": 392.6,
+        "pix": 1019.2,
+        "sobra": 10,
+        "cartao": 0,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-21": {
+      "date": "2025-04-21",
+      "values": {
+        "dinheiro": 422,
+        "pix": 1167.3,
+        "sobra": 0,
+        "cartao": 610.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-22": {
+      "date": "2025-04-22",
+      "values": {
+        "dinheiro": 765.8,
+        "pix": 1500.5,
+        "sobra": 20,
+        "cartao": 0,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-23": {
+      "date": "2025-04-23",
+      "values": {
+        "dinheiro": 635.5,
+        "pix": 1760.6,
+        "sobra": 0,
+        "cartao": 4027.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-24": {
+      "date": "2025-04-24",
+      "values": {
+        "dinheiro": 749.25,
+        "pix": 2098,
+        "sobra": 54.75,
+        "cartao": 1213.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-25": {
+      "date": "2025-04-25",
+      "values": {
+        "dinheiro": 510,
+        "pix": 1379.7,
+        "sobra": 0,
+        "cartao": 1925.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-26": {
+      "date": "2025-04-26",
+      "values": {
+        "dinheiro": 796.25,
+        "pix": 3169.6,
+        "sobra": 10.75,
+        "cartao": 3301.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-27": {
+      "date": "2025-04-27",
+      "values": {
+        "dinheiro": 617.5,
+        "pix": 753.5,
+        "sobra": 54,
+        "cartao": 1456.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-28": {
+      "date": "2025-04-28",
+      "values": {
+        "dinheiro": 1467,
+        "pix": 1837.4,
+        "sobra": 53,
+        "cartao": 2911.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-04-29": {
+      "date": "2025-04-29",
+      "values": {
+        "dinheiro": 946,
+        "pix": 1151.3,
+        "sobra": 28,
+        "cartao": 3134.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-04-30": {
+      "date": "2025-04-30",
+      "values": {
+        "dinheiro": 974.3,
+        "pix": 1067.4,
+        "sobra": 0,
+        "cartao": 2321.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-01": {
+      "date": "2025-05-01",
+      "values": {
+        "dinheiro": 799,
+        "pix": 1023.2,
+        "sobra": 10,
+        "cartao": 1834.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-02": {
+      "date": "2025-05-02",
+      "values": {
+        "dinheiro": 1771.55,
+        "pix": 1751.95,
+        "sobra": 0,
+        "cartao": 3741.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-03": {
+      "date": "2025-05-03",
+      "values": {
+        "dinheiro": 1460,
+        "pix": 1817.1,
+        "sobra": 81.55,
+        "cartao": 3382.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 60,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-04": {
+      "date": "2025-05-04",
+      "values": {
+        "dinheiro": 863.5,
+        "pix": 942.4,
+        "sobra": 0,
+        "cartao": 1323.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-05": {
+      "date": "2025-05-05",
+      "values": {
+        "dinheiro": 1438.5,
+        "pix": 1054.3,
+        "sobra": 44,
+        "cartao": 2216.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-05-06": {
+      "date": "2025-05-06",
+      "values": {
+        "dinheiro": 900.5,
+        "pix": 2598.65,
+        "sobra": 30,
+        "cartao": 2131,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-07": {
+      "date": "2025-05-07",
+      "values": {
+        "dinheiro": 1095.3,
+        "pix": 1323,
+        "sobra": 39,
+        "cartao": 2604.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-08": {
+      "date": "2025-05-08",
+      "values": {
+        "dinheiro": 884,
+        "pix": 1931.19,
+        "sobra": 2.5,
+        "cartao": 2739.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-09": {
+      "date": "2025-05-09",
+      "values": {
+        "dinheiro": 2206.5,
+        "pix": 2112.89,
+        "sobra": 20.1,
+        "cartao": 3300.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-05-10": {
+      "date": "2025-05-10",
+      "values": {
+        "dinheiro": 1084,
+        "pix": 2691.4,
+        "sobra": 35.5,
+        "cartao": 6078.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 700
+      },
+      "source": "manual"
+    },
+    "2025-05-11": {
+      "date": "2025-05-11",
+      "values": {
+        "dinheiro": 336.3,
+        "pix": 1210.9,
+        "sobra": 34.15,
+        "cartao": 1679.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-12": {
+      "date": "2025-05-12",
+      "values": {
+        "dinheiro": 1606.05,
+        "pix": 1311.3,
+        "sobra": 23,
+        "cartao": 2900.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-13": {
+      "date": "2025-05-13",
+      "values": {
+        "dinheiro": 1058.5,
+        "pix": 3923,
+        "sobra": 0,
+        "cartao": 1800.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-14": {
+      "date": "2025-05-14",
+      "values": {
+        "dinheiro": 550.25,
+        "pix": 1554.5,
+        "sobra": 7,
+        "cartao": 4202,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-15": {
+      "date": "2025-05-15",
+      "values": {
+        "dinheiro": 828.45,
+        "pix": 1994.8,
+        "sobra": 25.9,
+        "cartao": 4965.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-16": {
+      "date": "2025-05-16",
+      "values": {
+        "dinheiro": 1715.25,
+        "pix": 2659.8,
+        "sobra": 0,
+        "cartao": 1322.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-17": {
+      "date": "2025-05-17",
+      "values": {
+        "dinheiro": 804.25,
+        "pix": 1982.4,
+        "sobra": 34,
+        "cartao": 1912.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-18": {
+      "date": "2025-05-18",
+      "values": {
+        "dinheiro": 345.5,
+        "pix": 1511,
+        "sobra": 22.5,
+        "cartao": 2050,
+        "duplicata": 656.8,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-19": {
+      "date": "2025-05-19",
+      "values": {
+        "dinheiro": 622.75,
+        "pix": 2514.3,
+        "sobra": 89,
+        "cartao": 1536.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 400
+      },
+      "source": "manual"
+    },
+    "2025-05-20": {
+      "date": "2025-05-20",
+      "values": {
+        "dinheiro": 743.5,
+        "pix": 1118.3,
+        "sobra": 0,
+        "cartao": 1489.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-21": {
+      "date": "2025-05-21",
+      "values": {
+        "dinheiro": 708,
+        "pix": 1694.2,
+        "sobra": 10,
+        "cartao": 3344.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-22": {
+      "date": "2025-05-22",
+      "values": {
+        "dinheiro": 1220.1,
+        "pix": 1260.7,
+        "sobra": 1,
+        "cartao": 2949.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-23": {
+      "date": "2025-05-23",
+      "values": {
+        "dinheiro": 1107.65,
+        "pix": 1649.8,
+        "sobra": 0.1,
+        "cartao": 1744.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-24": {
+      "date": "2025-05-24",
+      "values": {
+        "dinheiro": 815.35,
+        "pix": 2080.4,
+        "sobra": 72.7,
+        "cartao": 5231.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-25": {
+      "date": "2025-05-25",
+      "values": {
+        "dinheiro": 398.7,
+        "pix": 1006,
+        "sobra": 1,
+        "cartao": 2135.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-26": {
+      "date": "2025-05-26",
+      "values": {
+        "dinheiro": 826.15,
+        "pix": 2059.8,
+        "sobra": 51.15,
+        "cartao": 2386.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-27": {
+      "date": "2025-05-27",
+      "values": {
+        "dinheiro": 635.05,
+        "pix": 2304.4,
+        "sobra": 0,
+        "cartao": 2011.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-28": {
+      "date": "2025-05-28",
+      "values": {
+        "dinheiro": 941.75,
+        "pix": 1811.87,
+        "sobra": 6,
+        "cartao": 2636.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-29": {
+      "date": "2025-05-29",
+      "values": {
+        "dinheiro": 1067.05,
+        "pix": 1469.2,
+        "sobra": 11,
+        "cartao": 2503.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-30": {
+      "date": "2025-05-30",
+      "values": {
+        "dinheiro": 972.75,
+        "pix": 1746.8,
+        "sobra": 8,
+        "cartao": 2739.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-05-31": {
+      "date": "2025-05-31",
+      "values": {
+        "dinheiro": 861.75,
+        "pix": 2274.89,
+        "sobra": 14.75,
+        "cartao": 2559.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-01": {
+      "date": "2025-06-01",
+      "values": {
+        "dinheiro": 669.25,
+        "pix": 834.3,
+        "sobra": 0,
+        "cartao": 1647.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-02": {
+      "date": "2025-06-02",
+      "values": {
+        "dinheiro": 775.15,
+        "pix": 1631.9,
+        "sobra": 13.85,
+        "cartao": 2736.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-03": {
+      "date": "2025-06-03",
+      "values": {
+        "dinheiro": 789.5,
+        "pix": 1539,
+        "sobra": 10,
+        "cartao": 5839.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-04": {
+      "date": "2025-06-04",
+      "values": {
+        "dinheiro": 699.85,
+        "pix": 1349.8,
+        "sobra": 25.25,
+        "cartao": 3969.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-05": {
+      "date": "2025-06-05",
+      "values": {
+        "dinheiro": 1025,
+        "pix": 1754.9,
+        "sobra": 18,
+        "cartao": 2610.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-06": {
+      "date": "2025-06-06",
+      "values": {
+        "dinheiro": 1274.2,
+        "pix": 1378,
+        "sobra": 43.3,
+        "cartao": 3215.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-07": {
+      "date": "2025-06-07",
+      "values": {
+        "dinheiro": 1132,
+        "pix": 2503.2,
+        "sobra": 69.5,
+        "cartao": 2741.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 600
+      },
+      "source": "manual"
+    },
+    "2025-06-08": {
+      "date": "2025-06-08",
+      "values": {
+        "dinheiro": 651.2,
+        "pix": 1778.8,
+        "sobra": 26.9,
+        "cartao": 1250.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-09": {
+      "date": "2025-06-09",
+      "values": {
+        "dinheiro": 859.25,
+        "pix": 1134.3,
+        "sobra": 58.75,
+        "cartao": 1685.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-10": {
+      "date": "2025-06-10",
+      "values": {
+        "dinheiro": 931.4,
+        "pix": 1169.7,
+        "sobra": 8.1,
+        "cartao": 2632,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-11": {
+      "date": "2025-06-11",
+      "values": {
+        "dinheiro": 553.05,
+        "pix": 1416.7,
+        "sobra": 94.75,
+        "cartao": 3849.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-12": {
+      "date": "2025-06-12",
+      "values": {
+        "dinheiro": 882.9,
+        "pix": 752.6,
+        "sobra": 15.1,
+        "cartao": 3721.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-13": {
+      "date": "2025-06-13",
+      "values": {
+        "dinheiro": 753,
+        "pix": 1383.3,
+        "sobra": 2,
+        "cartao": 2657.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-14": {
+      "date": "2025-06-14",
+      "values": {
+        "dinheiro": 1555,
+        "pix": 2270.4,
+        "sobra": 40,
+        "cartao": 3011.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-06-15": {
+      "date": "2025-06-15",
+      "values": {
+        "dinheiro": 636,
+        "pix": 623.6,
+        "sobra": 20,
+        "cartao": 1025.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-16": {
+      "date": "2025-06-16",
+      "values": {
+        "dinheiro": 809.15,
+        "pix": 3027.7,
+        "sobra": 93.95,
+        "cartao": 2635.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-17": {
+      "date": "2025-06-17",
+      "values": {
+        "dinheiro": 788.75,
+        "pix": 2498.5,
+        "sobra": 0,
+        "cartao": 2292,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-18": {
+      "date": "2025-06-18",
+      "values": {
+        "dinheiro": 859.9,
+        "pix": 1797.3,
+        "sobra": 19.1,
+        "cartao": 2244.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-19": {
+      "date": "2025-06-19",
+      "values": {
+        "dinheiro": 495.05,
+        "pix": 1150.82,
+        "sobra": 0,
+        "cartao": 1515.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-20": {
+      "date": "2025-06-20",
+      "values": {
+        "dinheiro": 520,
+        "pix": 2157.2,
+        "sobra": 7.75,
+        "cartao": 3454,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-21": {
+      "date": "2025-06-21",
+      "values": {
+        "dinheiro": 576.05,
+        "pix": 2746,
+        "sobra": 30.1,
+        "cartao": 2728.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-22": {
+      "date": "2025-06-22",
+      "values": {
+        "dinheiro": 285.65,
+        "pix": 336,
+        "sobra": 5,
+        "cartao": 1523.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-23": {
+      "date": "2025-06-23",
+      "values": {
+        "dinheiro": 835.4,
+        "pix": 1635.95,
+        "sobra": 0,
+        "cartao": 3363.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-24": {
+      "date": "2025-06-24",
+      "values": {
+        "dinheiro": 779.55,
+        "pix": 1052.9,
+        "sobra": 59.5,
+        "cartao": 2031.63,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-25": {
+      "date": "2025-06-25",
+      "values": {
+        "dinheiro": 542,
+        "pix": 2362.2,
+        "sobra": 19,
+        "cartao": 2240.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-26": {
+      "date": "2025-06-26",
+      "values": {
+        "dinheiro": 941.5,
+        "pix": 1012.3,
+        "sobra": 0,
+        "cartao": 2563.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-27": {
+      "date": "2025-06-27",
+      "values": {
+        "dinheiro": 1291.25,
+        "pix": 1231.4,
+        "sobra": 36.75,
+        "cartao": 1663.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-28": {
+      "date": "2025-06-28",
+      "values": {
+        "dinheiro": 1383.5,
+        "pix": 3598.79,
+        "sobra": 25,
+        "cartao": 2319.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 900
+      },
+      "source": "manual"
+    },
+    "2025-06-29": {
+      "date": "2025-06-29",
+      "values": {
+        "dinheiro": 654.25,
+        "pix": 1720.5,
+        "sobra": 69.75,
+        "cartao": 2672,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-06-30": {
+      "date": "2025-06-30",
+      "values": {
+        "dinheiro": 648.5,
+        "pix": 1118.08,
+        "sobra": 50.75,
+        "cartao": 3392.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-01": {
+      "date": "2025-07-01",
+      "values": {
+        "dinheiro": 871,
+        "pix": 1437.2,
+        "sobra": 1,
+        "cartao": 3704.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-02": {
+      "date": "2025-07-02",
+      "values": {
+        "dinheiro": 920.5,
+        "pix": 2050.4,
+        "sobra": 136,
+        "cartao": 3230.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-03": {
+      "date": "2025-07-03",
+      "values": {
+        "dinheiro": 663.8,
+        "pix": 1324.75,
+        "sobra": 32,
+        "cartao": 2787.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-04": {
+      "date": "2025-07-04",
+      "values": {
+        "dinheiro": 907.85,
+        "pix": 1993.99,
+        "sobra": 20,
+        "cartao": 1938.5,
+        "duplicata": 254.4,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-05": {
+      "date": "2025-07-05",
+      "values": {
+        "dinheiro": 416.7,
+        "pix": 2314.1,
+        "sobra": 16.5,
+        "cartao": 3760.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-06": {
+      "date": "2025-07-06",
+      "values": {
+        "dinheiro": 789.75,
+        "pix": 1497.3,
+        "sobra": 0,
+        "cartao": 3008.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-07": {
+      "date": "2025-07-07",
+      "values": {
+        "dinheiro": 1167.5,
+        "pix": 1333.1,
+        "sobra": 37,
+        "cartao": 1698.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 500
+      },
+      "source": "manual"
+    },
+    "2025-07-08": {
+      "date": "2025-07-08",
+      "values": {
+        "dinheiro": 1043.25,
+        "pix": 1633,
+        "sobra": 25,
+        "cartao": 1961.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-09": {
+      "date": "2025-07-09",
+      "values": {
+        "dinheiro": 1039.5,
+        "pix": 1918.2,
+        "sobra": 40,
+        "cartao": 2518.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-10": {
+      "date": "2025-07-10",
+      "values": {
+        "dinheiro": 1345.8,
+        "pix": 2018,
+        "sobra": 33,
+        "cartao": 3452.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-11": {
+      "date": "2025-07-11",
+      "values": {
+        "dinheiro": 1737.75,
+        "pix": 985.59,
+        "sobra": 66.9,
+        "cartao": 2571,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-12": {
+      "date": "2025-07-12",
+      "values": {
+        "dinheiro": 911.8,
+        "pix": 1564.45,
+        "sobra": 34.05,
+        "cartao": 4308.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-13": {
+      "date": "2025-07-13",
+      "values": {
+        "dinheiro": 831.45,
+        "pix": 1074.9,
+        "sobra": 10,
+        "cartao": 2576.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-14": {
+      "date": "2025-07-14",
+      "values": {
+        "dinheiro": 913.95,
+        "pix": 2221.9,
+        "sobra": 77.1,
+        "cartao": 2949.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-15": {
+      "date": "2025-07-15",
+      "values": {
+        "dinheiro": 1442.75,
+        "pix": 1306.99,
+        "sobra": 85.8,
+        "cartao": 4045,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-16": {
+      "date": "2025-07-16",
+      "values": {
+        "dinheiro": 494.2,
+        "pix": 1528.1,
+        "sobra": 102.05,
+        "cartao": 1619.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-17": {
+      "date": "2025-07-17",
+      "values": {
+        "dinheiro": 1080.15,
+        "pix": 1771,
+        "sobra": 4.9,
+        "cartao": 3830.35,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-18": {
+      "date": "2025-07-18",
+      "values": {
+        "dinheiro": 680,
+        "pix": 2514.1,
+        "sobra": 40,
+        "cartao": 2348.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-19": {
+      "date": "2025-07-19",
+      "values": {
+        "dinheiro": 458.25,
+        "pix": 2595.65,
+        "sobra": 5.25,
+        "cartao": 4733.35,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 20,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-20": {
+      "date": "2025-07-20",
+      "values": {
+        "dinheiro": 766,
+        "pix": 2274.1,
+        "sobra": 48,
+        "cartao": 2212.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-21": {
+      "date": "2025-07-21",
+      "values": {
+        "dinheiro": 993.85,
+        "pix": 1387.91,
+        "sobra": 45,
+        "cartao": 1739.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 300
+      },
+      "source": "manual"
+    },
+    "2025-07-22": {
+      "date": "2025-07-22",
+      "values": {
+        "dinheiro": 846,
+        "pix": 1846.85,
+        "sobra": 4.1,
+        "cartao": 3435.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-23": {
+      "date": "2025-07-23",
+      "values": {
+        "dinheiro": 383.5,
+        "pix": 4031.9,
+        "sobra": 33.3,
+        "cartao": 5519.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-24": {
+      "date": "2025-07-24",
+      "values": {
+        "dinheiro": 461.65,
+        "pix": 1488.2,
+        "sobra": 13,
+        "cartao": 1793.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-25": {
+      "date": "2025-07-25",
+      "values": {
+        "dinheiro": 879.5,
+        "pix": 1053.3,
+        "sobra": 5,
+        "cartao": 2901.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-26": {
+      "date": "2025-07-26",
+      "values": {
+        "dinheiro": 417.5,
+        "pix": 3057.9,
+        "sobra": 39.3,
+        "cartao": 2261.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-27": {
+      "date": "2025-07-27",
+      "values": {
+        "dinheiro": 789.45,
+        "pix": 1393.1,
+        "sobra": 15,
+        "cartao": 2753.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-28": {
+      "date": "2025-07-28",
+      "values": {
+        "dinheiro": 1434.35,
+        "pix": 1410.1,
+        "sobra": 32,
+        "cartao": 1869.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-29": {
+      "date": "2025-07-29",
+      "values": {
+        "dinheiro": 673.3,
+        "pix": 956.9,
+        "sobra": 0.1,
+        "cartao": 3074.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-30": {
+      "date": "2025-07-30",
+      "values": {
+        "dinheiro": 515.5,
+        "pix": 1219.9,
+        "sobra": 2,
+        "cartao": 1518.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-07-31": {
+      "date": "2025-07-31",
+      "values": {
+        "dinheiro": 668.7,
+        "pix": 2777.2,
+        "sobra": 39,
+        "cartao": 3570.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-01": {
+      "date": "2025-08-01",
+      "values": {
+        "dinheiro": 949.35,
+        "pix": 2100.2,
+        "sobra": 24.9,
+        "cartao": 3190.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-02": {
+      "date": "2025-08-02",
+      "values": {
+        "dinheiro": 551.75,
+        "pix": 1276.3,
+        "sobra": 69.9,
+        "cartao": 4305.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-03": {
+      "date": "2025-08-03",
+      "values": {
+        "dinheiro": 841.85,
+        "pix": 1821.73,
+        "sobra": 0,
+        "cartao": 3074.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-04": {
+      "date": "2025-08-04",
+      "values": {
+        "dinheiro": 823.4,
+        "pix": 2908.5,
+        "sobra": 46.3,
+        "cartao": 2311.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-05": {
+      "date": "2025-08-05",
+      "values": {
+        "dinheiro": 990,
+        "pix": 1185.11,
+        "sobra": 14.9,
+        "cartao": 3109.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-06": {
+      "date": "2025-08-06",
+      "values": {
+        "dinheiro": 509.85,
+        "pix": 1168,
+        "sobra": 7,
+        "cartao": 2408.45,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-07": {
+      "date": "2025-08-07",
+      "values": {
+        "dinheiro": 630.2,
+        "pix": 685.3,
+        "sobra": 20.1,
+        "cartao": 3148.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-08": {
+      "date": "2025-08-08",
+      "values": {
+        "dinheiro": 1654.5,
+        "pix": 1217.9,
+        "sobra": 3,
+        "cartao": 3391.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 900
+      },
+      "source": "manual"
+    },
+    "2025-08-09": {
+      "date": "2025-08-09",
+      "values": {
+        "dinheiro": 1219.55,
+        "pix": 1427.1,
+        "sobra": 41.4,
+        "cartao": 5191.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-10": {
+      "date": "2025-08-10",
+      "values": {
+        "dinheiro": 945.8,
+        "pix": 1930.6,
+        "sobra": 104,
+        "cartao": 4259.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-11": {
+      "date": "2025-08-11",
+      "values": {
+        "dinheiro": 542.3,
+        "pix": 1853.1,
+        "sobra": 10,
+        "cartao": 2444.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-12": {
+      "date": "2025-08-12",
+      "values": {
+        "dinheiro": 717.2,
+        "pix": 799.6,
+        "sobra": 38.85,
+        "cartao": 3223.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-13": {
+      "date": "2025-08-13",
+      "values": {
+        "dinheiro": 694.2,
+        "pix": 1351.4,
+        "sobra": 143.9,
+        "cartao": 2353.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-14": {
+      "date": "2025-08-14",
+      "values": {
+        "dinheiro": 728.85,
+        "pix": 1854.79,
+        "sobra": 19.8,
+        "cartao": 3917.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-15": {
+      "date": "2025-08-15",
+      "values": {
+        "dinheiro": 599.3,
+        "pix": 1295.5,
+        "sobra": 0,
+        "cartao": 1996.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 15,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-16": {
+      "date": "2025-08-16",
+      "values": {
+        "dinheiro": 849.8,
+        "pix": 1161.5,
+        "sobra": 13.9,
+        "cartao": 3357.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-17": {
+      "date": "2025-08-17",
+      "values": {
+        "dinheiro": 1057.5,
+        "pix": 1383.6,
+        "sobra": 25,
+        "cartao": 3663.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-18": {
+      "date": "2025-08-18",
+      "values": {
+        "dinheiro": 1180.3,
+        "pix": 1947.99,
+        "sobra": 68,
+        "cartao": 2676.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 800
+      },
+      "source": "manual"
+    },
+    "2025-08-19": {
+      "date": "2025-08-19",
+      "values": {
+        "dinheiro": 642.8,
+        "pix": 2789.7,
+        "sobra": 20.55,
+        "cartao": 3169.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-20": {
+      "date": "2025-08-20",
+      "values": {
+        "dinheiro": 562.9,
+        "pix": 1531.2,
+        "sobra": 0.9,
+        "cartao": 4566.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-21": {
+      "date": "2025-08-21",
+      "values": {
+        "dinheiro": 601.7,
+        "pix": 2724.9,
+        "sobra": 26,
+        "cartao": 2266.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-22": {
+      "date": "2025-08-22",
+      "values": {
+        "dinheiro": 947.35,
+        "pix": 2665.66,
+        "sobra": 7,
+        "cartao": 1536.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 519.9,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-23": {
+      "date": "2025-08-23",
+      "values": {
+        "dinheiro": 436.85,
+        "pix": 1442.8,
+        "sobra": 12.9,
+        "cartao": 2282.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-24": {
+      "date": "2025-08-24",
+      "values": {
+        "dinheiro": 559.25,
+        "pix": 3405,
+        "sobra": 19,
+        "cartao": 3057.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-25": {
+      "date": "2025-08-25",
+      "values": {
+        "dinheiro": 756.8,
+        "pix": 1389.6,
+        "sobra": 11.2,
+        "cartao": 1852,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-26": {
+      "date": "2025-08-26",
+      "values": {
+        "dinheiro": 582.4,
+        "pix": 1001.9,
+        "sobra": 9,
+        "cartao": 2769.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-27": {
+      "date": "2025-08-27",
+      "values": {
+        "dinheiro": 764.9,
+        "pix": 2460.7,
+        "sobra": 0.5,
+        "cartao": 2212.71,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-28": {
+      "date": "2025-08-28",
+      "values": {
+        "dinheiro": 1020.7,
+        "pix": 3663.5,
+        "sobra": 40,
+        "cartao": 2250.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-29": {
+      "date": "2025-08-29",
+      "values": {
+        "dinheiro": 890,
+        "pix": 1012,
+        "sobra": 21,
+        "cartao": 1864,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-30": {
+      "date": "2025-08-30",
+      "values": {
+        "dinheiro": 570.75,
+        "pix": 2064.5,
+        "sobra": 7.75,
+        "cartao": 3368.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-08-31": {
+      "date": "2025-08-31",
+      "values": {
+        "dinheiro": 810.75,
+        "pix": 3760.1,
+        "sobra": 13,
+        "cartao": 1891.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-01": {
+      "date": "2025-09-01",
+      "values": {
+        "dinheiro": 1167.5,
+        "pix": 1463.7,
+        "sobra": 33,
+        "cartao": 3300.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-02": {
+      "date": "2025-09-02",
+      "values": {
+        "dinheiro": 1281.75,
+        "pix": 2414.7,
+        "sobra": 15,
+        "cartao": 1598.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-03": {
+      "date": "2025-09-03",
+      "values": {
+        "dinheiro": 1099.25,
+        "pix": 2152.6,
+        "sobra": 68,
+        "cartao": 2900.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-04": {
+      "date": "2025-09-04",
+      "values": {
+        "dinheiro": 1692.8,
+        "pix": 993.6,
+        "sobra": 76.7,
+        "cartao": 2864.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-05": {
+      "date": "2025-09-05",
+      "values": {
+        "dinheiro": 1563,
+        "pix": 977.69,
+        "sobra": 3.25,
+        "cartao": 3361,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-06": {
+      "date": "2025-09-06",
+      "values": {
+        "dinheiro": 706,
+        "pix": 1856.1,
+        "sobra": 14,
+        "cartao": 2729.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-07": {
+      "date": "2025-09-07",
+      "values": {
+        "dinheiro": 473.1,
+        "pix": 2194.9,
+        "sobra": 25.05,
+        "cartao": 3679.88,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-08": {
+      "date": "2025-09-08",
+      "values": {
+        "dinheiro": 1421.1,
+        "pix": 1877.89,
+        "sobra": 1,
+        "cartao": 2041.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 1000
+      },
+      "source": "manual"
+    },
+    "2025-09-09": {
+      "date": "2025-09-09",
+      "values": {
+        "dinheiro": 721.25,
+        "pix": 1570.1,
+        "sobra": 68,
+        "cartao": 1902.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-10": {
+      "date": "2025-09-10",
+      "values": {
+        "dinheiro": 850.6,
+        "pix": 1798.7,
+        "sobra": 108.9,
+        "cartao": 1739.85,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-11": {
+      "date": "2025-09-11",
+      "values": {
+        "dinheiro": 1344.2,
+        "pix": 2328.1,
+        "sobra": 0,
+        "cartao": 2137.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-12": {
+      "date": "2025-09-12",
+      "values": {
+        "dinheiro": 662,
+        "pix": 1442.5,
+        "sobra": 25,
+        "cartao": 2570.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-13": {
+      "date": "2025-09-13",
+      "values": {
+        "dinheiro": 532.2,
+        "pix": 3388,
+        "sobra": 12.75,
+        "cartao": 3559.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-14": {
+      "date": "2025-09-14",
+      "values": {
+        "dinheiro": 757,
+        "pix": 1653.09,
+        "sobra": 13.1,
+        "cartao": 3170.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-15": {
+      "date": "2025-09-15",
+      "values": {
+        "dinheiro": 541.6,
+        "pix": 0,
+        "sobra": 1346.1,
+        "cartao": 2178,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 300
+      },
+      "source": "manual"
+    },
+    "2025-09-16": {
+      "date": "2025-09-16",
+      "values": {
+        "dinheiro": 731,
+        "pix": 1841.91,
+        "sobra": 18,
+        "cartao": 2743.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-17": {
+      "date": "2025-09-17",
+      "values": {
+        "dinheiro": 1031.35,
+        "pix": 1157.7,
+        "sobra": 0,
+        "cartao": 2360.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-18": {
+      "date": "2025-09-18",
+      "values": {
+        "dinheiro": 702.9,
+        "pix": 1411.1,
+        "sobra": 18,
+        "cartao": 3741.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-19": {
+      "date": "2025-09-19",
+      "values": {
+        "dinheiro": 1281.25,
+        "pix": 0,
+        "sobra": 1347,
+        "cartao": 3723.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-20": {
+      "date": "2025-09-20",
+      "values": {
+        "dinheiro": 1722.1,
+        "pix": 2237.7,
+        "sobra": 71.6,
+        "cartao": 5553.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-21": {
+      "date": "2025-09-21",
+      "values": {
+        "dinheiro": 554.3,
+        "pix": 1635.3,
+        "sobra": 7.1,
+        "cartao": 1336.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-22": {
+      "date": "2025-09-22",
+      "values": {
+        "dinheiro": 575.25,
+        "pix": 1467.7,
+        "sobra": 19.9,
+        "cartao": 2896.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-23": {
+      "date": "2025-09-23",
+      "values": {
+        "dinheiro": 1008.7,
+        "pix": 2092.7,
+        "sobra": 0,
+        "cartao": 1385.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-24": {
+      "date": "2025-09-24",
+      "values": {
+        "dinheiro": 644.9,
+        "pix": 1128.5,
+        "sobra": 0,
+        "cartao": 1767.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 90,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-25": {
+      "date": "2025-09-25",
+      "values": {
+        "dinheiro": 619.5,
+        "pix": 1314.99,
+        "sobra": 0,
+        "cartao": 2194.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-26": {
+      "date": "2025-09-26",
+      "values": {
+        "dinheiro": 764.5,
+        "pix": 2839.2,
+        "sobra": -0.9,
+        "cartao": 1180.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 9,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-27": {
+      "date": "2025-09-27",
+      "values": {
+        "dinheiro": 410.4,
+        "pix": 1216,
+        "sobra": 16,
+        "cartao": 4225.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-28": {
+      "date": "2025-09-28",
+      "values": {
+        "dinheiro": 1245.2,
+        "pix": 1550.6,
+        "sobra": 54.85,
+        "cartao": 3365,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-29": {
+      "date": "2025-09-29",
+      "values": {
+        "dinheiro": 1088.5,
+        "pix": 1010.8,
+        "sobra": 18,
+        "cartao": 1589.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-09-30": {
+      "date": "2025-09-30",
+      "values": {
+        "dinheiro": 765.55,
+        "pix": 2673.6,
+        "sobra": 42,
+        "cartao": 2527.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-01": {
+      "date": "2025-10-01",
+      "values": {
+        "dinheiro": 722.3,
+        "pix": 1400,
+        "sobra": 20,
+        "cartao": 4468.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-02": {
+      "date": "2025-10-02",
+      "values": {
+        "dinheiro": 1440.2,
+        "pix": 1434.5,
+        "sobra": 0,
+        "cartao": 2434.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-03": {
+      "date": "2025-10-03",
+      "values": {
+        "dinheiro": 2056.55,
+        "pix": 2346.8,
+        "sobra": 0,
+        "cartao": 3185.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-04": {
+      "date": "2025-10-04",
+      "values": {
+        "dinheiro": 605.15,
+        "pix": 2410.1,
+        "sobra": 46.25,
+        "cartao": 3174.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-05": {
+      "date": "2025-10-05",
+      "values": {
+        "dinheiro": 377.65,
+        "pix": 1808.3,
+        "sobra": 26.9,
+        "cartao": 1115.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-06": {
+      "date": "2025-10-06",
+      "values": {
+        "dinheiro": 933.3,
+        "pix": 1063.15,
+        "sobra": 5,
+        "cartao": 3008,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 700
+      },
+      "source": "manual"
+    },
+    "2025-10-07": {
+      "date": "2025-10-07",
+      "values": {
+        "dinheiro": 686.65,
+        "pix": 1897,
+        "sobra": 0.75,
+        "cartao": 1937.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-08": {
+      "date": "2025-10-08",
+      "values": {
+        "dinheiro": 5670.25,
+        "pix": 2230,
+        "sobra": 70,
+        "cartao": 2910.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 4000
+      },
+      "source": "manual"
+    },
+    "2025-10-09": {
+      "date": "2025-10-09",
+      "values": {
+        "dinheiro": 1034.85,
+        "pix": 1504.2,
+        "sobra": 24,
+        "cartao": 2477.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-10": {
+      "date": "2025-10-10",
+      "values": {
+        "dinheiro": 1359.9,
+        "pix": 1375.7,
+        "sobra": 22,
+        "cartao": 3239.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-11": {
+      "date": "2025-10-11",
+      "values": {
+        "dinheiro": 1006.2,
+        "pix": 1497.4,
+        "sobra": 27.3,
+        "cartao": 4147.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-12": {
+      "date": "2025-10-12",
+      "values": {
+        "dinheiro": 510.35,
+        "pix": 2099.9,
+        "sobra": 50,
+        "cartao": 4057.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-13": {
+      "date": "2025-10-13",
+      "values": {
+        "dinheiro": 1132.2,
+        "pix": 2491.7,
+        "sobra": 44.4,
+        "cartao": 2313.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-14": {
+      "date": "2025-10-14",
+      "values": {
+        "dinheiro": 884.6,
+        "pix": 1362.1,
+        "sobra": 0.3,
+        "cartao": 2789.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-15": {
+      "date": "2025-10-15",
+      "values": {
+        "dinheiro": 809.25,
+        "pix": 2095.5,
+        "sobra": 10,
+        "cartao": 1743.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-16": {
+      "date": "2025-10-16",
+      "values": {
+        "dinheiro": 821.05,
+        "pix": 1255.8,
+        "sobra": 9.5,
+        "cartao": 3945.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-17": {
+      "date": "2025-10-17",
+      "values": {
+        "dinheiro": 784.6,
+        "pix": 1581,
+        "sobra": 46,
+        "cartao": 3490.6,
+        "duplicata": 408.8,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-18": {
+      "date": "2025-10-18",
+      "values": {
+        "dinheiro": 628.05,
+        "pix": 2849.6,
+        "sobra": 109.5,
+        "cartao": 2517.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-19": {
+      "date": "2025-10-19",
+      "values": {
+        "dinheiro": 1040.2,
+        "pix": 1312.7,
+        "sobra": 90.8,
+        "cartao": 2198.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-20": {
+      "date": "2025-10-20",
+      "values": {
+        "dinheiro": 516.3,
+        "pix": 1193.2,
+        "sobra": 22,
+        "cartao": 2014.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-21": {
+      "date": "2025-10-21",
+      "values": {
+        "dinheiro": 1082.7,
+        "pix": 1312.4,
+        "sobra": 71.8,
+        "cartao": 2047.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-22": {
+      "date": "2025-10-22",
+      "values": {
+        "dinheiro": 716.6,
+        "pix": 1373.3,
+        "sobra": 20,
+        "cartao": 3360.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-23": {
+      "date": "2025-10-23",
+      "values": {
+        "dinheiro": 781.75,
+        "pix": 1905.8,
+        "sobra": 15,
+        "cartao": 1726.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-24": {
+      "date": "2025-10-24",
+      "values": {
+        "dinheiro": 876.3,
+        "pix": 2259.6,
+        "sobra": 0,
+        "cartao": 3186.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-25": {
+      "date": "2025-10-25",
+      "values": {
+        "dinheiro": 679.5,
+        "pix": 756.3,
+        "sobra": 0,
+        "cartao": 1892.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-26": {
+      "date": "2025-10-26",
+      "values": {
+        "dinheiro": 504.55,
+        "pix": 1741,
+        "sobra": 15,
+        "cartao": 2531.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-28": {
+      "date": "2025-10-28",
+      "values": {
+        "dinheiro": 900.75,
+        "pix": 2687.4,
+        "sobra": 45.75,
+        "cartao": 2413.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 800
+      },
+      "source": "manual"
+    },
+    "2025-10-29": {
+      "date": "2025-10-29",
+      "values": {
+        "dinheiro": 710.25,
+        "pix": 1718.3,
+        "sobra": 50,
+        "cartao": 1791.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-30": {
+      "date": "2025-10-30",
+      "values": {
+        "dinheiro": 552.2,
+        "pix": 1460.2,
+        "sobra": 0,
+        "cartao": 3038.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-10-31": {
+      "date": "2025-10-31",
+      "values": {
+        "dinheiro": 577.5,
+        "pix": 1336.2,
+        "sobra": 20,
+        "cartao": 2558.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-01": {
+      "date": "2025-11-01",
+      "values": {
+        "dinheiro": 934.7,
+        "pix": 1784,
+        "sobra": 18.25,
+        "cartao": 3652.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-02": {
+      "date": "2025-11-02",
+      "values": {
+        "dinheiro": 893.25,
+        "pix": 2105.7,
+        "sobra": 15,
+        "cartao": 2666.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-03": {
+      "date": "2025-11-03",
+      "values": {
+        "dinheiro": 531.65,
+        "pix": 2672.5,
+        "sobra": 14.1,
+        "cartao": 2583.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-04": {
+      "date": "2025-11-04",
+      "values": {
+        "dinheiro": 683,
+        "pix": 2429.9,
+        "sobra": 55.75,
+        "cartao": 1850.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 500
+      },
+      "source": "manual"
+    },
+    "2025-11-05": {
+      "date": "2025-11-05",
+      "values": {
+        "dinheiro": 568.9,
+        "pix": 2144.8,
+        "sobra": 106.7,
+        "cartao": 3908.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-06": {
+      "date": "2025-11-06",
+      "values": {
+        "dinheiro": 649,
+        "pix": 2649.3,
+        "sobra": 35,
+        "cartao": 4948,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-07": {
+      "date": "2025-11-07",
+      "values": {
+        "dinheiro": 874.7,
+        "pix": 3183,
+        "sobra": 92,
+        "cartao": 2907.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-08": {
+      "date": "2025-11-08",
+      "values": {
+        "dinheiro": 539.75,
+        "pix": 1900.3,
+        "sobra": 10.55,
+        "cartao": 2746.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-09": {
+      "date": "2025-11-09",
+      "values": {
+        "dinheiro": 726.5,
+        "pix": 1897.4,
+        "sobra": 49.5,
+        "cartao": 3918.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-10": {
+      "date": "2025-11-10",
+      "values": {
+        "dinheiro": 728.8,
+        "pix": 1285.6,
+        "sobra": 0,
+        "cartao": 2053,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-11": {
+      "date": "2025-11-11",
+      "values": {
+        "dinheiro": 599.1,
+        "pix": 2122.8,
+        "sobra": 48.5,
+        "cartao": 2562.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-12": {
+      "date": "2025-11-12",
+      "values": {
+        "dinheiro": 954.5,
+        "pix": 1094.1,
+        "sobra": 47,
+        "cartao": 4625.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-13": {
+      "date": "2025-11-13",
+      "values": {
+        "dinheiro": 1841.9,
+        "pix": 2028.1,
+        "sobra": 39.5,
+        "cartao": 1932.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-14": {
+      "date": "2025-11-14",
+      "values": {
+        "dinheiro": 779.5,
+        "pix": 2224.5,
+        "sobra": 100,
+        "cartao": 4316.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 700
+      },
+      "source": "manual"
+    },
+    "2025-11-15": {
+      "date": "2025-11-15",
+      "values": {
+        "dinheiro": 279.45,
+        "pix": 715.45,
+        "sobra": 3.5,
+        "cartao": 1958.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-16": {
+      "date": "2025-11-16",
+      "values": {
+        "dinheiro": 607.8,
+        "pix": 2678.8,
+        "sobra": 0,
+        "cartao": 1465.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-17": {
+      "date": "2025-11-17",
+      "values": {
+        "dinheiro": 635.6,
+        "pix": 1630.1,
+        "sobra": -9.1,
+        "cartao": 3012.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 400
+      },
+      "source": "manual"
+    },
+    "2025-11-18": {
+      "date": "2025-11-18",
+      "values": {
+        "dinheiro": 383,
+        "pix": 2347.2,
+        "sobra": 69,
+        "cartao": 3186.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-19": {
+      "date": "2025-11-19",
+      "values": {
+        "dinheiro": 1066.2,
+        "pix": 1086.9,
+        "sobra": 40,
+        "cartao": 2704.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-20": {
+      "date": "2025-11-20",
+      "values": {
+        "dinheiro": 729.55,
+        "pix": 1765,
+        "sobra": 17,
+        "cartao": 1974.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-21": {
+      "date": "2025-11-21",
+      "values": {
+        "dinheiro": 744.25,
+        "pix": 2800.3,
+        "sobra": 25,
+        "cartao": 3344.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-22": {
+      "date": "2025-11-22",
+      "values": {
+        "dinheiro": 682.85,
+        "pix": 1139.2,
+        "sobra": 16.45,
+        "cartao": 3720.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-23": {
+      "date": "2025-11-23",
+      "values": {
+        "dinheiro": 658.25,
+        "pix": 894.6,
+        "sobra": 47.8,
+        "cartao": 2651.5,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-24": {
+      "date": "2025-11-24",
+      "values": {
+        "dinheiro": 724,
+        "pix": 1470.5,
+        "sobra": 36,
+        "cartao": 1807.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 200
+      },
+      "source": "manual"
+    },
+    "2025-11-25": {
+      "date": "2025-11-25",
+      "values": {
+        "dinheiro": 948.7,
+        "pix": 3300.1,
+        "sobra": 50.2,
+        "cartao": 2694.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-26": {
+      "date": "2025-11-26",
+      "values": {
+        "dinheiro": 406.55,
+        "pix": 2471.6,
+        "sobra": 18,
+        "cartao": 2816.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 97,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-27": {
+      "date": "2025-11-27",
+      "values": {
+        "dinheiro": 1251.65,
+        "pix": 1989.4,
+        "sobra": 16.6,
+        "cartao": 1605.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-28": {
+      "date": "2025-11-28",
+      "values": {
+        "dinheiro": 710.4,
+        "pix": 1894.8,
+        "sobra": 24.9,
+        "cartao": 3810.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-29": {
+      "date": "2025-11-29",
+      "values": {
+        "dinheiro": 909,
+        "pix": 3361.3,
+        "sobra": 34.75,
+        "cartao": 2488.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-11-30": {
+      "date": "2025-11-30",
+      "values": {
+        "dinheiro": 661,
+        "pix": 1713.5,
+        "sobra": 79,
+        "cartao": 3309.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-01": {
+      "date": "2025-12-01",
+      "values": {
+        "dinheiro": 741.5,
+        "pix": 2431.3,
+        "sobra": 46,
+        "cartao": 2566.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 400
+      },
+      "source": "manual"
+    },
+    "2025-12-02": {
+      "date": "2025-12-02",
+      "values": {
+        "dinheiro": 997.5,
+        "pix": 2265.9,
+        "sobra": 45,
+        "cartao": 2468,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-03": {
+      "date": "2025-12-03",
+      "values": {
+        "dinheiro": 784.5,
+        "pix": 1599.7,
+        "sobra": 36,
+        "cartao": 2280.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-04": {
+      "date": "2025-12-04",
+      "values": {
+        "dinheiro": 621.75,
+        "pix": 3387.9,
+        "sobra": 32,
+        "cartao": 3241.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-05": {
+      "date": "2025-12-05",
+      "values": {
+        "dinheiro": 1126.75,
+        "pix": 1609.5,
+        "sobra": 14,
+        "cartao": 2354.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-06": {
+      "date": "2025-12-06",
+      "values": {
+        "dinheiro": 878.5,
+        "pix": 2681.2,
+        "sobra": 36,
+        "cartao": 3727.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 85,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-07": {
+      "date": "2025-12-07",
+      "values": {
+        "dinheiro": 1066,
+        "pix": 2341.3,
+        "sobra": 17.8,
+        "cartao": 4790.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-08": {
+      "date": "2025-12-08",
+      "values": {
+        "dinheiro": 660.25,
+        "pix": 1948,
+        "sobra": 120.9,
+        "cartao": 1654.8,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-09": {
+      "date": "2025-12-09",
+      "values": {
+        "dinheiro": 683.35,
+        "pix": 1586.5,
+        "sobra": 23.9,
+        "cartao": 2529.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-10": {
+      "date": "2025-12-10",
+      "values": {
+        "dinheiro": 382.4,
+        "pix": 1396.4,
+        "sobra": 0,
+        "cartao": 2830,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-11": {
+      "date": "2025-12-11",
+      "values": {
+        "dinheiro": 600.5,
+        "pix": 1365,
+        "sobra": 63.4,
+        "cartao": 2739.9,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-12": {
+      "date": "2025-12-12",
+      "values": {
+        "dinheiro": 500.75,
+        "pix": 1571.1,
+        "sobra": 75,
+        "cartao": 2777.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-13": {
+      "date": "2025-12-13",
+      "values": {
+        "dinheiro": 446.45,
+        "pix": 3289.3,
+        "sobra": 19.5,
+        "cartao": 3155,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-14": {
+      "date": "2025-12-14",
+      "values": {
+        "dinheiro": 483.3,
+        "pix": 1690,
+        "sobra": 0,
+        "cartao": 6494,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-15": {
+      "date": "2025-12-15",
+      "values": {
+        "dinheiro": 1081.3,
+        "pix": 2806.3,
+        "sobra": 118,
+        "cartao": 2730.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-16": {
+      "date": "2025-12-16",
+      "values": {
+        "dinheiro": 728.5,
+        "pix": 2865.5,
+        "sobra": 109.5,
+        "cartao": 1827,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-17": {
+      "date": "2025-12-17",
+      "values": {
+        "dinheiro": 956.5,
+        "pix": 1279.2,
+        "sobra": 66.25,
+        "cartao": 3228.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-18": {
+      "date": "2025-12-18",
+      "values": {
+        "dinheiro": 1192,
+        "pix": 2196.4,
+        "sobra": 3,
+        "cartao": 2675.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-19": {
+      "date": "2025-12-19",
+      "values": {
+        "dinheiro": 973,
+        "pix": 1650.9,
+        "sobra": 59,
+        "cartao": 1546.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 243,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-20": {
+      "date": "2025-12-20",
+      "values": {
+        "dinheiro": 1027.65,
+        "pix": 3392.3,
+        "sobra": 66.5,
+        "cartao": 5914.2,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-21": {
+      "date": "2025-12-21",
+      "values": {
+        "dinheiro": 833.3,
+        "pix": 1844.89,
+        "sobra": 117.2,
+        "cartao": 2339.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 700
+      },
+      "source": "manual"
+    },
+    "2025-12-22": {
+      "date": "2025-12-22",
+      "values": {
+        "dinheiro": 1036.85,
+        "pix": 3267.57,
+        "sobra": 165.5,
+        "cartao": 3775.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 700
+      },
+      "source": "manual"
+    },
+    "2025-12-23": {
+      "date": "2025-12-23",
+      "values": {
+        "dinheiro": 878.75,
+        "pix": 2858.2,
+        "sobra": 8,
+        "cartao": 5273.6,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-24": {
+      "date": "2025-12-24",
+      "values": {
+        "dinheiro": 1179.55,
+        "pix": 4907.09,
+        "sobra": 77.1,
+        "cartao": 6582.1,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-26": {
+      "date": "2025-12-26",
+      "values": {
+        "dinheiro": 1042.25,
+        "pix": 3063.8,
+        "sobra": 45,
+        "cartao": 2849.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-27": {
+      "date": "2025-12-27",
+      "values": {
+        "dinheiro": 500,
+        "pix": 2514.9,
+        "sobra": 132.5,
+        "cartao": 3050.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-28": {
+      "date": "2025-12-28",
+      "values": {
+        "dinheiro": 565.25,
+        "pix": 882.9,
+        "sobra": 17,
+        "cartao": 1171.4,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-29": {
+      "date": "2025-12-29",
+      "values": {
+        "dinheiro": 877.25,
+        "pix": 2585.8,
+        "sobra": 39.05,
+        "cartao": 2823,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 600
+      },
+      "source": "manual"
+    },
+    "2025-12-30": {
+      "date": "2025-12-30",
+      "values": {
+        "dinheiro": 1311.5,
+        "pix": 1812.69,
+        "sobra": 176.55,
+        "cartao": 3000.7,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    },
+    "2025-12-31": {
+      "date": "2025-12-31",
+      "values": {
+        "dinheiro": 951.9,
+        "pix": 3892.4,
+        "sobra": 81.95,
+        "cartao": 3491.3,
+        "duplicata": 0,
+        "cart_jb": 0,
+        "est_desp": 0,
+        "sangria": 0
+      },
+      "source": "manual"
+    }
+  }
+}

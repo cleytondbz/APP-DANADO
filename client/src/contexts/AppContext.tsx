@@ -438,8 +438,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const syncData = async () => {
         if (Date.now() < suppressServerPushUntilRef.current) return;
         const saveSequence = saveSequenceRef.current;
+        const settingsForSync = { ...settings } as any;
+        // Compras agora tem salvamento parcial por mês. Não enviar todas as
+        // compras no pacote geral evita payload grande e impede sobrescrita
+        // de meses que a tela nem carregou.
+        delete settingsForSync.purchaseEntries;
         const payload = {
-          settings, 
+          settings: settingsForSync, 
           stores, 
           debts, 
           saldoDia, 
