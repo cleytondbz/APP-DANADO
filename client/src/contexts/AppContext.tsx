@@ -444,7 +444,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // de meses que a tela nem carregou.
         delete settingsForSync.purchaseEntries;
         const payload = {
-          settings: settingsForSync, 
+          settings: settingsForSync,
           stores, 
           debts, 
           saldoDia, 

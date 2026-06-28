@@ -30,71 +30,115 @@ export default function LancamentosTab() {
   const [draggedCat, setDraggedCat] = useState<string | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const currentMonthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+  const allMonthDays = useMemo(() => Array.from({ length: days }, (_, i) => i + 1), [days]);
 
   const customSaldoOptions = useMemo(() => {
     const opts: { key: string; storeLabel: string; catLabel: string }[] = [];
-    (['loja1', 'loja2'] as const).forEach((storeId) => {
-      const store = stores[storeId];
-      (store?.categories || []).forEach((c) => {
-        opts.push({
-          key: `${storeId}:${c.id}`,
-          storeLabel: storeId === 'loja1' ? 'Loja 1' : 'Loja 2',
-          catLabel: c.name,
-        });
+    const store = stores[currentStore];
+    (store?.categories || []).forEach((c) => {
+      opts.push({
+        key: c.id,
+        storeLabel: currentStore === 'loja1' ? 'Loja 1' : 'Loja 2',
+        catLabel: c.name,
       });
     });
     return opts;
-  }, [stores]);
+  }, [stores, currentStore]);
 
-  const customSaldoSelection = settings.customSaldoSelection || [];
-  const customSaldoDays = settings.customSaldoDays || [];
-  const activeCustomDays = customSaldoDays.length > 0
-    ? customSaldoDays
-    : Array.from({ length: days }, (_, i) => i + 1);
+  const legacyCustomSaldoSelection = useMemo(() => {
+    return (settings.customSaldoSelection || [])
+      .map((key) => {
+        const [storeId, categoryId] = key.split(':');
+        return storeId === currentStore && categoryId ? categoryId : key;
+      })
+      .filter((key) => customSaldoOptions.some((opt) => opt.key === key));
+  }, [settings.customSaldoSelection, currentStore, customSaldoOptions]);
 
-  const customSaldoTotal = useMemo(() => {
-    return customSaldoSelection.reduce((acc, key) => {
-      const [storeId, categoryId] = key.split(':');
-      const store = stores[storeId];
-      if (!store || !categoryId) return acc;
-      const monthData = store.months.find((m) => m.year === selectedYear && m.month === selectedMonth);
-      if (!monthData) return acc;
+  const customSaldoConfig = settings.customSaldoByStoreMonth?.[currentStore]?.[currentMonthKey];
+  const customSaldoSelection = customSaldoConfig?.selection || legacyCustomSaldoSelection;
+  const activeCustomDays = customSaldoConfig
+    ? customSaldoConfig.days
+    : (settings.customSaldoDays?.length ? settings.customSaldoDays : allMonthDays);
+
+  const calculateCustomSaldoTotal = (selection: string[], selectedDays: number[]) => {
+    const store = stores[currentStore];
+    if (!store) return 0;
+    const monthData = store.months.find((m) => m.year === selectedYear && m.month === selectedMonth);
+    if (!monthData) return 0;
+    return selection.reduce((acc, categoryId) => {
       const catTotal = monthData.entries.reduce((sum, e) => {
         const day = parseInt((e.date || '').split('-')[2] || '0', 10);
-        if (!activeCustomDays.includes(day)) return sum;
+        if (!selectedDays.includes(day)) return sum;
         return sum + (e.values?.[categoryId] || 0);
       }, 0);
       return acc + catTotal;
     }, 0);
-  }, [customSaldoSelection, activeCustomDays, stores, selectedYear, selectedMonth]);
-
-  const toggleCustomSaldo = (key: string) => {
-    setSettings((s) => {
-      const current = s.customSaldoSelection || [];
-      const next = current.includes(key) ? current.filter((x) => x !== key) : [...current, key];
-      return { ...s, customSaldoSelection: next };
-    });
   };
 
-  const toggleCustomSaldoDay = (day: number) => {
-    setSettings((s) => {
-      const current = s.customSaldoDays || [];
-      const next = current.includes(day)
-        ? current.filter((d) => d !== day)
-        : [...current, day].sort((a, b) => a - b);
-      return { ...s, customSaldoDays: next };
-    });
-  };
+  const customSaldoTotal = useMemo(() => {
+    return calculateCustomSaldoTotal(customSaldoSelection, activeCustomDays);
+  }, [customSaldoSelection, activeCustomDays, stores, currentStore, selectedYear, selectedMonth]);
 
-  const setAllCustomSaldoDays = () => {
+  const getCustomSaldoLabels = (selection: string[]) =>
+    selection.map((key) => customSaldoOptions.find((opt) => opt.key === key)?.catLabel || key);
+
+  const saveCustomSaldoConfig = (selection: string[], selectedDays: number[], action: string) => {
+    const cleanSelection = selection.filter((key) => customSaldoOptions.some((opt) => opt.key === key));
+    const cleanDays = Array.from(new Set(selectedDays.filter((day) => day >= 1 && day <= days))).sort((a, b) => a - b);
+    const total = calculateCustomSaldoTotal(cleanSelection, cleanDays);
+    const updatedAt = new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace('T', ' ');
+    const historyEntry = {
+      id: `custom_saldo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: Date.now(),
+      updatedAt,
+      storeId: currentStore,
+      monthKey: currentMonthKey,
+      selection: cleanSelection,
+      selectionLabels: getCustomSaldoLabels(cleanSelection),
+      days: cleanDays,
+      total,
+      action,
+    };
+
     setSettings((s) => ({
       ...s,
-      customSaldoDays: Array.from({ length: days }, (_, i) => i + 1),
+      customSaldoByStoreMonth: {
+        ...(s.customSaldoByStoreMonth || {}),
+        [currentStore]: {
+          ...(s.customSaldoByStoreMonth?.[currentStore] || {}),
+          [currentMonthKey]: {
+            selection: cleanSelection,
+            days: cleanDays,
+            updatedAt,
+            total,
+          },
+        },
+      },
+      customSaldoHistory: [...(s.customSaldoHistory || []), historyEntry].slice(-500),
     }));
   };
 
+  const toggleCustomSaldo = (key: string) => {
+    const next = customSaldoSelection.includes(key)
+      ? customSaldoSelection.filter((x) => x !== key)
+      : [...customSaldoSelection, key];
+    saveCustomSaldoConfig(next, activeCustomDays, 'toggle_category');
+  };
+
+  const toggleCustomSaldoDay = (day: number) => {
+    const next = activeCustomDays.includes(day)
+      ? activeCustomDays.filter((d) => d !== day)
+      : [...activeCustomDays, day].sort((a, b) => a - b);
+    saveCustomSaldoConfig(customSaldoSelection, next, 'toggle_day');
+  };
+
+  const setAllCustomSaldoDays = () => {
+    saveCustomSaldoConfig(customSaldoSelection, allMonthDays, 'select_all_days');
+  };
+
   const clearCustomSaldoDays = () => {
-    setSettings((s) => ({ ...s, customSaldoDays: [] }));
+    saveCustomSaldoConfig(customSaldoSelection, [], 'clear_days');
   };
 
   const monthTotal = useMemo(() => {
@@ -650,7 +694,11 @@ export default function LancamentosTab() {
       {/* Custom Saldo Dialog */}
       <Dialog open={showCustomSaldo} onOpenChange={setShowCustomSaldo}>
         <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Saldo Personalizado</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>
+              Saldo Personalizado - {currentStore === 'loja1' ? 'Loja 1' : 'Loja 2'} / {currentMonthKey}
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">Dias incluidos</h4>
@@ -676,6 +724,9 @@ export default function LancamentosTab() {
             </div>
           </div>
           <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Selecione apenas categorias da loja atual. Cada loja e mês guarda sua própria configuração.
+            </p>
             {customSaldoOptions.map((opt) => {
               const checked = customSaldoSelection.includes(opt.key);
               return (

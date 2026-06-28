@@ -73,6 +73,17 @@ export default function MainLayout() {
               Adicionar
             </Button>
           )}
+          {!isAndroidAppMode && tab === 'compras' && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-9 whitespace-nowrap px-3"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-purchase-global-search'))}
+            >
+              Pesquisa global
+            </Button>
+          )}
           {!isAndroidAppMode && tab === 'compras' ? (
             <div className="relative w-full max-w-xl">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

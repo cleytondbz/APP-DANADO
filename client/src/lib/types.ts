@@ -122,6 +122,24 @@ export interface AppSettings {
   dateProtection?: 'none' | 'day' | 'month';
   customSaldoSelection?: string[];
   customSaldoDays?: number[];
+  customSaldoByStoreMonth?: Record<string, Record<string, {
+    selection: string[];
+    days: number[];
+    updatedAt?: string;
+    total?: number;
+  }>>;
+  customSaldoHistory?: Array<{
+    id: string;
+    timestamp: number;
+    updatedAt: string;
+    storeId: StoreId;
+    monthKey: string;
+    selection: string[];
+    selectionLabels: string[];
+    days: number[];
+    total: number;
+    action: string;
+  }>;
   syncPreference?: 'site' | 'program';
   purchaseEntries?: Record<string, PurchaseEntry[]>;
   purchaseOptions?: PurchaseOptions;

@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 const MATRIX_PASSWORD = 'Spys32636995';
 
 export default function SelectionScreen() {
-  const { setScreen, setTab, settings, setSettings } = useApp();
+  const { setScreen, setTab, settings, setSettings, logAccess } = useApp();
   const [showSenhaVendas, setShowSenhaVendas] = useState(false);
   const [senhaVendasInput, setSenhaVendasInput] = useState('');
+  const [showSenhaCaixa, setShowSenhaCaixa] = useState(false);
+  const [senhaCaixaInput, setSenhaCaixaInput] = useState('');
   const [showAlterarSenha, setShowAlterarSenha] = useState(false);
   const [senhaAntiga, setSenhaAntiga] = useState('');
   const [senhaNova, setSenhaNova] = useState('');
@@ -33,6 +35,30 @@ export default function SelectionScreen() {
     setSenhaVendasInput('');
     setTab('fechamentoCompacto');
     setScreen('main');
+  };
+
+  const abrirCaixa = () => {
+    setShowSenhaCaixa(true);
+    setSenhaCaixaInput('');
+  };
+
+  const confirmarSenhaCaixa = () => {
+    const senha = senhaCaixaInput.trim();
+    const usuario = (settings.actionUsers || []).find(
+      (item) => String(item.password || '').trim() === senha
+    );
+
+    if (!usuario) {
+      logAccess('accessCaixa', 'failed', 'Desconhecido', 'Senha invalida ao acessar a area de Caixa');
+      toast.error('Senha de usuario de acao incorreta!');
+      setSenhaCaixaInput('');
+      return;
+    }
+
+    logAccess('accessCaixa', 'success', usuario.name, 'Entrada autorizada na area de Caixa');
+    setShowSenhaCaixa(false);
+    setSenhaCaixaInput('');
+    setScreen('caixaSelection');
   };
 
   const alterarSenha = () => {
@@ -80,7 +106,7 @@ export default function SelectionScreen() {
         </motion.button>
 
         <motion.button initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          onClick={() => setScreen('caixaSelection')}
+          onClick={abrirCaixa}
           className="w-full bg-accent rounded-2xl p-6 flex flex-col items-center gap-3 hover:opacity-90 active:scale-95 transition-all card-glow"
         >
           <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
@@ -147,6 +173,50 @@ export default function SelectionScreen() {
             <div className="flex gap-3">
               <Button onClick={() => { setShowSenhaVendas(false); setSenhaVendasInput(''); }} variant="outline" className="flex-1">Cancelar</Button>
               <Button onClick={confirmarSenhaVendas} className="flex-1 bg-primary hover:bg-primary/90">Confirmar</Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showSenhaCaixa && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-background rounded-lg shadow-lg p-6 w-96 max-w-[90vw]"
+          >
+            <h2 className="text-lg font-bold text-foreground mb-4">Acesso a Area de Caixa</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Digite a senha de um usuario de acao cadastrado.
+            </p>
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Senha</label>
+              <Input
+                type="password"
+                value={senhaCaixaInput}
+                onChange={(e) => setSenhaCaixaInput(e.target.value)}
+                placeholder="Digite a senha do usuario"
+                onKeyDown={(e) => { if (e.key === 'Enter') confirmarSenhaCaixa(); }}
+                className="w-full tracking-widest"
+                autoFocus
+                maxLength={30}
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setShowSenhaCaixa(false);
+                  setSenhaCaixaInput('');
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button onClick={confirmarSenhaCaixa} className="flex-1 bg-primary hover:bg-primary/90">
+                Confirmar
+              </Button>
             </div>
           </motion.div>
         </div>

@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Lock, Store, Info, Link2, Moon, Sun, Plus, Trash2, ChevronDown, Download, Upload } from 'lucide-react';
+import { Lock, Store, Info, Link2, Moon, Sun, Plus, Trash2, ChevronDown, Download, Upload, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -100,6 +100,7 @@ export default function OpcoesTab() {
   const [newActionUserPassword, setNewActionUserPassword] = useState('');
   const [newActionUserPermissions, setNewActionUserPermissions] = useState<any[]>(['delete']);
   const [editingActionUserId, setEditingActionUserId] = useState<string | null>(null);
+  const [visibleActionUserPasswords, setVisibleActionUserPasswords] = useState<Record<string, boolean>>({});
 
   // Categorias
   const [caixaCategories, setCaixaCategories] = useState(getCaixaCategories());
@@ -480,8 +481,27 @@ export default function OpcoesTab() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-foreground">{user.name}</p>
                     <p className="text-xs text-muted-foreground">Permissões: {user.permissions.join(', ')}</p>
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                      Senha: <span className="font-mono text-foreground">
+                        {visibleActionUserPasswords[user.id] ? user.password : '••••••'}
+                      </span>
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setVisibleActionUserPasswords((prev) => ({
+                          ...prev,
+                          [user.id]: !prev[user.id],
+                        }))
+                      }
+                      className="gap-1"
+                      title={visibleActionUserPasswords[user.id] ? 'Ocultar senha' : 'Ver senha'}
+                    >
+                      {visibleActionUserPasswords[user.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
