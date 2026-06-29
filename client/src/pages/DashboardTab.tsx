@@ -42,7 +42,7 @@ const CustomTooltip = ({ active, payload, label, tooltipTextColor = '#000000', t
 };
 
 export default function DashboardTab() {
-  const { settings, stores, getCategories, getMonthData, selectedYear, selectedMonth } = useApp();
+  const { settings, stores, getCategories, getMonthData, selectedYear, selectedMonth, currentStore, caixaData } = useApp();
   const cats = getCategories();
   const md = getMonthData(selectedYear, selectedMonth);
   const [selCat, setSelCat] = useState<string | null>(null);
@@ -147,6 +147,26 @@ export default function DashboardTab() {
     }));
   }, [catTotals, cats]);
 
+  const boletoCompanyData = useMemo(() => {
+    const monthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+    const totals = new Map<string, number>();
+    const storeCaixa = caixaData?.[currentStore] || {};
+    Object.entries(storeCaixa).forEach(([date, dayData]: [string, any]) => {
+      if (!String(date).startsWith(monthKey)) return;
+      const items = Array.isArray(dayData?.boleto) ? dayData.boleto : [];
+      items.forEach((item: any) => {
+        const label = String(item?.descricao || '').trim();
+        if (!label) return;
+        const amount = Number(String(item?.valor || '0').replace(',', '.')) * (Number(item?.quantidade || 1) || 1);
+        totals.set(label, (totals.get(label) || 0) + amount);
+      });
+    });
+    return Array.from(totals.entries())
+      .map(([name, value], index) => ({ name, value, fill: CHART_HEX[index % CHART_HEX.length] }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [caixaData, currentStore, selectedYear, selectedMonth]);
+
   const comprasVsVendasData = useMemo(() => {
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     if (annualDashboardSummary?.length) {
@@ -217,7 +237,7 @@ export default function DashboardTab() {
   const tooltipBgColor = settings.dasColors?.tooltipBg || '#ffffff';
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="flex flex-col gap-4 pb-24">
 
       {/* Botão de Exportação */}
       <button onClick={handleExportPDF}
@@ -262,6 +282,32 @@ export default function DashboardTab() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="order-[100] bg-card rounded-2xl p-4">
+        <h3 className="text-sm font-bold text-foreground mb-3">Empresas no Boleto</h3>
+        {boletoCompanyData.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3 items-center">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={boletoCompanyData} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
+                <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => `R$${(Number(v)/1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                <Tooltip content={<CustomTooltip tooltipTextColor={tooltipTextColor} tooltipBgColor={tooltipBgColor} />} />
+                <Bar dataKey="value" name="Valor" fill="#ef4444" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="space-y-1.5">
+              {boletoCompanyData.map((item) => (
+                <div key={item.name} className="flex justify-between gap-2 rounded-lg bg-secondary/60 px-2 py-1.5 text-xs">
+                  <span className="font-semibold truncate">{item.name}</span>
+                  <span className="font-bold text-red-600">{formatCurrency(item.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground text-sm py-8">Sem empresas de boleto neste mês</p>
+        )}
       </div>
 
       {/* Daily Evolution */}
@@ -409,7 +455,7 @@ export default function DashboardTab() {
         <TotaisTab embedded />
       </div>
 
-      <div className="bg-card rounded-2xl p-4">
+      <div className="order-[90] bg-card rounded-2xl p-4">
         <h3 className="text-sm font-bold text-foreground mb-3">Comparativo Anual {selectedYear} (Compras x Vendas)</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={comprasVsVendasData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>

@@ -3,12 +3,14 @@ export interface Category {
   name: string;
   operation: 'add' | 'subtract' | 'null';
   order: number;
+  activeMonths?: string[]; // YYYY-MM; vazio/indefinido = todos os meses
 }
 
 export interface DayEntry {
   date: string;
   values: Record<string, number>;
   manualFields?: string[];
+  details?: Record<string, Array<{ label: string; amount: number }>>;
 }
 
 export interface MonthData {
@@ -95,6 +97,7 @@ export interface TimelineEntry {
 export interface AppSettings {
   password: string;
   senhaVendas?: string;
+  boletoCompanies?: string[];
   actionUsers?: ActionUser[];
   accessLogs?: AccessLog[];
   timeline?: TimelineEntry[];
@@ -123,6 +126,7 @@ export interface AppSettings {
   customSaldoSelection?: string[];
   customSaldoDays?: number[];
   customSaldoByStoreMonth?: Record<string, Record<string, {
+    label?: string;
     selection: string[];
     days: number[];
     updatedAt?: string;

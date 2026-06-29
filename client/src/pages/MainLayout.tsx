@@ -25,6 +25,7 @@ const tabs: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
 export default function MainLayout() {
   const { tab, setTab, setScreen, currentStore, setCurrentStore, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useApp();
   const [purchaseSearch, setPurchaseSearch] = useState('');
+  const [purchaseServerStatus, setPurchaseServerStatus] = useState<'idle' | 'saving' | 'offline' | 'online'>('idle');
   const isAndroidAppMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('app') === 'android';
   const availableTabs = isAndroidAppMode
     ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'fechamentoCompacto')
@@ -35,6 +36,17 @@ export default function MainLayout() {
       setTab('dashboard');
     }
   }, [isAndroidAppMode, tab, setTab]);
+
+  useEffect(() => {
+    const handlePurchaseServerStatus = (event: Event) => {
+      const status = (event as CustomEvent).detail;
+      if (status === 'idle' || status === 'saving' || status === 'offline' || status === 'online') {
+        setPurchaseServerStatus(status);
+      }
+    };
+    window.addEventListener('purchase-server-status-change', handlePurchaseServerStatus);
+    return () => window.removeEventListener('purchase-server-status-change', handlePurchaseServerStatus);
+  }, []);
 
   const navMonth = (dir: number) => {
     let m = selectedMonth + dir;
@@ -57,9 +69,15 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
+      <header className={`sticky top-0 z-40 backdrop-blur-xl border-b px-4 py-3 flex items-center gap-3 transition-colors ${
+        tab === 'compras' && purchaseServerStatus === 'offline'
+          ? 'border-red-700 bg-red-600/95 text-white'
+          : tab === 'compras' && purchaseServerStatus === 'online'
+            ? 'border-green-700 bg-green-600/95 text-white'
+            : 'border-border bg-card/80'
+      }`}>
         <button onClick={() => setScreen('storeSelection')} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-          <ArrowLeft className="w-4 h-4 text-primary" />
+          <ArrowLeft className={`w-4 h-4 ${tab === 'compras' && purchaseServerStatus !== 'idle' ? 'text-white' : 'text-primary'}`} />
         </button>
         <div className="flex-1 flex items-center justify-center gap-3">
           {!isAndroidAppMode && tab === 'compras' && (
@@ -91,7 +109,7 @@ export default function MainLayout() {
                 value={purchaseSearch}
                 onChange={(e) => updatePurchaseSearch(e.target.value)}
                 placeholder="Pesquisar compras..."
-                className="h-9 bg-background pl-9"
+              className="h-9 bg-background pl-9"
               />
             </div>
           ) : (
@@ -120,14 +138,14 @@ export default function MainLayout() {
           )}
           <div className="inline-flex items-center rounded-lg border border-border bg-card px-2 py-1 gap-2">
             <button onClick={() => navMonth(-1)} className="p-1 rounded hover:bg-secondary">
-              <ChevronLeft className="w-4 h-4 text-primary" />
+              <ChevronLeft className={`w-4 h-4 ${tab === 'compras' && purchaseServerStatus !== 'idle' ? 'text-white' : 'text-primary'}`} />
             </button>
             <div className="text-center leading-tight min-w-[104px]">
               <div className="text-sm font-semibold">{MONTH_NAMES[selectedMonth - 1]}</div>
               <div className="text-[10px] text-muted-foreground">{selectedYear}</div>
             </div>
             <button onClick={() => navMonth(1)} className="p-1 rounded hover:bg-secondary">
-              <ChevronRight className="w-4 h-4 text-primary" />
+              <ChevronRight className={`w-4 h-4 ${tab === 'compras' && purchaseServerStatus !== 'idle' ? 'text-white' : 'text-primary'}`} />
             </button>
           </div>
         </div>

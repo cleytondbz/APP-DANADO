@@ -77,8 +77,9 @@ const isAnnotationActionLog = (details?: string) => {
 };
 
 export default function FechamentoCompactoTab() {
-  const { currentStore, getAccessLogs, fechamentoData, settings } = useApp();
+  const { currentStore, getAccessLogs, fechamentoData, caixaData, settings } = useApp();
   const [data, setData] = useState<string>(() => localDateStr());
+  const [showBoletoCompanies, setShowBoletoCompanies] = useState(false);
 
   const fechamentoPorData = fechamentoData[currentStore] || {};
   const fechamentoAtual = fechamentoPorData[data] || {};
@@ -115,6 +116,15 @@ export default function FechamentoCompactoTab() {
   const totalDespesas = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
   const saldoDinheiro = parseCommaNumber(dinheiro) + parseCommaNumber(sobra) - totalSangrias - totalDespesas;
   const totalGeral = totalVendas - totalDespesas;
+  const boletoItems = Array.isArray(caixaData?.[currentStore]?.[data]?.boleto)
+    ? caixaData[currentStore][data].boleto
+    : [];
+  const boletoCompanies = boletoItems
+    .filter((item: any) => String(item?.descricao || '').trim())
+    .map((item: any) => ({
+      label: String(item.descricao || '').trim(),
+      amount: parseCommaNumber(item.valor) * (parseCommaNumber(item.quantidade || 1) || 1),
+    }));
 
   const accessLogs = getAccessLogs();
   const todayLogs = accessLogs.filter(log => {
@@ -131,8 +141,12 @@ export default function FechamentoCompactoTab() {
     setData((current) => addDaysToDateStr(current, offset));
   };
 
-  const renderValorCard = (label: string, value: number, Icon: any, accent: string) => (
-    <Card key={label} className={`p-3 md:p-4 border-l-4 ${accent.split(' ')[0]} min-h-[96px]`}>
+  const renderValorCard = (label: string, value: number, Icon: any, accent: string, onClick?: () => void) => (
+    <Card
+      key={label}
+      onClick={onClick}
+      className={`p-3 md:p-4 border-l-4 ${accent.split(' ')[0]} min-h-[96px] ${onClick ? 'cursor-pointer hover:bg-primary/5 transition-colors' : ''}`}
+    >
       <div className="flex items-center gap-2 mb-2">
         <Icon className={`w-5 h-5 ${accent.split(' ')[1]}`} />
         <span className="text-sm font-semibold text-muted-foreground">{label}</span>
@@ -174,8 +188,28 @@ export default function FechamentoCompactoTab() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {renderValorCard(valores[2].label, valores[2].value, valores[2].icon, valores[2].accent)}
-            {renderValorCard(valores[3].label, valores[3].value, valores[3].icon, valores[3].accent)}
+            {renderValorCard(valores[3].label, valores[3].value, valores[3].icon, valores[3].accent, () => setShowBoletoCompanies(true))}
           </div>
+          {showBoletoCompanies && (
+            <div className="relative">
+              <Card className="absolute right-0 top-0 z-40 w-full max-w-sm p-3 space-y-2 border-red-200 shadow-xl">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-extrabold text-red-600">Empresas do Boleto</p>
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowBoletoCompanies(false)}>×</Button>
+                </div>
+                <div className="max-h-56 overflow-y-auto space-y-1.5">
+                  {boletoCompanies.length > 0 ? boletoCompanies.map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="flex items-center justify-between gap-3 rounded-md bg-secondary/60 px-2 py-1.5 text-xs">
+                      <span className="font-semibold truncate">{item.label}</span>
+                      <span className="font-bold text-red-600">{formatCurrency(item.amount)}</span>
+                    </div>
+                  )) : (
+                    <p className="text-xs text-muted-foreground text-center py-3">Nenhuma empresa registrada em boleto neste dia.</p>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-1.5">
             <Card className="p-2 border-l-4 border-l-amber-500 min-w-0">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase">Sobra</p>

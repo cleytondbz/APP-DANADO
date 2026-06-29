@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertTriangle, Plus, Pencil, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, Pencil, Trash2, BadgeCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PurchaseEntry, PurchaseOptions } from '@/lib/types';
 import { localDateStr } from '@/lib/helpers';
@@ -249,14 +249,17 @@ export default function ComprasTab() {
   const [showClearMonthDialog, setShowClearMonthDialog] = useState(false);
   const [clearMonthPassword, setClearMonthPassword] = useState('');
   const [clearMonthConfirmText, setClearMonthConfirmText] = useState('');
+  const [paidCelebrationMessage, setPaidCelebrationMessage] = useState('');
   const [savePendingMessage, setSavePendingMessage] = useState('');
   const [saveFailureMessage, setSaveFailureMessage] = useState('');
+  const [saveRestoredMessage, setSaveRestoredMessage] = useState('');
   const [showSaveFailureDialog, setShowSaveFailureDialog] = useState(false);
   const purchaseSaveAttemptRef = useRef(false);
   const purchaseSaveAttemptIdRef = useRef(0);
   const purchaseSaveStartedAtRef = useRef(0);
   const purchaseSaveSuccessMessageRef = useRef('');
   const purchaseSaveTimeoutRef = useRef<number | null>(null);
+  const purchaseHealthCheckRef = useRef<number | null>(null);
   const dueDateRef = useRef<HTMLInputElement | null>(null);
   const groupRef = useRef<HTMLInputElement | null>(null);
   const supplierRef = useRef<HTMLInputElement | null>(null);
@@ -711,6 +714,15 @@ export default function ComprasTab() {
     }
   };
 
+  const emitPurchaseServerStatus = (status: 'idle' | 'saving' | 'offline' | 'online') => {
+    window.dispatchEvent(new CustomEvent('purchase-server-status-change', { detail: status }));
+  };
+
+  const clearRestoredNotice = () => {
+    if (saveRestoredMessage) setSaveRestoredMessage('');
+    emitPurchaseServerStatus('idle');
+  };
+
   const getPurchaseServerUrl = () => {
     if (typeof window === 'undefined') return '';
     const host = window.location.hostname;
@@ -724,6 +736,7 @@ export default function ComprasTab() {
     clearPurchaseSaveTimeout();
     purchaseSaveAttemptRef.current = false;
     purchaseSaveSuccessMessageRef.current = '';
+    setSaveRestoredMessage('');
     setSavePendingMessage('');
     const time = new Date().toLocaleTimeString('pt-BR', {
       hour: '2-digit',
@@ -733,7 +746,27 @@ export default function ComprasTab() {
     setSaveFailureMessage(
       `Falha ao salvar compras no servidor (${time}). Nao atualize a pagina. Verifique a rede/terminal do servidor e salve novamente quando a conexao voltar.`
     );
+    emitPurchaseServerStatus('offline');
     setShowSaveFailureDialog(true);
+  };
+
+  const checkPurchaseServerHealth = async () => {
+    const serverUrl = getPurchaseServerUrl();
+    if (!serverUrl) return false;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 2500);
+    try {
+      const response = await fetch(`${serverUrl}/api/health`, {
+        method: 'GET',
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      return response.ok;
+    } catch {
+      return false;
+    } finally {
+      window.clearTimeout(timer);
+    }
   };
 
   const checkPurchaseServerImmediately = async (attemptId: number) => {
@@ -829,6 +862,8 @@ export default function ComprasTab() {
       purchaseSaveSuccessMessageRef.current = '';
       setSavePendingMessage('');
       setSaveFailureMessage('');
+      setSaveRestoredMessage('');
+      emitPurchaseServerStatus('idle');
       setShowSaveFailureDialog(false);
     } catch {
       showPurchaseSaveFailure(attemptId);
@@ -838,6 +873,7 @@ export default function ComprasTab() {
   };
 
   const markPurchaseSavePending = (successMessage: string) => {
+    clearRestoredNotice();
     clearPurchaseSaveTimeout();
     const attemptId = purchaseSaveAttemptIdRef.current + 1;
     purchaseSaveAttemptIdRef.current = attemptId;
@@ -845,8 +881,10 @@ export default function ComprasTab() {
     purchaseSaveAttemptRef.current = true;
     purchaseSaveSuccessMessageRef.current = successMessage;
     setSaveFailureMessage('');
+    setSaveRestoredMessage('');
     setShowSaveFailureDialog(false);
     setSavePendingMessage('Aguardando confirmacao do servidor...');
+    emitPurchaseServerStatus('saving');
     void checkPurchaseServerImmediately(attemptId);
 
     purchaseSaveTimeoutRef.current = window.setTimeout(() => {
@@ -871,10 +909,55 @@ export default function ComprasTab() {
     window.addEventListener('danado:server-save-success', handleServerSaveSuccess);
     return () => {
       clearPurchaseSaveTimeout();
+      if (purchaseHealthCheckRef.current !== null) {
+        window.clearInterval(purchaseHealthCheckRef.current);
+        purchaseHealthCheckRef.current = null;
+      }
       window.removeEventListener('danado:server-save-error', handleServerSaveError);
       window.removeEventListener('danado:server-save-success', handleServerSaveSuccess);
     };
   }, []);
+
+  useEffect(() => {
+    if (!saveFailureMessage) {
+      if (purchaseHealthCheckRef.current !== null) {
+        window.clearInterval(purchaseHealthCheckRef.current);
+        purchaseHealthCheckRef.current = null;
+      }
+      return;
+    }
+
+    const checkAndMarkRestored = async () => {
+      const ok = await checkPurchaseServerHealth();
+      if (!ok) return;
+      const time = new Date().toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      setSaveFailureMessage('');
+      setShowSaveFailureDialog(false);
+      setSavePendingMessage('');
+      setSaveRestoredMessage(`Servidor voltou (${time}). Pode usar normalmente.`);
+      emitPurchaseServerStatus('online');
+      if (purchaseHealthCheckRef.current !== null) {
+        window.clearInterval(purchaseHealthCheckRef.current);
+        purchaseHealthCheckRef.current = null;
+      }
+    };
+
+    void checkAndMarkRestored();
+    purchaseHealthCheckRef.current = window.setInterval(() => {
+      void checkAndMarkRestored();
+    }, 15000);
+
+    return () => {
+      if (purchaseHealthCheckRef.current !== null) {
+        window.clearInterval(purchaseHealthCheckRef.current);
+        purchaseHealthCheckRef.current = null;
+      }
+    };
+  }, [saveFailureMessage]);
 
   const clearForm = () => {
     setForm(emptyForm);
@@ -978,13 +1061,15 @@ export default function ComprasTab() {
     setShowRowEdit(true);
   };
 
-  const saveRowEdit = () => {
-    if (!rowEditForm) return;
-    if (!rowEditForm.dueDate) {
+  const saveRowEdit = (opts: { closeDialog?: boolean; successMessage?: string; formOverride?: PurchaseEntry } = {}) => {
+    const closeDialog = opts.closeDialog ?? true;
+    const activeRowForm = opts.formOverride || rowEditForm;
+    if (!activeRowForm) return;
+    if (!activeRowForm.dueDate) {
       toast.error('Vencimento e obrigatorio.');
       return;
     }
-    const fixedInstallments = toInstallmentsFixed(rowEditForm.installments);
+    const fixedInstallments = toInstallmentsFixed(activeRowForm.installments);
     if (!validateInstallments(fixedInstallments)) {
       toast.error('Parcela deve estar no formato 01/05 ou 10/10.');
       return;
@@ -997,18 +1082,18 @@ export default function ComprasTab() {
           .filter((item) => !!item.dueDate)
       : [];
 
-    const cleanSupplier = sanitizeStoredText(rowEditForm.supplier || '');
-    const cleanInstitution = sanitizeStoredText(rowEditForm.financialInstitution || '');
-    const resolvedDifType = normalizeDifType(rowEditForm.difType) || getMappedSupplierDif(cleanSupplier, options);
+    const cleanSupplier = sanitizeStoredText(activeRowForm.supplier || '');
+    const cleanInstitution = sanitizeStoredText(activeRowForm.financialInstitution || '');
+    const resolvedDifType = normalizeDifType(activeRowForm.difType) || getMappedSupplierDif(cleanSupplier, options);
     const nextEntry: PurchaseEntry = {
-      ...rowEditForm,
-      amount: Number.isFinite(Number(rowEditForm.amount)) ? Number(rowEditForm.amount) : 0,
-      group: (rowEditForm.group || '').trim() || 'M',
+      ...activeRowForm,
+      amount: Number.isFinite(Number(activeRowForm.amount)) ? Number(activeRowForm.amount) : 0,
+      group: (activeRowForm.group || '').trim() || 'M',
       supplier: cleanSupplier,
-      documentNumber: (rowEditForm.documentNumber || '').trim(),
-      issueDate: rowEditForm.issueDate || '',
+      documentNumber: (activeRowForm.documentNumber || '').trim(),
+      issueDate: activeRowForm.issueDate || '',
       installments: fixedInstallments,
-      paidDate: rowEditForm.paidDate || undefined,
+      paidDate: activeRowForm.paidDate || undefined,
       financialInstitution: cleanInstitution,
       difType: resolvedDifType || undefined,
     };
@@ -1060,18 +1145,45 @@ export default function ComprasTab() {
         next[newMonth] = [...(next[newMonth] || []).filter((x) => x.id !== nextEntry.id), nextEntry];
       }
       return syncSupplierDifFromEntry(next, nextEntry, currentOptions);
-    }, showAddPurchase && filledExtraDueDates.length > 0
+    }, opts.successMessage || (showAddPurchase && filledExtraDueDates.length > 0
       ? `${filledExtraDueDates.length + 1} parcelas adicionadas no servidor.`
-      : showAddPurchase ? 'Compra adicionada no servidor.' : 'Compra atualizada no servidor.',
+      : showAddPurchase ? 'Compra adicionada no servidor.' : 'Compra atualizada no servidor.'),
       (prevOptions) => withEntryOptions(prevOptions, nextEntry)
     );
 
-    setShowRowEdit(false);
-    setShowAddPurchase(false);
-    setRowEditForm(null);
-    setRowEditAmountText('');
-    setRowEditOriginalDueDate('');
-    setRowExtraDueDates([]);
+    if (closeDialog) {
+      setShowRowEdit(false);
+      setShowAddPurchase(false);
+      setRowEditForm(null);
+      setRowEditAmountText('');
+      setRowEditOriginalDueDate('');
+      setRowExtraDueDates([]);
+    }
+  };
+
+  const markRowPaidToday = () => {
+    if (!rowEditForm || showAddPurchase) return;
+    const today = localDateStr();
+    const nextForm = { ...rowEditForm, paidDate: today };
+    setRowEditForm(nextForm);
+    saveRowEdit({ closeDialog: true, successMessage: 'Compra marcada como paga no servidor.', formOverride: nextForm });
+    setPaidCelebrationMessage('Foi pago!');
+    window.setTimeout(() => setPaidCelebrationMessage(''), 3000);
+  };
+
+  const markEntryPaidToday = (entry: PurchaseEntry) => {
+    if (!entry || entry.paidDate) return;
+    const today = localDateStr();
+    const targetMonth = entry.dueDate.slice(0, 7);
+    const updatedEntry = { ...entry, paidDate: today };
+    saveSettingsEntries((prev, currentOptions) => {
+      const monthItems = (prev[targetMonth] || []).map((item) =>
+        item.id === entry.id ? updatedEntry : item
+      );
+      return syncSupplierDifFromEntry({ ...prev, [targetMonth]: monthItems }, updatedEntry, currentOptions);
+    }, 'Compra marcada como paga no servidor.', (prevOptions) => withEntryOptions(prevOptions, updatedEntry));
+    setPaidCelebrationMessage('Foi pago!');
+    window.setTimeout(() => setPaidCelebrationMessage(''), 3000);
   };
 
   const removeEntry = (entry: PurchaseEntry) => {
@@ -1361,9 +1473,6 @@ export default function ComprasTab() {
 
           saveSettingsEntries((prev) => {
             const next = { ...prev };
-            Object.keys(next).forEach((month) => {
-              if (month.startsWith(`${selectedYear}-`)) next[month] = [];
-            });
 
             months.forEach((month) => {
               next[month] = (importedEntriesByMonth[month] || []).map((entry, index) => ({
@@ -1398,6 +1507,7 @@ export default function ComprasTab() {
         }
 
         const imported: PurchaseEntry[] = [];
+        const touchedMonths = new Set<string>();
         for (let i = 1; i < rows.length; i += 1) {
           const cols = parseCsvLine(rows[i]);
           if (cols.length < 9) continue;
@@ -1414,8 +1524,10 @@ export default function ComprasTab() {
           const difTypeRaw = (cols[9] || '').trim().toUpperCase();
           const difType: 'D' | 'I' | 'F' | undefined = difTypeRaw === 'D' || difTypeRaw === 'I' || difTypeRaw === 'F' ? (difTypeRaw as 'D' | 'I' | 'F') : undefined;
 
-          if (!dueDate || !supplier || !issueDate || !financialInstitution || amount <= 0) continue;
           if (!dueDate.startsWith(`${selectedYear}-`)) continue;
+          const touchedMonth = dueDate.slice(0, 7);
+          if (/^\d{4}-\d{2}$/.test(touchedMonth)) touchedMonths.add(touchedMonth);
+          if (!dueDate || !supplier || !issueDate || !financialInstitution || amount <= 0) continue;
 
           imported.push({
             id: `${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
@@ -1432,15 +1544,15 @@ export default function ComprasTab() {
           });
         }
 
-        if (imported.length === 0) {
-          toast.error('Nenhuma linha valida do ano selecionado.');
+        if (imported.length === 0 && touchedMonths.size === 0) {
+          toast.error('Nenhuma linha valida ou mes do ano selecionado.');
           return;
         }
 
         saveSettingsEntries((prev) => {
           const next = { ...prev };
-          Object.keys(next).forEach((month) => {
-            if (month.startsWith(`${selectedYear}-`)) next[month] = [];
+          touchedMonths.forEach((month) => {
+            next[month] = [];
           });
 
           imported.forEach((entry) => {
@@ -1533,6 +1645,18 @@ export default function ComprasTab() {
 
   return (
     <div className="space-y-4 pb-24">
+      {paidCelebrationMessage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/10 pointer-events-none">
+          <div className="animate-in fade-in zoom-in-95 duration-200 rounded-3xl border-4 border-green-500 bg-white px-10 py-8 text-center shadow-2xl">
+            <div className="mb-2 text-5xl">🎉</div>
+            <div className="flex items-center justify-center gap-3 text-3xl font-black text-green-700">
+              <BadgeCheck className="h-9 w-9" />
+              {paidCelebrationMessage}
+            </div>
+            <div className="mt-2 text-sm font-bold text-green-700">Compra marcada com a data de hoje.</div>
+          </div>
+        </div>
+      )}
       {savePendingMessage && !saveFailureMessage && (
         <div className="rounded-xl border border-amber-500 bg-amber-50 p-3 text-amber-900 shadow-sm">
           <div className="flex items-start gap-3">
@@ -1551,6 +1675,17 @@ export default function ComprasTab() {
             <div>
               <div className="text-base font-bold">Falha ao salvar compras</div>
               <div className="text-sm font-semibold">{saveFailureMessage}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {saveRestoredMessage && !saveFailureMessage && (
+        <div className="rounded-xl border-2 border-green-700 bg-green-600 p-4 text-white shadow-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0" />
+            <div>
+              <div className="text-base font-bold">Sistema voltou</div>
+              <div className="text-sm font-semibold">{saveRestoredMessage}</div>
             </div>
           </div>
         </div>
@@ -1929,7 +2064,7 @@ export default function ComprasTab() {
                   <col style={{ width: '120px' }} />
                   <col style={{ width: '120px' }} />
                   <col style={{ width: '250px' }} />
-                  <col style={{ width: '90px' }} />
+                  <col style={{ width: '130px' }} />
                 </colgroup>
                 <thead className="bg-primary/10">
                   <tr>
@@ -1963,7 +2098,24 @@ export default function ComprasTab() {
                       <td className="px-3 py-2">{entry.issueDate ? formatDateBr(entry.issueDate) : '-'}</td>
                       <td className="px-3 py-2">{entry.installments || '-'}</td>
                       <td className="px-3 py-2 font-semibold">{formatCurrency(entry.amount)}</td>
-                      <td className="px-3 py-2">{entry.paidDate ? formatDateBr(entry.paidDate) : '-'}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span>{entry.paidDate ? formatDateBr(entry.paidDate) : '-'}</span>
+                          {!entry.paidDate && (
+                            <Button
+                              size="icon"
+                              className="h-7 w-7 bg-green-600 text-white hover:bg-green-700"
+                              title="Marcar como pago hoje"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markEntryPaidToday(entry);
+                              }}
+                            >
+                              <BadgeCheck className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-3 py-2 truncate">{fixMojibakeSafe(entry.financialInstitution || '-')}</td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-1">
@@ -2343,7 +2495,20 @@ export default function ComprasTab() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Pago (data)</label>
-                <Input ref={rowPaidDateRef} type="date" value={rowEditForm.paidDate || ''} onChange={(e) => setRowEditForm((p) => (p ? { ...p, paidDate: e.target.value || undefined } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowInstitutionRef)} />
+                <div className="flex gap-1">
+                  <Input ref={rowPaidDateRef} type="date" value={rowEditForm.paidDate || ''} onChange={(e) => setRowEditForm((p) => (p ? { ...p, paidDate: e.target.value || undefined } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowInstitutionRef)} />
+                  {!showAddPurchase && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      title="Marcar como pago hoje"
+                      className="h-10 w-10 shrink-0 bg-green-600 text-white hover:bg-green-700 active:scale-95"
+                      onClick={markRowPaidToday}
+                    >
+                      <BadgeCheck className="h-5 w-5" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Instituicao Financeira</label>

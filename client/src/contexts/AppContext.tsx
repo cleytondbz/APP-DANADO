@@ -80,6 +80,7 @@ export const useApp = () => {
 const defaultSettings: AppSettings = {
   password: '2512',
   syncPreference: 'program',
+  boletoCompanies: [],
   caixaCategories: DEFAULT_CAIXA_CATEGORIES,
   fechamentoCategories: DEFAULT_FECHAMENTO_CATEGORIES,
   fieldMappingLan1: [
@@ -179,6 +180,59 @@ const buildStoresFromFechamento = (
   });
 
   return nextStores;
+};
+
+const mergeLancamentoDetailsIntoStores = (
+  baseStores: Record<string, StoreData>,
+  lancamentos: Record<string, Record<string, any>>
+): Record<string, StoreData> => {
+  const nextStores: Record<string, StoreData> = JSON.parse(JSON.stringify(baseStores || {}));
+
+  Object.entries(lancamentos || {}).forEach(([storeId, entriesByDate]) => {
+    const store = nextStores[storeId];
+    if (!store || !entriesByDate || typeof entriesByDate !== 'object') return;
+
+    Object.entries(entriesByDate).forEach(([date, lancamentoEntry]) => {
+      const details = (lancamentoEntry as any)?.details;
+      if (!details || typeof details !== 'object') return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+
+      const [yS, mS] = date.split('-');
+      const y = parseInt(yS, 10);
+      const m = parseInt(mS, 10);
+      if (!y || !m) return;
+
+      let month = store.months.find((md) => md.year === y && md.month === m);
+      if (!month) {
+        month = { year: y, month: m, entries: [] };
+        store.months.push(month);
+      }
+
+      let entry = month.entries.find((e) => e.date === date);
+      if (!entry) {
+        entry = { date, values: {}, manualFields: [] };
+        month.entries.push(entry);
+      }
+
+      entry.details = details;
+    });
+  });
+
+  return nextStores;
+};
+
+const collectBoletoCompaniesFromCaixa = (caixa: Record<string, Record<string, any>> = {}) => {
+  const companies = new Set<string>();
+  Object.values(caixa || {}).forEach((storeData: any) => {
+    Object.values(storeData || {}).forEach((dayData: any) => {
+      const boletos = Array.isArray(dayData?.boleto) ? dayData.boleto : [];
+      boletos.forEach((item: any) => {
+        const name = String(item?.descricao || '').trim();
+        if (name) companies.add(name);
+      });
+    });
+  });
+  return Array.from(companies).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -339,7 +393,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     pendingServerSaveRef.current = false;
     suppressServerPushUntilRef.current = Date.now() + 2500;
 
-    const mergedSettings = { ...defaultSettings, ...(serverData.settings || {}) };
+    const boletoCompanies = Array.from(new Set([
+      ...((serverData.settings?.boletoCompanies || []) as string[]).map((name) => String(name || '').trim()).filter(Boolean),
+      ...collectBoletoCompaniesFromCaixa(serverData.caixa || {}),
+    ])).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    const mergedSettings = { ...defaultSettings, ...(serverData.settings || {}), boletoCompanies };
     setSettings(mergedSettings);
 
     const defaultStores = {
@@ -358,7 +416,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       fechamento,
       mergedSettings
     );
-    setStores(storesWithLancamentos);
+    setStores(mergeLancamentoDetailsIntoStores(storesWithLancamentos, serverData.lancamentos || {}));
     setDebts(serverData.debts || []);
     setSaldoDia(serverData.saldoDia || 0);
     setCaixaData(serverData.caixa || { loja1: {}, loja2: {} });
@@ -685,7 +743,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...prev,
       [currentStore]: {
         ...prev[currentStore],
-        [date]: { date, values, source }
+        [date]: {
+          ...(prev[currentStore]?.[date] || {}),
+          date,
+          values,
+          source
+        }
       }
     }));
   };
@@ -696,7 +759,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...prev,
       [currentStore]: {
         ...prev[currentStore],
-        [date]: { date, values }
+        [date]: {
+          ...(prev[currentStore]?.[date] || {}),
+          date,
+          values
+        }
       }
     }));
   };

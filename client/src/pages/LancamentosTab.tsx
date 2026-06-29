@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MONTH_NAMES } from '@/lib/types';
+import type { Category } from '@/lib/types';
 
 export default function LancamentosTab() {
-  const { settings, setSettings, getCategories, getMonthData, saveEntry, clearManualFieldMark, deleteEntry, addCategory, removeCategory, updateCategory, selectedYear, selectedMonth, currentStore, stores, fechamentoData, setFechamentoData, addTimelineEntry } = useApp();
-  const cats = getCategories();
+  const { settings, setSettings, getCategories, getMonthData, saveEntry, clearManualFieldMark, deleteEntry, removeCategory, updateCategory, selectedYear, selectedMonth, currentStore, stores, setStores, fechamentoData, setFechamentoData, caixaData, addTimelineEntry } = useApp();
+  const allCats = getCategories();
   const md = getMonthData(selectedYear, selectedMonth);
   const days = getDaysInMonth(selectedYear, selectedMonth);
 
@@ -21,22 +22,52 @@ export default function LancamentosTab() {
   const [showEdit, setShowEdit] = useState(false);
   const [showCatMgr, setShowCatMgr] = useState(false);
   const [showCustomSaldo, setShowCustomSaldo] = useState(false);
+  const [showBoletoLists, setShowBoletoLists] = useState(false);
+  const [newBoletoCompany, setNewBoletoCompany] = useState('');
   const [selDay, setSelDay] = useState(1);
   const [vals, setVals] = useState<Record<string, string>>({});
   const [editDate, setEditDate] = useState('');
   const [newCatName, setNewCatName] = useState('');
   const [newCatOp, setNewCatOp] = useState<'add' | 'subtract' | 'null'>('add');
+  const [newCatMonths, setNewCatMonths] = useState<string[]>([]);
   const [keepOpen, setKeepOpen] = useState(false);
   const [draggedCat, setDraggedCat] = useState<string | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const currentMonthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+  const boletoMappedCategory = useMemo(() => {
+    const mapping = currentStore === 'loja1' ? settings.fieldMappingLan1 : settings.fieldMappingLan2;
+    return (mapping || []).find((item: any) => item?.fechamento_field === 'boleto')?.lancamento_field || '';
+  }, [currentStore, settings.fieldMappingLan1, settings.fieldMappingLan2]);
+
+  const getBoletoDetailsForDay = (date: string, categoryId: string) => {
+    const savedDetails = md?.entries.find(e => e.date === date)?.details?.[categoryId];
+    if (Array.isArray(savedDetails) && savedDetails.length > 0) return savedDetails;
+    if (categoryId !== boletoMappedCategory) return [];
+    const items = Array.isArray(caixaData?.[currentStore]?.[date]?.boleto)
+      ? caixaData[currentStore][date].boleto
+      : [];
+    return items
+      .filter((item: any) => String(item?.descricao || '').trim())
+      .map((item: any) => ({
+        label: String(item.descricao || '').trim(),
+        amount: Number(String(item.valor || '0').replace(',', '.')) * (Number(item.quantidade || 1) || 1),
+      }));
+  };
+  const cats = useMemo(() => {
+    return allCats.filter((cat) => !cat.activeMonths?.length || cat.activeMonths.includes(currentMonthKey));
+  }, [allCats, currentMonthKey]);
+  const categoryMonthOptions = useMemo(() => (
+    Array.from({ length: 12 }, (_v, idx) => `${selectedYear}-${String(idx + 1).padStart(2, '0')}`)
+  ), [selectedYear]);
   const allMonthDays = useMemo(() => Array.from({ length: days }, (_, i) => i + 1), [days]);
 
   const customSaldoOptions = useMemo(() => {
     const opts: { key: string; storeLabel: string; catLabel: string }[] = [];
     const store = stores[currentStore];
-    (store?.categories || []).forEach((c) => {
+    (store?.categories || [])
+      .filter((c) => !c.activeMonths?.length || c.activeMonths.includes(currentMonthKey))
+      .forEach((c) => {
       opts.push({
         key: c.id,
         storeLabel: currentStore === 'loja1' ? 'Loja 1' : 'Loja 2',
@@ -44,7 +75,7 @@ export default function LancamentosTab() {
       });
     });
     return opts;
-  }, [stores, currentStore]);
+  }, [stores, currentStore, currentMonthKey]);
 
   const legacyCustomSaldoSelection = useMemo(() => {
     return (settings.customSaldoSelection || [])
@@ -56,6 +87,7 @@ export default function LancamentosTab() {
   }, [settings.customSaldoSelection, currentStore, customSaldoOptions]);
 
   const customSaldoConfig = settings.customSaldoByStoreMonth?.[currentStore]?.[currentMonthKey];
+  const customSaldoLabel = customSaldoConfig?.label || 'Saldo Personalizado';
   const customSaldoSelection = customSaldoConfig?.selection || legacyCustomSaldoSelection;
   const activeCustomDays = customSaldoConfig
     ? customSaldoConfig.days
@@ -83,7 +115,7 @@ export default function LancamentosTab() {
   const getCustomSaldoLabels = (selection: string[]) =>
     selection.map((key) => customSaldoOptions.find((opt) => opt.key === key)?.catLabel || key);
 
-  const saveCustomSaldoConfig = (selection: string[], selectedDays: number[], action: string) => {
+  const saveCustomSaldoConfig = (selection: string[], selectedDays: number[], action: string, label = customSaldoLabel) => {
     const cleanSelection = selection.filter((key) => customSaldoOptions.some((opt) => opt.key === key));
     const cleanDays = Array.from(new Set(selectedDays.filter((day) => day >= 1 && day <= days))).sort((a, b) => a - b);
     const total = calculateCustomSaldoTotal(cleanSelection, cleanDays);
@@ -108,6 +140,7 @@ export default function LancamentosTab() {
         [currentStore]: {
           ...(s.customSaldoByStoreMonth?.[currentStore] || {}),
           [currentMonthKey]: {
+            label: (label || '').trim() || 'Saldo Personalizado',
             selection: cleanSelection,
             days: cleanDays,
             updatedAt,
@@ -139,6 +172,37 @@ export default function LancamentosTab() {
 
   const clearCustomSaldoDays = () => {
     saveCustomSaldoConfig(customSaldoSelection, [], 'clear_days');
+  };
+
+  const updateCustomSaldoLabel = (label: string) => {
+    saveCustomSaldoConfig(customSaldoSelection, activeCustomDays, 'update_label', label);
+  };
+
+  const addBoletoCompany = () => {
+    const name = newBoletoCompany.trim();
+    if (!name) return;
+    setSettings((s) => {
+      const current = s.boletoCompanies || [];
+      const exists = current.some((item) => item.localeCompare(name, 'pt-BR', { sensitivity: 'base' }) === 0);
+      if (exists) return s;
+      return {
+        ...s,
+        boletoCompanies: [...current, name].sort((a, b) => a.localeCompare(b, 'pt-BR')),
+      };
+    });
+    setNewBoletoCompany('');
+    toast.success('Empresa adicionada à lista.');
+  };
+
+  const toggleNewCatMonth = (monthKey: string) => {
+    setNewCatMonths((prev) => {
+      if (prev.includes(monthKey)) return prev.filter((m) => m !== monthKey);
+      if (prev.length >= 6) {
+        toast.error('Selecione no máximo 6 meses para a categoria.');
+        return prev;
+      }
+      return [...prev, monthKey].sort();
+    });
   };
 
   const monthTotal = useMemo(() => {
@@ -279,8 +343,30 @@ export default function LancamentosTab() {
 
   const handleAddCat = () => {
     if (!newCatName.trim()) { toast.error('Digite o nome'); return; }
-    addCategory(newCatName.trim(), newCatOp);
-    setNewCatName(''); setNewCatOp('add'); toast.success('Categoria adicionada!');
+    const months = newCatMonths.length ? newCatMonths : [currentMonthKey];
+    if (months.length > 6) {
+      toast.error('Selecione no máximo 6 meses.');
+      return;
+    }
+    const id = newCatName.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
+    const newCategory: Category = {
+      id,
+      name: newCatName.trim(),
+      operation: newCatOp,
+      order: (stores[currentStore]?.categories || []).length + 1,
+      activeMonths: months,
+    };
+    setStores({
+      ...stores,
+      [currentStore]: {
+        ...stores[currentStore],
+        categories: [...(stores[currentStore]?.categories || []), newCategory],
+      },
+    });
+    setNewCatName('');
+    setNewCatOp('add');
+    setNewCatMonths([]);
+    toast.success(`Categoria adicionada em ${months.length} mês(es).`);
   };
 
   const getDayTotal = (ds: string) => {
@@ -304,11 +390,11 @@ export default function LancamentosTab() {
   }, [md, selectedYear, selectedMonth, days]);
 
   const handleMoveCategory = (catId: string, direction: 'up' | 'down') => {
-    const index = cats.findIndex(c => c.id === catId);
-    if ((direction === 'up' && index > 0) || (direction === 'down' && index < cats.length - 1)) {
+    const index = allCats.findIndex(c => c.id === catId);
+    if ((direction === 'up' && index > 0) || (direction === 'down' && index < allCats.length - 1)) {
       const newIndex = direction === 'up' ? index - 1 : index + 1;
-      const cat1 = cats[index];
-      const cat2 = cats[newIndex];
+      const cat1 = allCats[index];
+      const cat2 = allCats[newIndex];
       const temp = cat1.order;
       updateCategory(cat1.id, { order: cat2.order });
       updateCategory(cat2.id, { order: temp });
@@ -510,19 +596,27 @@ export default function LancamentosTab() {
 
       {/* Total bar */}
       <div className="flex flex-col md:flex-row gap-2 md:items-stretch">
-        <div className="bg-primary/20 border border-primary/30 rounded-xl px-4 py-2 text-center flex-1 min-w-0">
-          <span className="text-xs text-muted-foreground">Total: </span>
-          <span className="font-bold font-mono-num text-primary">{formatCurrency(monthTotal)}</span>
+        <div className="bg-primary/20 border border-primary/30 rounded-xl px-3 py-1.5 text-center flex-1 min-w-0 flex items-center justify-center gap-2">
+          <span className="text-sm text-muted-foreground">Total:</span>
+          <span className="font-extrabold font-mono-num text-primary text-2xl md:text-3xl">{formatCurrency(monthTotal)}</span>
         </div>
         <div className="bg-accent/15 border border-accent/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2 md:w-[260px] md:ml-auto">
           <div>
-            <div className="text-[11px] text-muted-foreground">Saldo Personalizado</div>
+            <div className="text-[11px] text-muted-foreground">{customSaldoLabel}</div>
             <div className="font-bold font-mono-num text-accent">{formatCurrency(customSaldoTotal)}</div>
           </div>
           <Button onClick={() => setShowCustomSaldo(true)} variant="secondary" className="h-7 text-xs px-2">
             Configurar
           </Button>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowBoletoLists(true)}
+          className="bg-secondary/80 hover:bg-secondary border border-border rounded-xl px-3 py-2 flex flex-col items-center justify-center gap-0.5 md:w-[92px] transition-colors"
+        >
+          <span className="text-[11px] text-muted-foreground">Boleto</span>
+          <span className="text-sm font-bold text-foreground">Listas</span>
+        </button>
       </div>
 
       {/* Table */}
@@ -546,8 +640,8 @@ export default function LancamentosTab() {
             {allDays.map(({ day, ds, entry, dow }) => {
               const isSun = dow === 0;
               return (
-                <div key={day} className={`flex text-2xl border-b border-border/50 ${isSun ? 'bg-destructive/10' : day % 2 === 0 ? 'bg-secondary/30' : ''} cursor-pointer hover:bg-primary/5 transition-colors`} style={{ fontFamily: 'Century, serif', minHeight: '100px' }} onClick={() => openEdit(ds)}>
-                  <div className="w-20 p-3 text-center shrink-0 flex flex-col justify-center">
+                <div key={day} className={`flex text-2xl border-b border-border/50 ${isSun ? 'bg-destructive/10' : day % 2 === 0 ? 'bg-secondary/30' : ''} cursor-pointer hover:bg-primary/5 transition-colors`} style={{ fontFamily: 'Century, serif', minHeight: '74px' }} onClick={() => openEdit(ds)}>
+                  <div className="w-20 px-3 py-1.5 text-center shrink-0 flex flex-col justify-center">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className={`font-bold text-2xl ${isSun ? 'text-destructive' : 'text-foreground'}`}>{String(day).padStart(2, '0')}</div>
@@ -559,8 +653,9 @@ export default function LancamentosTab() {
                    {cats.map(c => {
                      const fontSizeClass = settings.lancamentosFontSize === 'xs' ? 'text-sm' : settings.lancamentosFontSize === 'sm' ? 'text-base' : settings.lancamentosFontSize === 'lg' ? 'text-2xl' : settings.lancamentosFontSize === 'xl' ? 'text-3xl' : 'text-lg';
                      const isManualField = !!entry?.manualFields?.includes(c.id);
+                     const categoryDetails = getBoletoDetailsForDay(ds, c.id);
                     return (
-                    <div key={c.id} className="w-36 p-3 text-center shrink-0 flex items-center justify-center">
+                    <div key={c.id} className="w-36 px-3 py-1.5 text-center shrink-0 flex items-center justify-center">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="inline-flex flex-col items-center leading-none">
@@ -575,12 +670,29 @@ export default function LancamentosTab() {
                             </span>
                           </div>
                         </TooltipTrigger>
-                        <TooltipContent className="bg-primary text-primary-foreground font-semibold" sideOffset={6}>{c.name}</TooltipContent>
+                        <TooltipContent className="bg-primary text-primary-foreground font-semibold max-w-xs" sideOffset={6}>
+                          <div className="space-y-1">
+                            <div>{c.name}</div>
+                            {categoryDetails.length > 0 && (
+                              <div className="pt-1 border-t border-primary-foreground/25 text-xs font-normal">
+                                {categoryDetails.slice(0, 8).map((detail, index) => (
+                                  <div key={`${detail.label}-${index}`} className="flex justify-between gap-3">
+                                    <span className="truncate max-w-[150px]">{detail.label}</span>
+                                    <span className="font-bold">{formatCurrency(Number(detail.amount || 0))}</span>
+                                  </div>
+                                ))}
+                                {categoryDetails.length > 8 && (
+                                  <div className="opacity-80">+{categoryDetails.length - 8} empresas</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </TooltipContent>
                       </Tooltip>
                     </div>
                   );
                   })}
-                  <div className="w-36 p-3 text-center shrink-0 flex items-center justify-center">
+                  <div className="w-36 px-3 py-1.5 text-center shrink-0 flex items-center justify-center">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className={`font-bold font-mono-num ${settings.lancamentosFontSize === 'xs' ? 'text-sm' : settings.lancamentosFontSize === 'sm' ? 'text-base' : settings.lancamentosFontSize === 'lg' ? 'text-2xl' : settings.lancamentosFontSize === 'xl' ? 'text-3xl' : 'text-lg'} ${entry ? (getDayTotal(ds) >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground/40'}`}>
@@ -590,7 +702,7 @@ export default function LancamentosTab() {
                       <TooltipContent className="bg-primary text-primary-foreground font-semibold" sideOffset={6}>Saldo</TooltipContent>
                     </Tooltip>
                   </div>
-                  <div className="w-28 p-3 flex items-center justify-center gap-2 shrink-0">
+                  <div className="w-28 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0">
                     {entry && (
                       <>
                         <button onClick={() => openEdit(ds)} className="p-1 rounded bg-warning/20 hover:bg-warning/30" title="Editar">
@@ -692,13 +804,74 @@ export default function LancamentosTab() {
       </Dialog>
 
       {/* Custom Saldo Dialog */}
+      <Dialog open={showBoletoLists} onOpenChange={setShowBoletoLists}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Listas - Empresas de Boleto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={newBoletoCompany}
+                onChange={(e) => setNewBoletoCompany(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addBoletoCompany();
+                }}
+                placeholder="Nome da empresa"
+              />
+              <Button onClick={addBoletoCompany} className="gap-1">
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            </div>
+            <div className="max-h-80 overflow-y-auto space-y-2">
+              {(settings.boletoCompanies || []).length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Nenhuma empresa cadastrada.
+                </p>
+              ) : (
+                (settings.boletoCompanies || []).map((name) => (
+                  <div key={name} className="flex items-center justify-between gap-2 rounded-lg border bg-secondary/40 px-3 py-2">
+                    <span className="text-sm font-semibold truncate">{name}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        setSettings((s) => ({
+                          ...s,
+                          boletoCompanies: (s.boletoCompanies || []).filter((item) => item !== name),
+                        }));
+                        toast.success('Empresa removida.');
+                      }}
+                      title="Apagar empresa"
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showCustomSaldo} onOpenChange={setShowCustomSaldo}>
         <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Saldo Personalizado - {currentStore === 'loja1' ? 'Loja 1' : 'Loja 2'} / {currentMonthKey}
+              {customSaldoLabel} - {currentStore === 'loja1' ? 'Loja 1' : 'Loja 2'} / {currentMonthKey}
             </DialogTitle>
           </DialogHeader>
+          <div className="space-y-1 mb-4">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Nome deste saldo no mês</label>
+            <Input
+              value={customSaldoLabel}
+              placeholder="Saldo Personalizado"
+              onChange={(e) => updateCustomSaldoLabel(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Esse nome vale apenas para {currentMonthKey}.</p>
+          </div>
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">Dias incluidos</h4>
@@ -801,19 +974,28 @@ export default function LancamentosTab() {
         <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Gerenciar Categorias</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            {cats.map((c, idx) => (
+            {allCats.map((c, idx) => (
               <div key={c.id} className="flex items-center gap-2 p-2 bg-secondary rounded-lg">
                 <div className="flex flex-col gap-1">
                   <button onClick={() => handleMoveCategory(c.id, 'up')} disabled={idx === 0}
                     className="p-0.5 rounded hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed" title="Mover para cima">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3.707 9.293a1 1 0 010 1.414l5 5a1 1 0 001.414 0l5-5a1 1 0 00-1.414-1.414L10 12.586 5.121 7.707a1 1 0 00-1.414 0z" transform="rotate(180 10 10)" /></svg>
                   </button>
-                  <button onClick={() => handleMoveCategory(c.id, 'down')} disabled={idx === cats.length - 1}
+                  <button onClick={() => handleMoveCategory(c.id, 'down')} disabled={idx === allCats.length - 1}
                     className="p-0.5 rounded hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed" title="Mover para baixo">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3.707 9.293a1 1 0 010 1.414l5 5a1 1 0 001.414 0l5-5a1 1 0 00-1.414-1.414L10 12.586 5.121 7.707a1 1 0 00-1.414 0z" /></svg>
                   </button>
                 </div>
-                <span className="flex-1 text-sm font-medium text-foreground">{c.name}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-foreground">{c.name}</span>
+                  {c.activeMonths?.length ? (
+                    <div className="text-[10px] text-muted-foreground">
+                      Meses: {c.activeMonths.map((m) => m.slice(5, 7)).join(', ')}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-muted-foreground">Fixa: todos os meses</div>
+                  )}
+                </div>
                 <button onClick={() => updateCategory(c.id, { operation: (c.operation === 'add' ? 'subtract' : c.operation === 'subtract' ? 'null' : 'add') as 'add' | 'subtract' | undefined })}
                   className={`text-xs font-bold px-2 py-1 rounded-lg ${c.operation === 'add' ? 'bg-success/20 text-success' : c.operation === 'subtract' ? 'bg-destructive/20 text-destructive' : 'bg-muted/20 text-muted-foreground'}`}>
                   {c.operation === 'add' ? '+ Soma' : c.operation === 'subtract' ? '- Subtrai' : 'Nulo'}
@@ -827,6 +1009,32 @@ export default function LancamentosTab() {
             <div className="border-t border-border pt-3 space-y-2">
               <h4 className="text-sm font-bold text-foreground">Adicionar Categoria</h4>
               <Input placeholder="Nome da categoria" value={newCatName} onChange={e => setNewCatName(e.target.value)} />
+              <div className="rounded-lg border border-border p-2">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase">Meses da categoria</span>
+                  <span className="text-[10px] text-muted-foreground">{newCatMonths.length || 1}/6</span>
+                </div>
+                <div className="grid grid-cols-4 gap-1">
+                  {categoryMonthOptions.map((monthKey) => {
+                    const checked = (newCatMonths.length ? newCatMonths : [currentMonthKey]).includes(monthKey);
+                    return (
+                      <button
+                        key={monthKey}
+                        type="button"
+                        onClick={() => toggleNewCatMonth(monthKey)}
+                        className={`h-8 rounded-md border text-xs font-bold ${
+                          checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary/40 text-muted-foreground'
+                        }`}
+                      >
+                        {MONTH_NAMES[Number(monthKey.slice(5, 7)) - 1].slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  Se não selecionar nada, entra apenas no mês atual. Máximo de 6 meses.
+                </p>
+              </div>
               <div className="flex gap-2">
                 <button onClick={() => setNewCatOp('add')}
                   className={`flex-1 py-2 rounded-lg text-sm font-bold ${newCatOp === 'add' ? 'bg-success text-success-foreground' : 'bg-secondary text-foreground'}`}>
