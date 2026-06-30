@@ -1890,6 +1890,55 @@ app.post('/api/settings/clear-access-logs', (_req: Request, res: Response) => {
   }
 });
 
+app.post('/api/settings/clear-occurrences-by-date', (req: Request, res: Response) => {
+  try {
+    const date = String(req.body?.date || '').slice(0, 10);
+    const storeId = String(req.body?.storeId || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ success: false, message: 'Data inválida.' });
+    }
+
+    const localDateFromTimestamp = (timestamp: any) => {
+      const d = new Date(Number(timestamp || 0));
+      if (!Number.isFinite(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const itemDate = (item: any) => String(item?.date || '').slice(0, 10) || localDateFromTimestamp(item?.timestamp);
+    const matches = (item: any) => itemDate(item) === date && (!storeId || item?.storeId === storeId);
+
+    const currentSettings = dataStore.settings || {};
+    const beforeAccess = Array.isArray(currentSettings.accessLogs) ? currentSettings.accessLogs.length : 0;
+    const beforeTimeline = Array.isArray(currentSettings.timeline) ? currentSettings.timeline.length : 0;
+    const accessLogs = (currentSettings.accessLogs || []).filter((item: any) => !matches(item));
+    const timeline = (currentSettings.timeline || []).filter((item: any) => !matches(item));
+
+    dataStore.settings = {
+      ...currentSettings,
+      accessLogs,
+      timeline,
+    };
+    saveDataToFile(dataStore);
+
+    return res.json({
+      success: true,
+      date,
+      storeId,
+      removedAccessLogs: beforeAccess - accessLogs.length,
+      removedTimeline: beforeTimeline - timeline.length,
+      timestamp: getLocalDateTimeString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Falha ao limpar ocorrências do dia.',
+      error: String(error?.message || error),
+    });
+  }
+});
+
 // ==================== APP DATA SYNC ====================
 // Salvar dados do AppContext (settings, stores, debts, saldoDia)
 app.post('/api/sync/save', (req: Request, res: Response) => {

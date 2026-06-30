@@ -6,6 +6,7 @@ import { AccessLogsReport } from '@/components/AccessLogsReport';
 import { Banknote, FileText, CreditCard, ChevronLeft, ChevronRight, UserRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { addDaysToDateStr, localDateStr } from '@/lib/helpers';
+import { toast } from 'sonner';
 
 interface Sangria {
   id: string;
@@ -77,7 +78,7 @@ const isAnnotationActionLog = (details?: string) => {
 };
 
 export default function FechamentoCompactoTab() {
-  const { currentStore, getAccessLogs, fechamentoData, caixaData, settings } = useApp();
+  const { currentStore, getAccessLogs, clearAccessLogsByDate, fechamentoData, caixaData, settings } = useApp();
   const [data, setData] = useState<string>(() => localDateStr());
   const [showBoletoCompanies, setShowBoletoCompanies] = useState(false);
 
@@ -141,6 +142,21 @@ export default function FechamentoCompactoTab() {
     setData((current) => addDaysToDateStr(current, offset));
   };
 
+  const limparOcorrenciasDoDia = async () => {
+    if (todayLogs.length === 0) {
+      toast.info('Este dia não tem ocorrências para limpar.');
+      return;
+    }
+    if (!window.confirm(`Limpar ${todayLogs.length} ocorrência(s) de ${formatarDataComDia(data)}?`)) return;
+    try {
+      await clearAccessLogsByDate(data, currentStore);
+      toast.success('Ocorrências do dia limpas.');
+    } catch (error) {
+      console.error('[FechamentoCompacto] Erro ao limpar ocorrências do dia:', error);
+      toast.error('Falha ao limpar ocorrências do dia no servidor.');
+    }
+  };
+
   const renderValorCard = (label: string, value: number, Icon: any, accent: string, onClick?: () => void) => (
     <Card
       key={label}
@@ -198,7 +214,7 @@ export default function FechamentoCompactoTab() {
                   <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowBoletoCompanies(false)}>×</Button>
                 </div>
                 <div className="max-h-56 overflow-y-auto space-y-1.5">
-                  {boletoCompanies.length > 0 ? boletoCompanies.map((item, index) => (
+                  {boletoCompanies.length > 0 ? boletoCompanies.map((item: { label: string; amount: number }, index: number) => (
                     <div key={`${item.label}-${index}`} className="flex items-center justify-between gap-3 rounded-md bg-secondary/60 px-2 py-1.5 text-xs">
                       <span className="font-semibold truncate">{item.label}</span>
                       <span className="font-bold text-red-600">{formatCurrency(item.amount)}</span>
@@ -274,6 +290,13 @@ export default function FechamentoCompactoTab() {
       </div>
 
       <div className="hidden md:block">
+        {todayLogs.length > 0 && (
+          <div className="mb-2 flex justify-end">
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={limparOcorrenciasDoDia}>
+              Limpar dia
+            </Button>
+          </div>
+        )}
         <AccessLogsReport logs={todayLogs} />
       </div>
     </div>

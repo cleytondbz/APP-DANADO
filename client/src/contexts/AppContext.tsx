@@ -29,6 +29,7 @@ interface AppContextType {
   logAccess: (action: string, status: 'success' | 'failed', userName?: string, details?: string) => void;
   getAccessLogs: () => any[];
   clearAccessLogs: () => void;
+  clearAccessLogsByDate: (date: string, storeId?: string) => Promise<void>;
   addTimelineEntry: (module: 'caixa' | 'fechamento' | 'lancamentos', action: 'create' | 'update' | 'delete', date: string, field?: string, oldValue?: string | number, newValue?: string | number, description?: string) => void;
   getTimeline: () => any[];
   clearTimeline: () => void;
@@ -878,6 +879,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings(s => ({ ...s, accessLogs: [] }));
   };
 
+  const clearAccessLogsByDate = async (date: string, storeId: string = currentStore) => {
+    const getLogDate = (log: any) => {
+      if (log?.date) return String(log.date).slice(0, 10);
+      const d = new Date(log?.timestamp || 0);
+      if (!Number.isFinite(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    setSettings(s => ({
+      ...s,
+      accessLogs: (s.accessLogs || []).filter((log: any) => !(getLogDate(log) === date && (!storeId || log.storeId === storeId))),
+      timeline: (s.timeline || []).filter((item: any) => !(String(item?.date || '').slice(0, 10) === date && (!storeId || item.storeId === storeId))),
+    }));
+
+    const serverUrl = localStorage.getItem('fd_serverUrl') || window.location.origin;
+    const resp = await fetch(`${serverUrl}/api/settings/clear-occurrences-by-date`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, storeId }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  };
+
   const addTimelineEntry = (module: 'caixa' | 'fechamento' | 'lancamentos', action: 'create' | 'update' | 'delete', date: string, field?: string, oldValue?: string | number, newValue?: string | number, description?: string) => {
     const newEntry = {
       id: Date.now().toString(),
@@ -928,6 +955,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     logAccess,
     getAccessLogs,
     clearAccessLogs,
+    clearAccessLogsByDate,
     addTimelineEntry,
     getTimeline,
     clearTimeline,
