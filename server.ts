@@ -1724,6 +1724,13 @@ app.use((req: Request, res: Response, next) => {
   const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
   if (!SYNC_TOKEN || !isApiRoute || !isWriteMethod) return next();
 
+  const appBypassWritePaths = new Set([
+    '/api/settings/clear-occurrences-by-date',
+  ]);
+  if (appBypassWritePaths.has(req.path) && hasAppBypass(req)) {
+    return next();
+  }
+
   if (!hasSyncTokenAuth) {
     return res.status(401).json({ success: false, error: 'write_blocked' });
   }
