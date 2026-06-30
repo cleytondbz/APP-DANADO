@@ -1455,6 +1455,22 @@ const cloudRetryDelay = (attempts: number) => {
   return steps[Math.min(Math.max(attempts - 1, 0), steps.length - 1)];
 };
 
+const summarizeCloudSyncHttpError = (status: number, responseText: string, responseBody: any) => {
+  const confirmedId = String(responseBody?.cloudSyncId || 'ausente');
+  const content = String(responseText || '').trim();
+  const isHtml = /^<!doctype html/i.test(content) || /^<html/i.test(content);
+  const jsonMessage = responseBody?.message || responseBody?.error || responseBody?.details;
+  const detail = jsonMessage
+    ? String(jsonMessage)
+    : isHtml
+      ? 'resposta_html_do_render'
+      : content
+        ? content.replace(/\s+/g, ' ').slice(0, 120)
+        : 'sem_corpo';
+
+  return `HTTP ${status}; confirmacao=${confirmedId}; detalhe=${detail}`;
+};
+
 function armCloudPush(delayMs: number) {
   if (!ENABLE_CLOUD_PUSH || !CLOUD_SYNC_URL || !CLOUD_SYNC_TOKEN) return;
   if (cloudPushTimer) clearTimeout(cloudPushTimer);
@@ -1506,9 +1522,7 @@ async function pushDataToCloud() {
       responseBody?.cloudSyncId === queued.id;
 
     if (!confirmed) {
-      throw new Error(
-        `HTTP ${resp.status}; confirmacao=${String(responseBody?.cloudSyncId || 'ausente')}; ${responseText.slice(0, 300)}`
-      );
+      throw new Error(summarizeCloudSyncHttpError(resp.status, responseText, responseBody));
     }
 
     if (cloudSyncQueue?.id === queued.id) {
