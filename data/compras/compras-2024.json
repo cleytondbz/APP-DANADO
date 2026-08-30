@@ -76,7 +76,7 @@
       "amount": 688.91,
       "paidDate": "2024-12-02",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_2169_1pjwiu",
@@ -180,7 +180,7 @@
       "amount": 1612.32,
       "paidDate": "2024-12-03",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789049_2178_lj71zy",
@@ -401,7 +401,7 @@
       "amount": 797.43,
       "paidDate": "2024-12-06",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_2198_jshhb7",
@@ -596,7 +596,7 @@
       "amount": 415.81,
       "paidDate": "2024-12-09",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789050_2215_uwnwcd",
@@ -1142,7 +1142,7 @@
       "amount": 688.91,
       "paidDate": "2024-12-16",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789050_2263_vj1aoj",
@@ -1207,7 +1207,7 @@
       "amount": 771.62,
       "paidDate": "2024-12-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789050_2269_anxvm4",
@@ -1220,7 +1220,7 @@
       "amount": 2002.03,
       "paidDate": "2024-12-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789050_2270_hezidv",
@@ -1233,7 +1233,7 @@
       "amount": 1260.82,
       "paidDate": "2024-12-18",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789050_2271_ycmy6j",
@@ -1285,7 +1285,7 @@
       "amount": 1093.55,
       "paidDate": "2024-12-18",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789050_2275_o3237b",
@@ -1584,7 +1584,7 @@
       "amount": 797.43,
       "paidDate": "2024-12-23",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789050_2301_4c8vcy",
@@ -1597,7 +1597,7 @@
       "amount": 1485.28,
       "paidDate": "2024-12-23",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789050_2302_evmnqs",
@@ -2013,7 +2013,7 @@
       "amount": 1495.44,
       "paidDate": "2024-12-27",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789050_2337_e10op4",
@@ -2730,7 +2730,7 @@
       "amount": 580,
       "paidDate": "2024-01-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789042_40_py9xis",
@@ -2743,7 +2743,7 @@
       "amount": 1585.9,
       "paidDate": "2024-01-05",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789042_41_zph7m6",
@@ -2756,7 +2756,7 @@
       "amount": 656.49,
       "paidDate": "2024-01-05",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789042_42_z0x9vj",
@@ -3380,7 +3380,7 @@
       "amount": 1991.27,
       "paidDate": "2024-01-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789042_97_jeqsca",
@@ -3900,7 +3900,7 @@
       "amount": 2521.64,
       "paidDate": "2024-01-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789042_140_bfpukr",
@@ -4342,7 +4342,7 @@
       "amount": 2521.64,
       "paidDate": "2024-01-24",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789042_180_w90bpb",
@@ -4706,7 +4706,7 @@
       "amount": 1991.27,
       "paidDate": "2024-01-26",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_210_o8rojv",
@@ -5267,7 +5267,7 @@
       "amount": 2820.39,
       "paidDate": "2024-03-04",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_461_u15f0l",
@@ -5501,7 +5501,7 @@
       "amount": 380.41,
       "paidDate": "2024-03-06",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789044_482_fiswj3",
@@ -5514,7 +5514,7 @@
       "amount": 1258.14,
       "paidDate": "2024-03-06",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789044_484_en4711",
@@ -5605,7 +5605,7 @@
       "amount": 3945,
       "paidDate": "2024-03-07",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_491_jxq176",
@@ -5956,7 +5956,7 @@
       "amount": 1991.25,
       "paidDate": "2024-03-13",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_522_5nptic",
@@ -6424,7 +6424,7 @@
       "amount": 364.42,
       "paidDate": "2024-03-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789044_562_p9ngkx",
@@ -6437,7 +6437,7 @@
       "amount": 2338.64,
       "paidDate": "2024-03-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789044_563_3b6czq",
@@ -6580,7 +6580,7 @@
       "amount": 1237.29,
       "paidDate": "2024-03-21",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_576_kzs8md",
@@ -7230,7 +7230,7 @@
       "amount": 1154.35,
       "paidDate": "2024-03-28",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_632_31946j",
@@ -7570,7 +7570,7 @@
       "amount": 2521.64,
       "paidDate": "2024-02-01",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_245_6ufg94",
@@ -7609,7 +7609,7 @@
       "amount": 3694.62,
       "paidDate": "2024-02-02",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_250_xzycsq",
@@ -7882,7 +7882,7 @@
       "amount": 3945,
       "paidDate": "2024-02-07",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_273_atm2kr",
@@ -7895,7 +7895,7 @@
       "amount": 380.41,
       "paidDate": "2024-02-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789043_274_1vaqa0",
@@ -7921,7 +7921,7 @@
       "amount": 1262.2,
       "paidDate": "2024-02-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789043_276_8r3s9s",
@@ -7973,7 +7973,7 @@
       "amount": 2521.64,
       "paidDate": "2024-02-08",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_281_q3wbn7",
@@ -8194,7 +8194,7 @@
       "amount": 1991.27,
       "paidDate": "2024-02-14",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_299_l1p24t",
@@ -8610,7 +8610,7 @@
       "amount": 2521.64,
       "paidDate": "2024-02-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_333_2djs2w",
@@ -8922,7 +8922,7 @@
       "amount": 386.18,
       "paidDate": "2024-02-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789043_359_sf6wcq",
@@ -8948,7 +8948,7 @@
       "amount": 2223.29,
       "paidDate": "2024-02-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789043_361_4sed0u",
@@ -9078,7 +9078,7 @@
       "amount": 3945,
       "paidDate": "2024-02-22",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789043_372_9rhxbp",
@@ -10042,7 +10042,7 @@
       "amount": 1154.34,
       "paidDate": "2024-04-04",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_677_jmebkf",
@@ -10107,7 +10107,7 @@
       "amount": 1237.29,
       "paidDate": "2024-04-05",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_683_galpet",
@@ -10354,7 +10354,7 @@
       "amount": 1154.34,
       "paidDate": "2024-04-11",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789044_706_leowdc",
@@ -11004,7 +11004,7 @@
       "amount": 513.42,
       "paidDate": "2024-04-19",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789045_762_zm0mlh",
@@ -11017,7 +11017,7 @@
       "amount": 2419.15,
       "paidDate": "2024-04-19",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789045_763_8pfyaf",
@@ -11030,7 +11030,7 @@
       "amount": 531.68,
       "paidDate": "2024-04-19",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789045_764_6c26jq",
@@ -11043,7 +11043,7 @@
       "amount": 1336.67,
       "paidDate": "2024-04-19",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789045_765_72chev",
@@ -11147,7 +11147,7 @@
       "amount": 1237.29,
       "paidDate": "2024-04-22",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_774_072s5j",
@@ -12410,7 +12410,7 @@
       "amount": 350,
       "paidDate": "2024-05-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_883_wm73i2",
@@ -12904,7 +12904,7 @@
       "amount": 1722.67,
       "paidDate": "2024-05-14",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_926_410i03",
@@ -13151,7 +13151,7 @@
       "amount": 585.74,
       "paidDate": "2024-05-17",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789045_948_vthopd",
@@ -13164,7 +13164,7 @@
       "amount": 2281.08,
       "paidDate": "2024-05-17",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789045_949_20ab1a",
@@ -13177,7 +13177,7 @@
       "amount": 531.68,
       "paidDate": "2024-05-17",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789045_950_69wgk2",
@@ -13190,7 +13190,7 @@
       "amount": 1188.12,
       "paidDate": "2024-05-17",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789045_951_b9frxh",
@@ -13398,7 +13398,7 @@
       "amount": 1237.29,
       "paidDate": "2024-05-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_967_0nuwyk",
@@ -13476,7 +13476,7 @@
       "amount": 1722.67,
       "paidDate": "2024-05-21",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_974_c51pzl",
@@ -14022,7 +14022,7 @@
       "amount": 1722.67,
       "paidDate": "2024-05-28",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_1022_14bzq9",
@@ -14349,7 +14349,7 @@
       "amount": 1722.67,
       "paidDate": "2024-06-03",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789045_1053_8e8qhf",
@@ -14518,7 +14518,7 @@
       "amount": 350,
       "paidDate": "2024-06-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789046_1070_4ulrlb",
@@ -14544,7 +14544,7 @@
       "amount": 1933.74,
       "paidDate": "2024-06-06",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1072_3ziaej",
@@ -14570,7 +14570,7 @@
       "amount": 1294.44,
       "paidDate": "2024-06-06",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1074_r8i6ic",
@@ -14752,7 +14752,7 @@
       "amount": 1722.66,
       "paidDate": "2024-06-10",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789046_1089_r9lwly",
@@ -15389,7 +15389,7 @@
       "amount": 2228.51,
       "paidDate": "2024-06-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789046_1148_l6dfhc",
@@ -15402,7 +15402,7 @@
       "amount": 558.88,
       "paidDate": "2024-06-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789046_1149_329vbi",
@@ -15454,7 +15454,7 @@
       "amount": 531.68,
       "paidDate": "2024-06-20",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789046_1153_ih4kfg",
@@ -15467,7 +15467,7 @@
       "amount": 1141.38,
       "paidDate": "2024-06-20",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789046_1154_kiaawm",
@@ -15701,7 +15701,7 @@
       "amount": 1933.74,
       "paidDate": "2024-06-24",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1174_l7s54e",
@@ -15714,7 +15714,7 @@
       "amount": 1294.44,
       "paidDate": "2024-06-24",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1175_422a8j",
@@ -16444,7 +16444,7 @@
       "amount": 1933.74,
       "paidDate": "2024-07-08",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1244_jl1v5b",
@@ -16483,7 +16483,7 @@
       "amount": 1294.44,
       "paidDate": "2024-07-08",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1248_ujqsla",
@@ -17159,7 +17159,7 @@
       "amount": 2229.99,
       "paidDate": "2024-07-16",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789046_1306_rzoeup",
@@ -17172,7 +17172,7 @@
       "amount": 641.03,
       "paidDate": "2024-07-16",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789046_1307_5idljb",
@@ -17185,7 +17185,7 @@
       "amount": 663.94,
       "paidDate": "2024-07-17",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789046_1308_f9atu6",
@@ -17211,7 +17211,7 @@
       "amount": 1142.7,
       "paidDate": "2024-07-17",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789046_1310_onngqw",
@@ -17419,7 +17419,7 @@
       "amount": 1933.74,
       "paidDate": "2024-07-23",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789046_1328_msxbz7",
@@ -18240,7 +18240,7 @@
       "amount": 1933.74,
       "paidDate": "2024-08-07",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789047_1404_ajxcxh",
@@ -18279,7 +18279,7 @@
       "amount": 415.81,
       "paidDate": "2024-08-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1407_gcpunp",
@@ -18331,7 +18331,7 @@
       "amount": 1294.44,
       "paidDate": "2024-08-07",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789047_1412_o2kfs0",
@@ -18383,7 +18383,7 @@
       "amount": 2658.15,
       "paidDate": "2024-08-08",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1417_4qd2qu",
@@ -18578,7 +18578,7 @@
       "amount": 663.94,
       "paidDate": "2024-08-12",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789047_1433_u1dqn5",
@@ -18864,7 +18864,7 @@
       "amount": 2658.15,
       "paidDate": "2024-08-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1458_ygxo5w",
@@ -19046,7 +19046,7 @@
       "amount": 1076.57,
       "paidDate": "2024-08-19",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789047_1473_fvce7x",
@@ -19059,7 +19059,7 @@
       "amount": 2251.53,
       "paidDate": "2024-08-19",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789047_1474_q55qmv",
@@ -19085,7 +19085,7 @@
       "amount": 734.02,
       "paidDate": "1900-07-16",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789047_1476_bmnw3k",
@@ -19384,7 +19384,7 @@
       "amount": 2658.15,
       "paidDate": "2024-08-22",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1503_zstbqd",
@@ -19852,7 +19852,7 @@
       "amount": 2658.15,
       "paidDate": "2024-08-29",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1544_vmh55u",
@@ -20179,7 +20179,7 @@
       "amount": 2264.24,
       "paidDate": "2024-09-03",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1574_izvs9e",
@@ -20517,7 +20517,7 @@
       "amount": 415.81,
       "paidDate": "2024-09-09",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789047_1604_4n1tc3",
@@ -21375,7 +21375,7 @@
       "amount": 2149.5,
       "paidDate": "2024-09-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789048_1680_anb4v2",
@@ -21401,7 +21401,7 @@
       "amount": 708.91,
       "paidDate": "2024-09-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789048_1682_hfnjr1",
@@ -21440,7 +21440,7 @@
       "amount": 691.62,
       "paidDate": "2024-09-20",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789048_1685_w2k067",
@@ -21453,7 +21453,7 @@
       "amount": 1052.32,
       "paidDate": "2024-09-20",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789048_1686_o62d5s",
@@ -21739,7 +21739,7 @@
       "amount": 1404.56,
       "paidDate": "2024-09-24",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1710_4y4z3k",
@@ -22352,7 +22352,7 @@
       "amount": 1404.56,
       "paidDate": "2024-10-01",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_1989_m63z4f",
@@ -22781,7 +22781,7 @@
       "amount": 1404.56,
       "paidDate": "2024-10-08",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1801_dpntu3",
@@ -22807,7 +22807,7 @@
       "amount": 2260.58,
       "paidDate": "2024-10-08",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1803_3dnnkx",
@@ -23314,7 +23314,7 @@
       "amount": 863.2,
       "paidDate": "2024-10-14",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1846_0vawct",
@@ -23509,7 +23509,7 @@
       "amount": 1404.56,
       "paidDate": "2024-10-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1862_uwjois",
@@ -23535,7 +23535,7 @@
       "amount": 2260.58,
       "paidDate": "2024-10-15",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1864_uqpix9",
@@ -23730,7 +23730,7 @@
       "amount": 796.2,
       "paidDate": "2024-10-18",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789048_1882_8ivv7j",
@@ -23743,7 +23743,7 @@
       "amount": 1051.88,
       "paidDate": "2024-10-18",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789048_1883_4089fk",
@@ -23782,7 +23782,7 @@
       "amount": 2148.99,
       "paidDate": "2024-10-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789048_1886_spe1oi",
@@ -23795,7 +23795,7 @@
       "amount": 768.64,
       "paidDate": "2024-10-18",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789048_1887_6v2pk1",
@@ -24055,7 +24055,7 @@
       "amount": 863.2,
       "paidDate": "2024-10-21",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1908_agrzjg",
@@ -24081,7 +24081,7 @@
       "amount": 1404.56,
       "paidDate": "2024-10-22",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1911_zm6x4n",
@@ -24107,7 +24107,7 @@
       "amount": 2260.58,
       "paidDate": "2024-10-22",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1914_g9xhnz",
@@ -24120,7 +24120,7 @@
       "amount": 1485.9,
       "paidDate": "2024-10-23",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789048_1915_dma0by",
@@ -24653,7 +24653,7 @@
       "amount": 863.2,
       "paidDate": "2024-10-28",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_1958_tua0so",
@@ -24731,7 +24731,7 @@
       "amount": 2260.58,
       "paidDate": "2024-10-19",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_1965_15it6y",
@@ -25019,7 +25019,7 @@
       "amount": 2002.18,
       "paidDate": "2024-11-04",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789049_1993_trolxs",
@@ -25045,7 +25045,7 @@
       "amount": 863.2,
       "paidDate": "2024-11-04",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_1995_goxajh",
@@ -25214,7 +25214,7 @@
       "amount": 2260.59,
       "paidDate": "2024-11-05",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_2009_mrxyij",
@@ -25279,7 +25279,7 @@
       "amount": 1485.29,
       "paidDate": "2024-11-07",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_2016_8l0x8h",
@@ -25305,7 +25305,7 @@
       "amount": 415.81,
       "paidDate": "2024-11-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078789049_2018_34u86u",
@@ -25578,7 +25578,7 @@
       "amount": 863.18,
       "paidDate": "2024-11-11",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_2041_zd41ck",
@@ -26163,7 +26163,7 @@
       "amount": 768.64,
       "paidDate": "2024-11-19",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789049_2091_n3rl0x",
@@ -26176,7 +26176,7 @@
       "amount": 2461.04,
       "paidDate": "2024-11-19",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782078789049_2092_l0c5t9",
@@ -26202,7 +26202,7 @@
       "amount": 857.02,
       "paidDate": "2024-11-19",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789049_2094_tg2yrl",
@@ -26228,7 +26228,7 @@
       "amount": 796.2,
       "paidDate": "2024-11-19",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782078789049_2096_csmrwl",
@@ -26332,7 +26332,7 @@
       "amount": 1485.29,
       "paidDate": "2024-11-22",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078789049_2106_okrlw1",

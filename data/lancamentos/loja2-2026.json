@@ -2355,9 +2355,9 @@
     "2026-06-23": {
       "date": "2026-06-23",
       "values": {
-        "dinheiro": 108.5,
-        "pix": 235.3,
-        "cartao": 701.2
+        "dinheiro": 1050.75,
+        "pix": 1950.5,
+        "cartao": 2944.5
       },
       "source": "sync"
     },
@@ -2366,7 +2366,395 @@
       "values": {
         "dinheiro": 604,
         "pix": 1481.8,
+        "sobra": 23,
         "cartao": 1427.2
+      },
+      "source": "sync"
+    },
+    "2026-06-29": {
+      "date": "2026-06-29",
+      "values": {
+        "dinheiro": 593.5,
+        "pix": 1472.9,
+        "cartao": 1283.2,
+        "sangria": 300
+      },
+      "source": "sync"
+    },
+    "2026-06-28": {
+      "date": "2026-06-28",
+      "values": {
+        "dinheiro": 872.45,
+        "pix": 1387.48,
+        "sobra": 15.9,
+        "cartao": 2210.4
+      },
+      "source": "sync"
+    },
+    "2026-06-27": {
+      "date": "2026-06-27",
+      "values": {
+        "dinheiro": 646,
+        "pix": 2937.9,
+        "sobra": 21.35,
+        "cartao": 4086
+      },
+      "source": "sync"
+    },
+    "2026-06-26": {
+      "date": "2026-06-26",
+      "values": {
+        "dinheiro": 955.4,
+        "pix": 2752.3,
+        "sobra": 15,
+        "cartao": 2164.8
+      },
+      "source": "sync"
+    },
+    "2026-06-24": {
+      "date": "2026-06-24",
+      "values": {
+        "dinheiro": 814.6,
+        "pix": 2682.6,
+        "sobra": 62.9,
+        "cartao": 3377.2
+      },
+      "source": "sync"
+    },
+    "2026-07-01": {
+      "date": "2026-07-01",
+      "values": {
+        "dinheiro": 930,
+        "pix": 1829.49,
+        "cartao": 3010.1,
+        "sangria": 400
+      },
+      "source": "sync"
+    },
+    "2026-07-02": {
+      "date": "2026-07-02",
+      "values": {
+        "dinheiro": 1071.3,
+        "pix": 2080.9,
+        "sobra": 25,
+        "cartao": 3476.2,
+        "sangria": 500
+      },
+      "source": "sync"
+    },
+    "2026-07-03": {
+      "date": "2026-07-03",
+      "values": {
+        "dinheiro": 1639.95,
+        "pix": 2073,
+        "cartao": 1937.9,
+        "sangria": 500
+      },
+      "source": "sync"
+    },
+    "2026-07-05": {
+      "date": "2026-07-05",
+      "values": {
+        "dinheiro": 860,
+        "pix": 1495.1,
+        "cartao": 3260.8
+      },
+      "source": "sync"
+    },
+    "2026-07-04": {
+      "date": "2026-07-04",
+      "values": {
+        "dinheiro": 1312.9,
+        "pix": 2251.95,
+        "sobra": 67.7,
+        "cartao": 5369.63
+      },
+      "source": "sync"
+    },
+    "2026-07-07": {
+      "date": "2026-07-07",
+      "values": {
+        "dinheiro": 1781,
+        "pix": 2053.1,
+        "cartao": 2330.1
+      },
+      "source": "sync"
+    },
+    "2026-07-15": {
+      "date": "2026-07-15",
+      "values": {
+        "dinheiro": 972.65,
+        "pix": 1471.7,
+        "sobra": 34.75,
+        "cartao": 3100.9
+      },
+      "source": "sync"
+    },
+    "2026-07-14": {
+      "date": "2026-07-14",
+      "values": {
+        "dinheiro": 1124,
+        "pix": 2960,
+        "sobra": 16.9,
+        "cartao": 2350.1
+      },
+      "source": "sync"
+    },
+    "2026-07-13": {
+      "date": "2026-07-13",
+      "values": {
+        "dinheiro": 826.25,
+        "pix": 2207.1,
+        "sobra": 39,
+        "cartao": 2401.6
+      },
+      "source": "sync"
+    },
+    "2026-07-12": {
+      "date": "2026-07-12",
+      "values": {
+        "dinheiro": 825.3,
+        "pix": 1467.1,
+        "sobra": 18.9,
+        "cartao": 2203.7
+      },
+      "source": "sync"
+    },
+    "2026-07-11": {
+      "date": "2026-07-11",
+      "values": {
+        "dinheiro": 426.3,
+        "pix": 1716.5,
+        "sobra": 58.8,
+        "cartao": 2745.93
+      },
+      "source": "sync"
+    },
+    "2026-07-10": {
+      "date": "2026-07-10",
+      "values": {
+        "dinheiro": 977.85,
+        "pix": 2747.5,
+        "sobra": 13.65,
+        "cartao": 2916
+      },
+      "source": "sync"
+    },
+    "2026-07-09": {
+      "date": "2026-07-09",
+      "values": {
+        "dinheiro": 1198.2,
+        "pix": 2397.6,
+        "sobra": 37.9,
+        "cartao": 1627.3
+      },
+      "source": "sync"
+    },
+    "2026-07-08": {
+      "date": "2026-07-08",
+      "values": {
+        "dinheiro": 1015.3,
+        "pix": 1213.2,
+        "cartao": 3080.1
+      },
+      "source": "sync"
+    },
+    "2026-07-06": {
+      "date": "2026-07-06",
+      "values": {
+        "dinheiro": 1255,
+        "pix": 1327.1,
+        "cartao": 2605.05
+      },
+      "source": "sync"
+    },
+    "2026-07-20": {
+      "date": "2026-07-20",
+      "values": {
+        "dinheiro": 465,
+        "pix": 969.1,
+        "sobra": 49.8,
+        "cartao": 2459
+      },
+      "source": "sync"
+    },
+    "2026-07-19": {
+      "date": "2026-07-19",
+      "values": {
+        "dinheiro": 807.05,
+        "pix": 1271.4,
+        "cartao": 1160.15
+      },
+      "source": "sync"
+    },
+    "2026-07-18": {
+      "date": "2026-07-18",
+      "values": {
+        "dinheiro": 610.3,
+        "pix": 1487.5,
+        "sobra": 41.6,
+        "cartao": 2033.3
+      },
+      "source": "sync"
+    },
+    "2026-07-21": {
+      "date": "2026-07-21",
+      "values": {
+        "dinheiro": 1620.5,
+        "pix": 2327.7,
+        "cartao": 1569.1
+      },
+      "source": "sync"
+    },
+    "2026-07-17": {
+      "date": "2026-07-17",
+      "values": {
+        "dinheiro": 870.25,
+        "pix": 1352.1,
+        "sobra": 52,
+        "cartao": 2683.1
+      },
+      "source": "sync"
+    },
+    "2026-07-16": {
+      "date": "2026-07-16",
+      "values": {
+        "dinheiro": 1262.7,
+        "pix": 784.5,
+        "cartao": 2465.6
+      },
+      "source": "sync"
+    },
+    "2026-07-22": {
+      "date": "2026-07-22",
+      "values": {
+        "dinheiro": 170,
+        "pix": 261.8,
+        "cartao": 288.1
+      },
+      "source": "sync"
+    },
+    "2026-07-28": {
+      "date": "2026-07-28",
+      "values": {
+        "dinheiro": 118.1,
+        "pix": 285.8,
+        "cartao": 720.2
+      },
+      "source": "sync"
+    },
+    "2026-08-03": {
+      "date": "2026-08-03",
+      "values": {
+        "dinheiro": 1080.25,
+        "pix": 1616,
+        "sobra": 65,
+        "cartao": 2082.9
+      },
+      "source": "sync"
+    },
+    "2026-08-02": {
+      "date": "2026-08-02",
+      "values": {
+        "dinheiro": 724.75,
+        "pix": 1204.3,
+        "sobra": 3,
+        "cartao": 1669.8
+      },
+      "source": "sync"
+    },
+    "2026-08-01": {
+      "date": "2026-08-01",
+      "values": {
+        "dinheiro": 1189,
+        "pix": 2429.26,
+        "sobra": 58,
+        "cartao": 4258.2
+      },
+      "source": "sync"
+    },
+    "2026-08-05": {
+      "date": "2026-08-05",
+      "values": {
+        "dinheiro": 1122.5,
+        "pix": 2463.39,
+        "cartao": 2840.8
+      },
+      "source": "sync"
+    },
+    "2026-08-04": {
+      "date": "2026-08-04",
+      "values": {
+        "dinheiro": 918.25,
+        "pix": 1999.5,
+        "sobra": 87.25,
+        "cartao": 1996.6
+      },
+      "source": "sync"
+    },
+    "2026-08-07": {
+      "date": "2026-08-07",
+      "values": {
+        "dinheiro": 46,
+        "pix": 30,
+        "cartao": 79.9
+      },
+      "source": "sync"
+    },
+    "2026-08-06": {
+      "date": "2026-08-06",
+      "values": {
+        "dinheiro": 1463.5,
+        "pix": 1967.7,
+        "sobra": 10,
+        "cartao": 2407.1,
+        "sangria": 500
+      },
+      "source": "sync"
+    },
+    "2026-08-12": {
+      "date": "2026-08-12",
+      "values": {
+        "dinheiro": 154,
+        "pix": 183.33,
+        "cartao": 429.8
+      },
+      "source": "sync"
+    },
+    "2026-08-13": {
+      "date": "2026-08-13",
+      "values": {
+        "dinheiro": 1309,
+        "pix": 13934.7,
+        "sobra": 2,
+        "cartao": 1395.1
+      },
+      "source": "sync"
+    },
+    "2026-08-14": {
+      "date": "2026-08-14",
+      "values": {
+        "dinheiro": 118,
+        "pix": 1459.9,
+        "cartao": 600.6
+      },
+      "source": "sync"
+    },
+    "2026-08-24": {
+      "date": "2026-08-24",
+      "values": {
+        "dinheiro": 655.25,
+        "pix": 1411,
+        "cartao": 1521.1
+      },
+      "source": "sync"
+    },
+    "2026-08-27": {
+      "date": "2026-08-27",
+      "values": {
+        "dinheiro": 616.2,
+        "pix": 2083.8,
+        "cartao": 940.8
       },
       "source": "sync"
     }

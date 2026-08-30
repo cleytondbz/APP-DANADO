@@ -102,6 +102,18 @@ export default function OpcoesTab() {
   const [editingActionUserId, setEditingActionUserId] = useState<string | null>(null);
   const [visibleActionUserPasswords, setVisibleActionUserPasswords] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    setActionUsers(settings.actionUsers || []);
+  }, [settings.actionUsers]);
+
+  const updateActionUserAndRefresh = (id: string, updates: any) => {
+    const nextUser = actionUsers.find((user) => user.id === id);
+    if (!nextUser) return;
+    const updatedUser = { ...nextUser, ...updates };
+    setActionUsers((prev) => prev.map((user) => (user.id === id ? updatedUser : user)));
+    updateActionUser(id, updatedUser);
+  };
+
   // Categorias
   const [caixaCategories, setCaixaCategories] = useState(getCaixaCategories());
   const [fechamentoCategories, setFechamentoCategories] = useState(getFechamentoCategories());
@@ -481,6 +493,34 @@ export default function OpcoesTab() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-foreground">{user.name}</p>
                     <p className="text-xs text-muted-foreground">Permissões: {user.permissions.join(', ')}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(['delete', 'edit', 'changeDate', 'viewSales'] as const).map((perm) => {
+                        const checked = user.permissions.includes(perm);
+                        const label =
+                          perm === 'delete'
+                            ? 'Deletar'
+                            : perm === 'edit'
+                              ? 'Editar'
+                              : perm === 'changeDate'
+                                ? 'Trocar Data'
+                                : 'Visualizar vendas / Contador';
+                        return (
+                          <label key={perm} className="flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const nextPermissions = e.target.checked
+                                  ? Array.from(new Set([...user.permissions, perm]))
+                                  : user.permissions.filter((item) => item !== perm);
+                                updateActionUserAndRefresh(user.id, { permissions: nextPermissions });
+                              }}
+                            />
+                            {label}
+                          </label>
+                        );
+                      })}
+                    </div>
                     <p className="mt-1 text-xs font-semibold text-muted-foreground">
                       Senha: <span className="font-mono text-foreground">
                         {visibleActionUserPasswords[user.id] ? user.password : '••••••'}
@@ -517,7 +557,7 @@ export default function OpcoesTab() {
                             toast.error('Senha inválida em opções: esta senha já está em uso por outro usuário.');
                             return;
                           }
-                          updateActionUser(user.id, { ...user, password: newPassword });
+                          updateActionUserAndRefresh(user.id, { password: newPassword });
                           toast.success(`Senha de ${user.name} alterada!`);
                         }
                       }}
@@ -1281,7 +1321,7 @@ export default function OpcoesTab() {
             <div>
               <label className="text-sm font-medium">Permissões</label>
               <div className="space-y-2 mt-2">
-                {['delete', 'edit', 'changeDate'].map(perm => (
+                {['delete', 'edit', 'changeDate', 'viewSales'].map(perm => (
                   <label key={perm} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1296,7 +1336,7 @@ export default function OpcoesTab() {
                       className="w-4 h-4"
                     />
                     <span className="text-sm">
-                      {perm === 'delete' ? 'Deletar' : perm === 'edit' ? 'Editar' : 'Trocar Data'}
+                      {perm === 'delete' ? 'Deletar' : perm === 'edit' ? 'Editar' : perm === 'changeDate' ? 'Trocar Data' : 'Visualizar vendas / Contador'}
                     </span>
                   </label>
                 ))}

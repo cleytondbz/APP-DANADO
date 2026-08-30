@@ -110,7 +110,7 @@
       "dinheiro": "582,00",
       "sobra": "92",
       "pix": "1673,40",
-      "cartao": "1450,30",
+      "cartao": "1346,50",
       "boleto": "219,90",
       "sangrias": [],
       "despesas": [],
@@ -251,8 +251,8 @@
     "2026-06-13": {
       "dinheiro": "1252,50",
       "sobra": "27,10",
-      "pix": "2455,70",
-      "cartao": "3716,00",
+      "pix": "2257,90",
+      "cartao": "3709,10",
       "boleto": "1018,80",
       "sangrias": [],
       "despesas": [],
@@ -539,7 +539,742 @@
       "boleto": "0,00",
       "sangrias": [],
       "despesas": [],
-      "nomeDigital": "test",
+      "nomeDigital": "",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-06-29": {
+      "dinheiro": "647,60",
+      "sobra": "16,00",
+      "pix": "1918,30",
+      "cartao": "1783,60",
+      "boleto": "604,90",
+      "sangrias": [
+        {
+          "id": "1782745122441",
+          "valor": 400
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 400,
+      "despesa": 0
+    },
+    "2026-06-30": {
+      "dinheiro": "689,40",
+      "sobra": "13,75",
+      "pix": "2606,60",
+      "cartao": "2325,40",
+      "boleto": "109,90",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-01": {
+      "dinheiro": "1295,70",
+      "sobra": "66,20",
+      "pix": "2439,10",
+      "cartao": "3523,50",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1782935296095",
+          "valor": 600
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 600,
+      "despesa": 0
+    },
+    "2026-07-02": {
+      "dinheiro": "826,80",
+      "sobra": "24,50",
+      "pix": "2600,70",
+      "cartao": "3503,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-03": {
+      "dinheiro": "693,00",
+      "sobra": "117,5",
+      "pix": "1881,00",
+      "cartao": "4391,60",
+      "boleto": "298,90",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-04": {
+      "dinheiro": "434,00",
+      "sobra": "63,75",
+      "pix": "1764,00",
+      "cartao": "3458,50",
+      "boleto": "279,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "angela gerente",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-05": {
+      "dinheiro": "",
+      "sobra": "",
+      "pix": "",
+      "cartao": "",
+      "boleto": "",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-06": {
+      "dinheiro": "1118,30",
+      "sobra": "102,10",
+      "pix": "2102,80",
+      "cartao": "2597,10",
+      "boleto": "343,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-07": {
+      "dinheiro": "785,80",
+      "sobra": "69,60",
+      "pix": "1625,20",
+      "cartao": "3074,10",
+      "boleto": "83,60",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-08": {
+      "dinheiro": "602,40",
+      "sobra": "113,4",
+      "pix": "2503,00",
+      "cartao": "2940,30",
+      "boleto": "2947,70",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-09": {
+      "dinheiro": "984,50",
+      "sobra": "24,75",
+      "pix": "1946,40",
+      "cartao": "3689,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-10": {
+      "dinheiro": "841,40",
+      "sobra": "31",
+      "pix": "2263,50",
+      "cartao": "2880,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-11": {
+      "dinheiro": "720,50",
+      "sobra": "0,00",
+      "pix": "3312,00",
+      "cartao": "3307,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-13": {
+      "dinheiro": "792,50",
+      "sobra": "39,75",
+      "pix": "1843,10",
+      "cartao": "2792,90",
+      "boleto": "869,30",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-14": {
+      "dinheiro": "995,50",
+      "sobra": "47,00",
+      "pix": "1195,20",
+      "cartao": "2593,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-15": {
+      "dinheiro": "1278,00",
+      "sobra": "1,70",
+      "pix": "1487,30",
+      "cartao": "2530,00",
+      "boleto": "809,70",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-16": {
+      "dinheiro": "948,00",
+      "sobra": "29,40",
+      "pix": "1765,50",
+      "cartao": "2441,20",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-17": {
+      "dinheiro": "555,60",
+      "sobra": "26,80",
+      "pix": "1542,40",
+      "cartao": "3285,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-18": {
+      "dinheiro": "366,85",
+      "sobra": "0,00",
+      "pix": "760,20",
+      "cartao": "2036,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-20": {
+      "dinheiro": "306,50",
+      "sobra": "37,00",
+      "pix": "1604,40",
+      "cartao": "2516,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-21": {
+      "dinheiro": "477,25",
+      "sobra": "9,00",
+      "pix": "1448,70",
+      "cartao": "2713,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-22": {
+      "dinheiro": "344,25",
+      "sobra": "33,75",
+      "pix": "2343,00",
+      "cartao": "2726,50",
+      "boleto": "471,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-23": {
+      "dinheiro": "1496,80",
+      "sobra": "80",
+      "pix": "1002,40",
+      "cartao": "2425,40",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-24": {
+      "dinheiro": "361,40",
+      "sobra": "41,90",
+      "pix": "1112,60",
+      "cartao": "2408,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-25": {
+      "dinheiro": "493,10",
+      "sobra": "31,50",
+      "pix": "618,40",
+      "cartao": "2018,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-27": {
+      "dinheiro": "943,75",
+      "sobra": "23,55",
+      "pix": "957,60",
+      "cartao": "2279,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-28": {
+      "dinheiro": "835,30",
+      "sobra": "64,90",
+      "pix": "887,10",
+      "cartao": "1561,30",
+      "boleto": "96,70",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-29": {
+      "dinheiro": "652,25",
+      "sobra": "2,00",
+      "pix": "2153,65",
+      "cartao": "1194,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-30": {
+      "dinheiro": "",
+      "sobra": "",
+      "pix": "",
+      "cartao": "",
+      "boleto": "",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-31": {
+      "dinheiro": "1446,75",
+      "sobra": "1,75",
+      "pix": "1361,60",
+      "cartao": "2250,60",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1785530722878",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-01": {
+      "dinheiro": "618,75",
+      "sobra": "0,00",
+      "pix": "1558,60",
+      "cartao": "1606,30",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-03": {
+      "dinheiro": "1242,30",
+      "sobra": "0,00",
+      "pix": "2839,24",
+      "cartao": "1685,50",
+      "boleto": "67,30",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-04": {
+      "dinheiro": "1241,80",
+      "sobra": "0,00",
+      "pix": "1261,90",
+      "cartao": "2881,10",
+      "boleto": "560,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-05": {
+      "dinheiro": "721,60",
+      "sobra": "0,00",
+      "pix": "1284,30",
+      "cartao": "1727,10",
+      "boleto": "339,00",
+      "sangrias": [
+        {
+          "id": "1785961928130",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-06": {
+      "dinheiro": "876,10",
+      "sobra": "",
+      "pix": "2054,30",
+      "cartao": "3366,50",
+      "boleto": "1158,70",
+      "sangrias": [
+        {
+          "id": "1786031134334",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-07": {
+      "dinheiro": "1878,80",
+      "sobra": "",
+      "pix": "3976,10",
+      "cartao": "2404,30",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1786111077150",
+          "valor": 700
+        },
+        {
+          "id": "1786115644214",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 1200,
+      "despesa": 0
+    },
+    "2026-08-08": {
+      "dinheiro": "1535,80",
+      "sobra": "0,25",
+      "pix": "1852,40",
+      "cartao": "2317,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "angela gerente",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-10": {
+      "dinheiro": "575,20",
+      "sobra": "",
+      "pix": "2039,03",
+      "cartao": "2017,30",
+      "boleto": "349,50",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-11": {
+      "dinheiro": "849,05",
+      "sobra": "",
+      "pix": "1485,10",
+      "cartao": "1328,60",
+      "boleto": "460,60",
+      "sangrias": [
+        {
+          "id": "1786470759494",
+          "valor": 600
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 600,
+      "despesa": 0
+    },
+    "2026-08-12": {
+      "dinheiro": "567,15",
+      "sobra": "",
+      "pix": "2453,90",
+      "cartao": "1967,10",
+      "boleto": "3102,50",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-13": {
+      "dinheiro": "1372,60",
+      "sobra": "70,05",
+      "pix": "4263,30",
+      "cartao": "2041,60",
+      "boleto": "69,90",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-14": {
+      "dinheiro": "441,10",
+      "sobra": "",
+      "pix": "3050,19",
+      "cartao": "2902,90",
+      "boleto": "2533,90",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Cleyton",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-15": {
+      "dinheiro": "429,10",
+      "sobra": "12,65",
+      "pix": "2092,20",
+      "cartao": "2125,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "angel gerente",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-17": {
+      "dinheiro": "816,90",
+      "sobra": "",
+      "pix": "2271,40",
+      "cartao": "4324,80",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1787000838309",
+          "valor": 100
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 100,
+      "despesa": 0
+    },
+    "2026-08-18": {
+      "dinheiro": "",
+      "sobra": "",
+      "pix": "",
+      "cartao": "",
+      "boleto": "",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-19": {
+      "dinheiro": "2181,90",
+      "sobra": "-79,9",
+      "pix": "3319,50",
+      "cartao": "1925,80",
+      "boleto": "549,98",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-20": {
+      "dinheiro": "1269,85",
+      "sobra": "10,55",
+      "pix": "1513,00",
+      "cartao": "2067,90",
+      "boleto": "106,60",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-21": {
+      "dinheiro": "1298,60",
+      "sobra": "0,00",
+      "pix": "1849,30",
+      "cartao": "2043,30",
+      "boleto": "394,40",
+      "sangrias": [
+        {
+          "id": "1787329627964",
+          "valor": 700
+        },
+        {
+          "id": "1787341240838",
+          "valor": 300
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 1000,
+      "despesa": 0
+    },
+    "2026-08-22": {
+      "dinheiro": "600,20",
+      "sobra": "0,50",
+      "pix": "898,00",
+      "cartao": "2738,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "angla gerente",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-24": {
+      "dinheiro": "617,50",
+      "sobra": "",
+      "pix": "1789,60",
+      "cartao": "1294,70",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1787602465189",
+          "valor": 400
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "jomnathan",
+      "sangria": 400,
+      "despesa": 0
+    },
+    "2026-08-25": {
+      "dinheiro": "579,90",
+      "sobra": "3,00",
+      "pix": "1701,99",
+      "cartao": "3688,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-26": {
+      "dinheiro": "909,60",
+      "sobra": "5,90",
+      "pix": "2545,35",
+      "cartao": "1876,70",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1787770672180",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-27": {
+      "dinheiro": "1185,20",
+      "sobra": "32,95",
+      "pix": "1219,50",
+      "cartao": "2757,00",
+      "boleto": "154,90",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-28": {
+      "dinheiro": "828,00",
+      "sobra": "",
+      "pix": "1985,10",
+      "cartao": "2541,40",
+      "boleto": "728,80",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-29": {
+      "dinheiro": "489,15",
+      "sobra": "0,35",
+      "pix": "915,65",
+      "cartao": "1501,30",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "angela gerente",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-30": {
+      "dinheiro": "",
+      "sobra": "",
+      "pix": "",
+      "cartao": "",
+      "boleto": "",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "teste",
       "sangria": 0,
       "despesa": 0
     }

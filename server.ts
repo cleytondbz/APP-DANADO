@@ -110,8 +110,33 @@ const sanitizePurchaseSupplierDifTypes = (input: unknown): Record<string, 'D' | 
   return out;
 };
 
+const sanitizePurchaseHistoryForServer = (incoming: any[] = [], current: any[] = []) => {
+  const merged = new Map<string, any>();
+  [...(current || []), ...(incoming || [])].forEach((item: any) => {
+    if (!item || !item.timestamp || !item.description) return;
+    const clean = {
+      id: sanitizeLogText(item.id || `${item.timestamp}_${Math.random().toString(36).slice(2, 8)}`),
+      timestamp: Number(item.timestamp) || Date.now(),
+      action: ['add', 'edit', 'transfer', 'paid', 'delete', 'import'].includes(item.action) ? item.action : 'edit',
+      description: sanitizeLogText(item.description),
+      entryId: item.entryId ? sanitizeLogText(item.entryId) : undefined,
+      dueDate: item.dueDate ? sanitizeLogText(item.dueDate) : undefined,
+      oldDueDate: item.oldDueDate ? sanitizeLogText(item.oldDueDate) : undefined,
+      newDueDate: item.newDueDate ? sanitizeLogText(item.newDueDate) : undefined,
+      supplier: item.supplier ? sanitizeLogText(item.supplier) : undefined,
+      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
+    };
+    const key = clean.id || `${clean.timestamp}|${clean.action}|${clean.description}`;
+    merged.set(key, clean);
+  });
+  return Array.from(merged.values())
+    .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
+    .slice(0, 200);
+};
+
 const sanitizePurchaseOptionsForServer = (incoming: any = {}, current: any = {}) => {
   const hasIncomingMap = Object.prototype.hasOwnProperty.call(incoming || {}, 'supplierDifTypes');
+  const hasIncomingHistory = Object.prototype.hasOwnProperty.call(incoming || {}, 'purchaseHistory');
   return {
     groups: uniqueNormalizedList(incoming?.groups || []),
     suppliers: uniqueNormalizedList(incoming?.suppliers || []),
@@ -119,6 +144,9 @@ const sanitizePurchaseOptionsForServer = (incoming: any = {}, current: any = {})
     supplierDifTypes: hasIncomingMap
       ? sanitizePurchaseSupplierDifTypes(incoming?.supplierDifTypes)
       : sanitizePurchaseSupplierDifTypes(current?.supplierDifTypes),
+    purchaseHistory: hasIncomingHistory
+      ? sanitizePurchaseHistoryForServer(incoming?.purchaseHistory || [], current?.purchaseHistory || [])
+      : sanitizePurchaseHistoryForServer(current?.purchaseHistory || [], []),
   };
 };
 
@@ -156,26 +184,56 @@ const mergeStoreBranch = (
   return next;
 };
 
-const logMonthFromPayload = (payload: Record<string, any>) => {
+const logDateFromPayload = (payload: Record<string, any>) => {
   const raw = String(payload?.ts || payload?.createdAt || payload?.timestamp || '');
-  const dateMatch = raw.match(/^(\d{4})-(\d{2})/);
-  if (dateMatch) return `${dateMatch[1]}-${dateMatch[2]}`;
+  const dateMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dateMatch) return { year: dateMatch[1], month: dateMatch[2], day: dateMatch[3] };
   const numeric = Number(raw);
   if (Number.isFinite(numeric) && numeric > 0) {
     const date = new Date(numeric);
     if (!Number.isNaN(date.getTime())) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return {
+        year: String(date.getFullYear()),
+        month: String(date.getMonth() + 1).padStart(2, '0'),
+        day: String(date.getDate()).padStart(2, '0'),
+      };
     }
   }
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return {
+    year: String(now.getFullYear()),
+    month: String(now.getMonth() + 1).padStart(2, '0'),
+    day: String(now.getDate()).padStart(2, '0'),
+  };
+};
+
+const logPeriodFromPayload = (type: 'sync-audit' | 'caixa-movements' | 'purchase-movements', payload: Record<string, any>) => {
+  const date = logDateFromPayload(payload);
+  if (type === 'purchase-movements') {
+    const half = Number(date.day) <= 15 ? '01-15' : '16-fim';
+    return `${date.year}-${date.month}-${half}`;
+  }
+  return `${date.year}-${date.month}`;
 };
 
 const appendMonthlyLog = (type: 'sync-audit' | 'caixa-movements' | 'purchase-movements', payload: Record<string, any>) => {
-  const monthKey = logMonthFromPayload(payload);
+  const periodKey = logPeriodFromPayload(type, payload);
   const folder = path.join(LOGS_DIR, type);
   if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
-  fs.appendFileSync(path.join(folder, `${type}-${monthKey}.log`), `${JSON.stringify(payload)}\n`, 'utf-8');
+  fs.appendFileSync(path.join(folder, `${type}-${periodKey}.log`), `${JSON.stringify(payload)}\n`, 'utf-8');
+};
+
+const appendReadablePeriodLog = (
+  type: 'purchase-movements',
+  payload: Record<string, any>,
+  lines: string[],
+) => {
+  const periodKey = logPeriodFromPayload(type, payload);
+  const folder = path.join(LOGS_DIR, type);
+  if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
+  const cleanLines = lines.map((line) => sanitizeLogText(line)).filter(Boolean);
+  if (cleanLines.length === 0) return;
+  fs.appendFileSync(path.join(folder, `${type}-${periodKey}.txt`), `${cleanLines.join('\n')}\n`, 'utf-8');
 };
 
 const appendSyncAudit = (payload: Record<string, any>) => {
@@ -236,7 +294,14 @@ const appendCaixaMovementLog = (payload: Record<string, any>) => {
 
 const appendPurchaseMovementLog = (payload: Record<string, any>) => {
   try {
-    appendMonthlyLog('purchase-movements', payload);
+    const readableLines = buildPurchaseMovementReadableLines(payload);
+    appendMonthlyLog('purchase-movements', {
+      ...payload,
+      readable: sanitizeLogText(payload?.readable || readableLines.join(' | ') || buildPurchaseMovementReadable(payload)),
+    });
+    if (payload?.event !== 'purchase_settings_applied') {
+      appendReadablePeriodLog('purchase-movements', payload, readableLines);
+    }
   } catch (e) {
     console.error('[PurchaseMovements] Falha ao gravar log:', e);
   }
@@ -325,7 +390,126 @@ const summarizePurchaseOptions = (options: any = {}) => ({
   groups: Array.isArray(options?.groups) ? options.groups.length : 0,
   suppliers: Array.isArray(options?.suppliers) ? options.suppliers.length : 0,
   institutions: Array.isArray(options?.institutions) ? options.institutions.length : 0,
+  history: Array.isArray(options?.purchaseHistory) ? options.purchaseHistory.length : 0,
 });
+
+const formatCurrencyLog = (value: any) =>
+  Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const formatPurchaseEntryReadable = (entry: any) => {
+  const clean = compactPurchaseEntry(entry);
+  return [
+    clean.supplier || 'sem fornecedor',
+    clean.dueDate ? `vence ${clean.dueDate}` : '',
+    `valor ${formatCurrencyLog(clean.amount)}`,
+    clean.installments ? `parcela ${clean.installments}` : '',
+    clean.financialInstitution ? `inst. ${clean.financialInstitution}` : '',
+    clean.paidDate ? `pago ${clean.paidDate}` : '',
+  ].filter(Boolean).join(' | ');
+};
+
+const getPurchaseFieldChangesReadable = (before: any = {}, after: any = {}) => {
+  const changes: string[] = [];
+  const add = (label: string, oldValue: any, newValue: any) => {
+    const oldText = sanitizeLogText(oldValue ?? '');
+    const newText = sanitizeLogText(newValue ?? '');
+    if (oldText !== newText) changes.push(`${label}: ${oldText || '-'} -> ${newText || '-'}`);
+  };
+  add('vencimento', before?.dueDate, after?.dueDate);
+  add('fornecedor', before?.supplier, after?.supplier);
+  add('documento', before?.documentNumber, after?.documentNumber);
+  add('emissao', before?.issueDate, after?.issueDate);
+  add('parcela', before?.installments, after?.installments);
+  add('valor', formatCurrencyLog(before?.amount), formatCurrencyLog(after?.amount));
+  add('pago em', before?.paidDate, after?.paidDate);
+  add('instituicao', before?.financialInstitution, after?.financialInstitution);
+  add('grupo/loja', before?.group, after?.group);
+  add('tipo', before?.difType, after?.difType);
+  return changes;
+};
+
+const getNewPurchaseHistoryItems = (currentOptions: any = {}, incomingOptions: any = {}) => {
+  const current = Array.isArray(currentOptions?.purchaseHistory) ? currentOptions.purchaseHistory : [];
+  const incoming = Array.isArray(incomingOptions?.purchaseHistory) ? incomingOptions.purchaseHistory : [];
+  const currentKeys = new Set(current.map((item: any) => String(item?.id || `${item?.timestamp}|${item?.description}`)));
+  return incoming
+    .filter((item: any) => item?.description && !currentKeys.has(String(item?.id || `${item?.timestamp}|${item?.description}`)))
+    .sort((a: any, b: any) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
+    .slice(-20);
+};
+
+const buildPurchaseMovementReadableLines = (payload: Record<string, any>) => {
+  const ts = sanitizeLogText(payload?.ts || getLocalDateTimeString());
+  const prefix = `[${ts}]`;
+  const lines: string[] = [];
+
+  if (Array.isArray(payload?.historyItems) && payload.historyItems.length > 0) {
+    payload.historyItems.forEach((item: any) => {
+      const action = sanitizeLogText(item?.action || 'alteracao').toUpperCase();
+      const description = sanitizeLogText(item?.description || '');
+      lines.push(`${prefix} ${action}: ${description}`);
+    });
+    return lines;
+  }
+
+  const diffs = Array.isArray(payload?.entriesDiff) ? payload.entriesDiff : [];
+  diffs.forEach((month: any) => {
+    (month.added || []).forEach((entry: any) => {
+      lines.push(`${prefix} ADICIONOU compra (${month.monthKey}): ${formatPurchaseEntryReadable(entry)}`);
+    });
+    (month.changed || []).forEach((change: any) => {
+      const after = change?.after || {};
+      const changes = getPurchaseFieldChangesReadable(change?.before, after);
+      lines.push(`${prefix} EDITOU compra (${month.monthKey}): ${formatPurchaseEntryReadable(after)}${changes.length ? ` | Mudou: ${changes.join('; ')}` : ''}`);
+    });
+    (month.removed || []).forEach((entry: any) => {
+      lines.push(`${prefix} EXCLUIU compra (${month.monthKey}): ${formatPurchaseEntryReadable(entry)}`);
+    });
+  });
+
+  if (lines.length === 0 && payload?.hasPurchaseOptions) {
+    const summary = payload?.incomingOptionsSummary || payload?.savedOptionsSummary || {};
+    lines.push(`${prefix} Atualizou listas/opcoes de compras: fornecedores ${summary.suppliers ?? 0}, instituicoes ${summary.institutions ?? 0}, historico ${summary.history ?? 0}.`);
+  }
+  return lines;
+};
+
+const buildPurchaseMovementReadable = (payload: Record<string, any>) => {
+  const source = payload?.source ? `origem ${payload.source}` : 'origem desconhecida';
+  if (payload?.event === 'program_purchase_payload_ignored') {
+    return `Compras ignoradas do programa (${source}) para proteger as compras do site.`;
+  }
+  const diffs = Array.isArray(payload?.entriesDiff) ? payload.entriesDiff : [];
+  const parts: string[] = [];
+  diffs.forEach((month: any) => {
+    const monthParts: string[] = [];
+    if (month.addedCount) {
+      monthParts.push(`${month.addedCount} adicionada(s)`);
+      (month.added || []).slice(0, 5).forEach((entry: any) => {
+        monthParts.push(`+ ${formatPurchaseEntryReadable(entry)}`);
+      });
+    }
+    if (month.changedCount) {
+      monthParts.push(`${month.changedCount} editada(s)`);
+      (month.changed || []).slice(0, 5).forEach((change: any) => {
+        monthParts.push(`~ antes: ${formatPurchaseEntryReadable(change.before)} -> depois: ${formatPurchaseEntryReadable(change.after)}`);
+      });
+    }
+    if (month.removedCount) {
+      monthParts.push(`${month.removedCount} excluida(s)`);
+      (month.removed || []).slice(0, 5).forEach((entry: any) => {
+        monthParts.push(`- ${formatPurchaseEntryReadable(entry)}`);
+      });
+    }
+    if (monthParts.length) parts.push(`${month.monthKey}: ${monthParts.join('; ')}`);
+  });
+  if (parts.length) return `Movimento de compras aplicado (${source}). ${parts.join(' || ')}`;
+  if (payload?.hasPurchaseOptions) {
+    const summary = payload?.incomingOptionsSummary || payload?.savedOptionsSummary || {};
+    return `Opções de compras atualizadas (${source}). Fornecedores: ${summary.suppliers ?? 0}, instituições: ${summary.institutions ?? 0}, histórico: ${summary.history ?? 0}.`;
+  }
+  return `Sincronização de compras sem mudança visível (${source}).`;
+};
 
 const findFirstStringByKeyPatterns = (obj: any, patterns: RegExp[], maxDepth = 4): string => {
   const seen = new Set<any>();
@@ -1962,6 +2146,27 @@ app.post('/api/settings/clear-occurrences-by-date', (req: Request, res: Response
 
 // ==================== APP DATA SYNC ====================
 // Salvar dados do AppContext (settings, stores, debts, saldoDia)
+const mergeCustomSaldoByStoreMonth = (current: any = {}, incoming: any = {}) => {
+  const merged: Record<string, any> = { ...(current || {}) };
+  Object.entries(incoming || {}).forEach(([storeId, months]: [string, any]) => {
+    merged[storeId] = {
+      ...(merged[storeId] || {}),
+      ...(months || {}),
+    };
+  });
+  return merged;
+};
+
+const mergeCustomSaldoHistory = (current: any[] = [], incoming: any[] = []) => {
+  const byId = new Map<string, any>();
+  [...(current || []), ...(incoming || [])].forEach((item: any) => {
+    if (item?.id) byId.set(String(item.id), item);
+  });
+  return Array.from(byId.values())
+    .sort((a: any, b: any) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
+    .slice(-500);
+};
+
 app.post('/api/sync/save', (req: Request, res: Response) => {
   const {
     source = 'site',
@@ -2080,6 +2285,18 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       if (has('timeline') && Array.isArray(settings.timeline)) {
         partialSettings.timeline = settings.timeline;
       }
+      if (has('customSaldoByStoreMonth') && settings.customSaldoByStoreMonth && typeof settings.customSaldoByStoreMonth === 'object') {
+        partialSettings.customSaldoByStoreMonth = settings.customSaldoByStoreMonth;
+      }
+      if (has('customSaldoHistory') && Array.isArray(settings.customSaldoHistory)) {
+        partialSettings.customSaldoHistory = settings.customSaldoHistory;
+      }
+      if (has('customSaldoSelection') && Array.isArray(settings.customSaldoSelection)) {
+        partialSettings.customSaldoSelection = settings.customSaldoSelection;
+      }
+      if (has('customSaldoDays') && Array.isArray(settings.customSaldoDays)) {
+        partialSettings.customSaldoDays = settings.customSaldoDays;
+      }
       if (has('purchaseEntries')) {
         partialSettings.purchaseEntries = mergePurchaseEntries(
           dataStore.settings?.purchaseEntries || {},
@@ -2157,10 +2374,26 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       source !== 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseEntries');
     const hasPurchaseOptions =
       source !== 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseOptions');
-    if (hasPurchaseEntries || hasPurchaseOptions) {
+    const purchaseEntriesDiff = hasPurchaseEntries
+      ? diffPurchaseEntries(dataStore.settings?.purchaseEntries || {}, incomingSettings.purchaseEntries || {})
+      : [];
+    const currentPurchaseOptionsForLog = hasPurchaseOptions
+      ? sanitizePurchaseOptionsForServer(dataStore.settings?.purchaseOptions || {}, dataStore.settings?.purchaseOptions)
+      : undefined;
+    const incomingPurchaseOptionsForLog = hasPurchaseOptions
+      ? sanitizePurchaseOptionsForServer(incomingSettings.purchaseOptions || {}, dataStore.settings?.purchaseOptions)
+      : undefined;
+    const purchaseHistoryItems = hasPurchaseOptions
+      ? getNewPurchaseHistoryItems(currentPurchaseOptionsForLog, incomingPurchaseOptionsForLog)
+      : [];
+    const purchaseOptionsChanged = hasPurchaseOptions
+      ? JSON.stringify(currentPurchaseOptionsForLog) !== JSON.stringify(incomingPurchaseOptionsForLog)
+      : false;
+    const shouldLogPurchaseMovement = (hasPurchaseEntries && purchaseEntriesDiff.length > 0) || purchaseHistoryItems.length > 0;
+    if (shouldLogPurchaseMovement) {
       appendPurchaseMovementLog({
         ts: getLocalDateTimeString(),
-        event: 'purchase_settings_received',
+        event: purchaseHistoryItems.length > 0 ? 'purchase_history_received' : 'purchase_entries_received',
         source,
         clientId: sanitizeLogText(clientId),
         machineName: sanitizeLogText(machineName),
@@ -2172,15 +2405,14 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
         incomingEntriesSummary: hasPurchaseEntries
           ? summarizePurchaseEntries(incomingSettings.purchaseEntries || {})
           : undefined,
-        entriesDiff: hasPurchaseEntries
-          ? diffPurchaseEntries(dataStore.settings?.purchaseEntries || {}, incomingSettings.purchaseEntries || {})
-          : undefined,
+        entriesDiff: hasPurchaseEntries ? purchaseEntriesDiff : undefined,
         currentOptionsSummary: hasPurchaseOptions
-          ? summarizePurchaseOptions(dataStore.settings?.purchaseOptions || {})
+          ? summarizePurchaseOptions(currentPurchaseOptionsForLog)
           : undefined,
         incomingOptionsSummary: hasPurchaseOptions
-          ? summarizePurchaseOptions(incomingSettings.purchaseOptions || {})
+          ? summarizePurchaseOptions(incomingPurchaseOptionsForLog)
           : undefined,
+        historyItems: purchaseHistoryItems,
       });
     }
     if (Array.isArray(incomingSettings.actionUsers)) {
@@ -2250,6 +2482,19 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     delete (incomingSettings as any).purchaseEntries;
     delete (incomingSettings as any).purchaseOptions;
 
+    if ((incomingSettings as any).customSaldoByStoreMonth && typeof (incomingSettings as any).customSaldoByStoreMonth === 'object') {
+      (incomingSettings as any).customSaldoByStoreMonth = mergeCustomSaldoByStoreMonth(
+        dataStore.settings?.customSaldoByStoreMonth || {},
+        (incomingSettings as any).customSaldoByStoreMonth
+      );
+    }
+    if (Array.isArray((incomingSettings as any).customSaldoHistory)) {
+      (incomingSettings as any).customSaldoHistory = mergeCustomSaldoHistory(
+        dataStore.settings?.customSaldoHistory || [],
+        (incomingSettings as any).customSaldoHistory
+      );
+    }
+
     dataStore.settings = {
       ...(dataStore.settings || {}),
       ...incomingSettings,
@@ -2257,10 +2502,10 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       purchaseOptions: nextPurchaseOptions,
       syncPreference,
     };
-    if (hasPurchaseEntries || hasPurchaseOptions) {
+    if (shouldLogPurchaseMovement) {
       appendPurchaseMovementLog({
         ts: getLocalDateTimeString(),
-        event: 'purchase_settings_applied',
+        event: purchaseHistoryItems.length > 0 ? 'purchase_history_applied' : 'purchase_entries_applied',
         source,
         clientId: sanitizeLogText(clientId),
         machineName: sanitizeLogText(machineName),
@@ -2701,6 +2946,12 @@ app.get('/api/dashboard/:year', (req: Request, res: Response) => {
       (sum, item: any) => sum + Number(item?.amount || 0),
       0,
     );
+    const comprasFornecedor = readPurchaseEntriesByMonth(monthKey).reduce(
+      (sum, item: any) => String(item?.difType || '').toUpperCase() === 'F'
+        ? sum + Number(item?.amount || 0)
+        : sum,
+      0,
+    );
 
     const vendasPorLoja: Record<string, number> = {};
     Object.entries(dataStore.stores || {}).forEach(([storeId, store]: [string, any]) => {
@@ -2721,6 +2972,7 @@ app.get('/api/dashboard/:year', (req: Request, res: Response) => {
       month,
       monthKey,
       compras,
+      comprasFornecedor,
       vendasPorLoja,
       vendas: Object.values(vendasPorLoja).reduce((sum, value) => sum + Number(value || 0), 0),
     };

@@ -10,11 +10,14 @@ import type { PurchaseEntry, PurchaseOptions } from '@/lib/types';
 import { localDateStr } from '@/lib/helpers';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
+type PurchaseHistoryItem = NonNullable<PurchaseOptions['purchaseHistory']>[number];
+
 const DEFAULT_PURCHASE_OPTIONS: PurchaseOptions = {
   groups: ['M', 'JB'],
   suppliers: [],
   institutions: [],
   supplierDifTypes: {},
+  purchaseHistory: [],
 };
 
 type PurchaseDifType = 'D' | 'I' | 'F';
@@ -148,45 +151,28 @@ const sanitizePurchaseOptions = (input?: Partial<PurchaseOptions>): PurchaseOpti
   suppliers: sanitizeOptionList(input?.suppliers || []),
   institutions: sanitizeOptionList(input?.institutions || []),
   supplierDifTypes: sanitizeSupplierDifTypes(input?.supplierDifTypes as Record<string, PurchaseDifType> | undefined),
+  purchaseHistory: Array.isArray(input?.purchaseHistory)
+    ? input.purchaseHistory
+        .filter((item: any) => item && item.timestamp && item.description)
+        .map((item: any) => ({
+          id: String(item.id || `${item.timestamp}_${Math.random().toString(36).slice(2, 6)}`),
+          timestamp: Number(item.timestamp) || Date.now(),
+          action: ['add', 'edit', 'transfer', 'paid', 'delete', 'import'].includes(item.action) ? item.action : 'edit',
+          description: String(item.description || ''),
+          entryId: item.entryId ? String(item.entryId) : undefined,
+          dueDate: item.dueDate ? String(item.dueDate) : undefined,
+          oldDueDate: item.oldDueDate ? String(item.oldDueDate) : undefined,
+          newDueDate: item.newDueDate ? String(item.newDueDate) : undefined,
+          supplier: item.supplier ? sanitizeStoredText(String(item.supplier)) : undefined,
+          amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
+        }))
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 200)
+    : [],
 });
 
 const getMappedSupplierDif = (supplier: string, options?: PurchaseOptions): PurchaseDifType | '' =>
   sanitizeSupplierDifTypes(options?.supplierDifTypes as Record<string, PurchaseDifType> | undefined)[normalizeOptionMapKey(supplier)] || '';
-
-const parseCsvLine = (line: string): string[] => {
-  const out: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i += 1) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-    if (ch === ';' && !inQuotes) {
-      out.push(current);
-      current = '';
-      continue;
-    }
-    current += ch;
-  }
-  out.push(current);
-  return out.map((x) => x.trim());
-};
-
-const csvEscape = (value: string | number | undefined) => {
-  const text = String(value ?? '');
-  if (text.includes(';') || text.includes('"') || text.includes('\n')) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-  return text;
-};
 
 const normalizeInstallments = (raw: string) => {
   const digits = (raw || '').replace(/\D/g, '').slice(0, 4);
@@ -232,6 +218,8 @@ export default function ComprasTab() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showManageOptions, setShowManageOptions] = useState(false);
+  const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
+  const [showQuickPurchaseForm, setShowQuickPurchaseForm] = useState(false);
   const [showAddPurchase, setShowAddPurchase] = useState(false);
   const [newGroup, setNewGroup] = useState('');
   const [newSupplier, setNewSupplier] = useState('');
@@ -245,7 +233,10 @@ export default function ComprasTab() {
   const [rowEditForm, setRowEditForm] = useState<PurchaseEntry | null>(null);
   const [rowEditAmountText, setRowEditAmountText] = useState('');
   const [rowEditOriginalDueDate, setRowEditOriginalDueDate] = useState('');
+  const [transferDueDate, setTransferDueDate] = useState('');
+  const [showTransferDueDate, setShowTransferDueDate] = useState(false);
   const [rowExtraDueDates, setRowExtraDueDates] = useState<string[]>([]);
+  const [rowExtraAmounts, setRowExtraAmounts] = useState<string[]>([]);
   const [showClearMonthDialog, setShowClearMonthDialog] = useState(false);
   const [clearMonthPassword, setClearMonthPassword] = useState('');
   const [clearMonthConfirmText, setClearMonthConfirmText] = useState('');
@@ -332,6 +323,7 @@ export default function ComprasTab() {
       suppliers: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.suppliers, current.suppliers)),
       institutions: sanitizeOptionList(mergeUnique(DEFAULT_PURCHASE_OPTIONS.institutions, current.institutions)),
       supplierDifTypes: current.supplierDifTypes || {},
+      purchaseHistory: current.purchaseHistory || [],
     };
   }, [settings.purchaseOptions]);
 
@@ -356,6 +348,7 @@ export default function ComprasTab() {
       setRowEditAmountText('');
       setRowEditOriginalDueDate('');
       setRowExtraDueDates([]);
+      setRowExtraAmounts([]);
       setShowRowEdit(true);
       window.setTimeout(() => rowDueDateRef.current?.focus(), 80);
     };
@@ -389,9 +382,13 @@ export default function ComprasTab() {
   useEffect(() => {
     if (!showAddPurchase || !rowEditForm) {
       setRowExtraDueDates([]);
+      setRowExtraAmounts([]);
       return;
     }
     setRowExtraDueDates((prev) =>
+      Array.from({ length: rowExtraCount }, (_item, index) => prev[index] || '')
+    );
+    setRowExtraAmounts((prev) =>
       Array.from({ length: rowExtraCount }, (_item, index) => prev[index] || '')
     );
   }, [showAddPurchase, rowEditForm?.id, rowExtraCount]);
@@ -403,7 +400,8 @@ export default function ComprasTab() {
       JSON.stringify(current.groups || []) !== JSON.stringify(next.groups) ||
       JSON.stringify(current.suppliers || []) !== JSON.stringify(next.suppliers) ||
       JSON.stringify(current.institutions || []) !== JSON.stringify(next.institutions) ||
-      JSON.stringify(current.supplierDifTypes || {}) !== JSON.stringify(next.supplierDifTypes || {});
+      JSON.stringify(current.supplierDifTypes || {}) !== JSON.stringify(next.supplierDifTypes || {}) ||
+      JSON.stringify(current.purchaseHistory || []) !== JSON.stringify(next.purchaseHistory || []);
     if (!changed) return;
     setSettings((prev) => ({
       ...prev,
@@ -438,6 +436,41 @@ export default function ComprasTab() {
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
 
+  const startsWithSearchTerm = (value: string | number | undefined | null, term: string) => {
+    const normalized = normalizeText(value).trim();
+    if (!term) return true;
+    if (normalized.startsWith(term)) return true;
+    return normalized
+      .split(/[^a-z0-9]+/i)
+      .filter(Boolean)
+      .some((part) => part.startsWith(term));
+  };
+
+  const matchesEntryByPrefix = (values: Array<string | number | undefined | null>, term: string) =>
+    values.some((value) => startsWithSearchTerm(value, term));
+
+  const filterOptionsByPrefix = (list: string[], typed: string) => {
+    const term = normalizeText(typed).trim();
+    if (!term) return list;
+    return list.filter((item) => startsWithSearchTerm(item, term));
+  };
+
+  const activeGroupText = rowEditForm ? rowEditForm.group : form.group;
+  const activeSupplierText = rowEditForm ? rowEditForm.supplier : form.supplier;
+  const activeInstitutionText = rowEditForm ? rowEditForm.financialInstitution : form.financialInstitution;
+  const filteredGroupOptions = useMemo(
+    () => filterOptionsByPrefix(options.groups, activeGroupText).slice(0, 30),
+    [options.groups, activeGroupText]
+  );
+  const filteredSupplierOptions = useMemo(
+    () => filterOptionsByPrefix(options.suppliers, activeSupplierText).slice(0, 30),
+    [options.suppliers, activeSupplierText]
+  );
+  const filteredInstitutionOptions = useMemo(
+    () => filterOptionsByPrefix(options.institutions, activeInstitutionText).slice(0, 30),
+    [options.institutions, activeInstitutionText]
+  );
+
   const filteredEntries = useMemo(() => {
     const term = normalizeText(searchTerm.trim());
     if (!term) return entries;
@@ -448,7 +481,7 @@ export default function ComprasTab() {
       const paid = formatDateBr(entry.paidDate);
       const amountBr = entry.amount.toFixed(2).replace('.', ',');
 
-      const allBucket = [
+      const allValues = [
         entry.dueDate,
         due,
         entry.group,
@@ -462,23 +495,22 @@ export default function ComprasTab() {
         entry.financialInstitution,
         entry.paidDate,
         paid,
-      ]
-        .map((v) => normalizeText(v))
-        .join(' ');
+      ];
 
-      const scopedBuckets: Record<typeof searchField, string> = {
-        all: allBucket,
-        dueDate: [entry.dueDate, due].map((v) => normalizeText(v)).join(' '),
-        supplier: normalizeText(entry.supplier),
-        document: normalizeText(entry.documentNumber),
-        issueDate: [entry.issueDate, issue].map((v) => normalizeText(v)).join(' '),
-        amount: [entry.amount, amountBr].map((v) => normalizeText(v)).join(' '),
-        institution: normalizeText(entry.financialInstitution),
+      const scopedBuckets: Record<typeof searchField, Array<string | number | undefined | null>> = {
+        all: allValues,
+        dueDate: [entry.dueDate, due],
+        supplier: [entry.supplier],
+        document: [entry.documentNumber],
+        issueDate: [entry.issueDate, issue],
+        amount: [entry.amount, amountBr],
+        institution: [entry.financialInstitution],
       };
 
-      return scopedBuckets[searchField].includes(term);
+      return matchesEntryByPrefix(scopedBuckets[searchField], term);
     });
   }, [entries, searchTerm, searchField]);
+  const hasActiveSearch = searchTerm.trim().length > 0;
 
   const groupedByDueDate = useMemo(() => {
     const map = new Map<string, PurchaseEntry[]>();
@@ -533,19 +565,29 @@ export default function ComprasTab() {
       ),
     [allEntries]
   );
+  const globalSearchYears = useMemo(
+    () => [selectedYear - 1, selectedYear, selectedYear + 1],
+    [selectedYear]
+  );
+  const globalSearchYearSet = useMemo(
+    () => new Set(globalSearchYears.map(String)),
+    [globalSearchYears]
+  );
   const globalSearchResults = useMemo(() => {
     const term = normalizeText(globalSearchTerm.trim());
     if (!term) return [];
     return allEntriesFlat
       .filter((entry) => {
+        const entryYear = String(entry.month || entry.dueDate || '').slice(0, 4);
+        if (!globalSearchYearSet.has(entryYear)) return false;
         const bucket = globalSearchType === 'supplier' ? entry.supplier : entry.documentNumber;
-        return normalizeText(bucket).includes(term);
+        return startsWithSearchTerm(bucket, term);
       })
       .sort((a, b) => {
         if (a.dueDate !== b.dueDate) return b.dueDate.localeCompare(a.dueDate);
         return a.supplier.localeCompare(b.supplier);
       });
-  }, [allEntriesFlat, globalSearchTerm, globalSearchType]);
+  }, [allEntriesFlat, globalSearchTerm, globalSearchType, globalSearchYearSet]);
 
   const saveSettingsEntries = (
     updater: (
@@ -585,6 +627,70 @@ export default function ComprasTab() {
       return { ...prev, purchaseOptions: clean };
     });
   };
+
+  const historyActionLabel = (action: PurchaseHistoryItem['action']) => {
+    if (action === 'add') return 'Adicionou';
+    if (action === 'transfer') return 'Transferiu';
+    if (action === 'paid') return 'Pagou';
+    if (action === 'delete') return 'Excluiu';
+    if (action === 'import') return 'Importou';
+    return 'Editou';
+  };
+
+  const addPurchaseHistory = (base: PurchaseOptions, item: Omit<PurchaseHistoryItem, 'id' | 'timestamp'>): PurchaseOptions => {
+    const clean = sanitizePurchaseOptions(base);
+    const nextItem: PurchaseHistoryItem = {
+      ...item,
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: Date.now(),
+    };
+    return sanitizePurchaseOptions({
+      ...clean,
+      purchaseHistory: [nextItem, ...(clean.purchaseHistory || [])].slice(0, 200),
+    });
+  };
+
+  const describePurchaseEntry = (entry: PurchaseEntry) => {
+    const parts = [
+      `Fornecedor: ${entry.supplier || 'sem fornecedor'}`,
+      `Vencimento: ${formatDateBr(entry.dueDate) || '-'}`,
+      `Valor: ${formatCurrency(Number(entry.amount || 0))}`,
+      `Parcela: ${entry.installments || '-'}`,
+      `Loja/Grupo: ${entry.group || '-'}`,
+    ];
+    if (entry.documentNumber) parts.push(`Documento: ${entry.documentNumber}`);
+    if (entry.issueDate) parts.push(`Emissão: ${formatDateBr(entry.issueDate)}`);
+    if (entry.paidDate) parts.push(`Pago em: ${formatDateBr(entry.paidDate)}`);
+    if (entry.financialInstitution) parts.push(`Instituição: ${entry.financialInstitution}`);
+    if (entry.difType) parts.push(`Tipo: ${entry.difType}`);
+    return parts.join(' | ');
+  };
+
+  const describePurchaseChanges = (before?: PurchaseEntry, after?: PurchaseEntry) => {
+    if (!after) return 'Compra alterada.';
+    if (!before) return `Adicionou compra | ${describePurchaseEntry(after)}`;
+    const changes: string[] = [];
+    const addChange = (label: string, oldValue: string, newValue: string) => {
+      if (oldValue !== newValue) changes.push(`${label}: ${oldValue || '-'} → ${newValue || '-'}`);
+    };
+
+    addChange('Vencimento', formatDateBr(before.dueDate), formatDateBr(after.dueDate));
+    addChange('Fornecedor', before.supplier || '', after.supplier || '');
+    addChange('Documento', before.documentNumber || '', after.documentNumber || '');
+    addChange('Emissão', formatDateBr(before.issueDate), formatDateBr(after.issueDate));
+    addChange('Parcela', before.installments || '', after.installments || '');
+    addChange('Valor', formatCurrency(Number(before.amount || 0)), formatCurrency(Number(after.amount || 0)));
+    addChange('Pago em', formatDateBr(before.paidDate), formatDateBr(after.paidDate));
+    addChange('Instituição', before.financialInstitution || '', after.financialInstitution || '');
+    addChange('Loja/Grupo', before.group || '', after.group || '');
+    addChange('Tipo', before.difType || '', after.difType || '');
+    addChange('Boleto comigo', before.boletoConciliado ? 'sim' : 'não', after.boletoConciliado ? 'sim' : 'não');
+
+    if (changes.length === 0) return `Abriu e salvou sem mudança visível | ${describePurchaseEntry(after)}`;
+    return `Editou compra de ${after.supplier || before.supplier || 'sem fornecedor'} | ${changes.join(' | ')}`;
+  };
+
+  const purchaseHistory = options.purchaseHistory || [];
 
   const withEntryOptions = (
     base: PurchaseOptions,
@@ -1024,6 +1130,11 @@ export default function ComprasTab() {
 
     const targetMonth = form.dueDate.slice(0, 7);
 
+    const beforeEntry = editingId
+      ? ((allEntries[targetMonth] || []).find((item) => item.id === editingId) ||
+          Object.values(allEntries).flat().find((item) => item.id === editingId))
+      : undefined;
+
     saveSettingsEntries((prev, currentOptions) => {
       const monthItems = [...(prev[targetMonth] || [])];
       const idx = monthItems.findIndex((x) => x.id === entry.id);
@@ -1031,7 +1142,16 @@ export default function ComprasTab() {
       else monthItems.push(entry);
       return syncSupplierDifFromEntry({ ...prev, [targetMonth]: monthItems }, entry, currentOptions);
     }, editingId ? 'Compra atualizada no servidor.' : 'Compra adicionada no servidor.', (prevOptions) =>
-      withEntryOptions(prevOptions, entry)
+      addPurchaseHistory(withEntryOptions(prevOptions, entry), {
+        action: editingId ? 'edit' : 'add',
+        entryId: entry.id,
+        dueDate: entry.dueDate,
+        supplier: entry.supplier,
+        amount: entry.amount,
+        description: editingId
+          ? describePurchaseChanges(beforeEntry, entry)
+          : describePurchaseChanges(undefined, entry),
+      })
     );
 
     clearForm();
@@ -1058,10 +1178,17 @@ export default function ComprasTab() {
     setRowEditForm({ ...entry });
     setRowEditAmountText(Number(entry.amount || 0).toFixed(2).replace('.', ','));
     setRowEditOriginalDueDate(entry.dueDate);
+    setTransferDueDate(entry.dueDate);
+    setShowTransferDueDate(false);
     setShowRowEdit(true);
   };
 
-  const saveRowEdit = (opts: { closeDialog?: boolean; successMessage?: string; formOverride?: PurchaseEntry } = {}) => {
+  const saveRowEdit = (opts: {
+    closeDialog?: boolean;
+    successMessage?: string;
+    formOverride?: PurchaseEntry;
+    historyEvent?: Omit<PurchaseHistoryItem, 'id' | 'timestamp'>;
+  } = {}) => {
     const closeDialog = opts.closeDialog ?? true;
     const activeRowForm = opts.formOverride || rowEditForm;
     if (!activeRowForm) return;
@@ -1094,12 +1221,17 @@ export default function ComprasTab() {
       issueDate: activeRowForm.issueDate || '',
       installments: fixedInstallments,
       paidDate: activeRowForm.paidDate || undefined,
+      boletoConciliado: !!activeRowForm.boletoConciliado,
       financialInstitution: cleanInstitution,
       difType: resolvedDifType || undefined,
     };
 
     const oldMonth = rowEditOriginalDueDate.slice(0, 7);
     const newMonth = nextEntry.dueDate.slice(0, 7);
+    const beforeEntry = !showAddPurchase
+      ? ((allEntries[oldMonth] || []).find((entry) => entry.id === nextEntry.id) ||
+          Object.values(allEntries).flat().find((entry) => entry.id === nextEntry.id))
+      : undefined;
 
     saveSettingsEntries((prev, currentOptions) => {
       const next = { ...prev };
@@ -1112,6 +1244,7 @@ export default function ComprasTab() {
             ...nextEntry,
             id: `${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`,
             dueDate,
+            amount: rowExtraAmounts[index] ? parseAmount(rowExtraAmounts[index]) : nextEntry.amount,
             paidDate: undefined,
             installments: `${String(installmentInfo.current + index + 1).padStart(2, '0')}/${totalText}`,
           })),
@@ -1148,7 +1281,21 @@ export default function ComprasTab() {
     }, opts.successMessage || (showAddPurchase && filledExtraDueDates.length > 0
       ? `${filledExtraDueDates.length + 1} parcelas adicionadas no servidor.`
       : showAddPurchase ? 'Compra adicionada no servidor.' : 'Compra atualizada no servidor.'),
-      (prevOptions) => withEntryOptions(prevOptions, nextEntry)
+      (prevOptions) => {
+        const withOptions = withEntryOptions(prevOptions, nextEntry);
+        if (opts.historyEvent) return addPurchaseHistory(withOptions, opts.historyEvent);
+        const action = showAddPurchase ? 'add' : 'edit';
+        return addPurchaseHistory(withOptions, {
+          action,
+          entryId: nextEntry.id,
+          dueDate: nextEntry.dueDate,
+          supplier: nextEntry.supplier,
+          amount: nextEntry.amount,
+          description: action === 'add'
+            ? describePurchaseChanges(undefined, nextEntry)
+            : describePurchaseChanges(beforeEntry, nextEntry),
+        });
+      }
     );
 
     if (closeDialog) {
@@ -1157,7 +1304,10 @@ export default function ComprasTab() {
       setRowEditForm(null);
       setRowEditAmountText('');
       setRowEditOriginalDueDate('');
+      setTransferDueDate('');
+      setShowTransferDueDate(false);
       setRowExtraDueDates([]);
+      setRowExtraAmounts([]);
     }
   };
 
@@ -1166,9 +1316,50 @@ export default function ComprasTab() {
     const today = localDateStr();
     const nextForm = { ...rowEditForm, paidDate: today };
     setRowEditForm(nextForm);
-    saveRowEdit({ closeDialog: true, successMessage: 'Compra marcada como paga no servidor.', formOverride: nextForm });
+    saveRowEdit({
+      closeDialog: true,
+      successMessage: 'Compra marcada como paga no servidor.',
+      formOverride: nextForm,
+      historyEvent: {
+        action: 'paid',
+        entryId: nextForm.id,
+        dueDate: nextForm.dueDate,
+        supplier: nextForm.supplier,
+        amount: nextForm.amount,
+        description: `Marcou como pago ${nextForm.supplier || 'sem fornecedor'} em ${formatDateBr(nextForm.dueDate)} (${formatCurrency(nextForm.amount)})`,
+      },
+    });
     setPaidCelebrationMessage('Foi pago!');
     window.setTimeout(() => setPaidCelebrationMessage(''), 3000);
+  };
+
+  const transferRowDueDate = () => {
+    if (!rowEditForm || showAddPurchase) return;
+    if (!transferDueDate) {
+      toast.error('Informe a nova data de vencimento.');
+      return;
+    }
+    if (transferDueDate === rowEditForm.dueDate) {
+      toast.info('A compra já está nesta data.');
+      return;
+    }
+    const nextForm = { ...rowEditForm, dueDate: transferDueDate };
+    setRowEditForm(nextForm);
+    saveRowEdit({
+      closeDialog: true,
+      successMessage: `Compra transferida para ${formatDateBr(transferDueDate)}.`,
+      formOverride: nextForm,
+      historyEvent: {
+        action: 'transfer',
+        entryId: nextForm.id,
+        oldDueDate: rowEditForm.dueDate,
+        newDueDate: transferDueDate,
+        dueDate: transferDueDate,
+        supplier: nextForm.supplier,
+        amount: nextForm.amount,
+        description: `Transferiu ${nextForm.supplier || 'sem fornecedor'} de ${formatDateBr(rowEditForm.dueDate)} para ${formatDateBr(transferDueDate)} (${formatCurrency(nextForm.amount)})`,
+      },
+    });
   };
 
   const markEntryPaidToday = (entry: PurchaseEntry) => {
@@ -1181,9 +1372,39 @@ export default function ComprasTab() {
         item.id === entry.id ? updatedEntry : item
       );
       return syncSupplierDifFromEntry({ ...prev, [targetMonth]: monthItems }, updatedEntry, currentOptions);
-    }, 'Compra marcada como paga no servidor.', (prevOptions) => withEntryOptions(prevOptions, updatedEntry));
+    }, 'Compra marcada como paga no servidor.', (prevOptions) =>
+      addPurchaseHistory(withEntryOptions(prevOptions, updatedEntry), {
+        action: 'paid',
+        entryId: updatedEntry.id,
+        dueDate: updatedEntry.dueDate,
+        supplier: updatedEntry.supplier,
+        amount: updatedEntry.amount,
+        description: `Marcou como pago ${updatedEntry.supplier || 'sem fornecedor'} em ${formatDateBr(updatedEntry.dueDate)} (${formatCurrency(updatedEntry.amount)})`,
+      })
+    );
     setPaidCelebrationMessage('Foi pago!');
     window.setTimeout(() => setPaidCelebrationMessage(''), 3000);
+  };
+
+  const toggleEntryBoletoConciliado = (entry: PurchaseEntry) => {
+    if (!entry) return;
+    const targetMonth = entry.dueDate.slice(0, 7);
+    const updatedEntry = { ...entry, boletoConciliado: !entry.boletoConciliado };
+    saveSettingsEntries((prev, currentOptions) => {
+      const monthItems = (prev[targetMonth] || []).map((item) =>
+        item.id === entry.id ? updatedEntry : item
+      );
+      return syncSupplierDifFromEntry({ ...prev, [targetMonth]: monthItems }, updatedEntry, currentOptions);
+    }, updatedEntry.boletoConciliado ? 'Boleto marcado como conciliado.' : 'Marca de conciliado removida.', (prevOptions) =>
+      addPurchaseHistory(withEntryOptions(prevOptions, updatedEntry), {
+        action: 'edit',
+        entryId: updatedEntry.id,
+        dueDate: updatedEntry.dueDate,
+        supplier: updatedEntry.supplier,
+        amount: updatedEntry.amount,
+        description: `${updatedEntry.boletoConciliado ? 'Marcou' : 'Removeu'} conciliado/boleto comigo em ${updatedEntry.supplier || 'sem fornecedor'} (${formatCurrency(updatedEntry.amount)})`,
+      })
+    );
   };
 
   const removeEntry = (entry: PurchaseEntry) => {
@@ -1191,7 +1412,16 @@ export default function ComprasTab() {
     const targetMonth = entry.dueDate.slice(0, 7);
     saveSettingsEntries((prev) => {
       return { ...prev, [targetMonth]: (prev[targetMonth] || []).filter((x) => x.id !== entry.id) };
-    }, 'Compra excluida no servidor.');
+    }, 'Compra excluida no servidor.', (prevOptions) =>
+      addPurchaseHistory(prevOptions, {
+        action: 'delete',
+        entryId: entry.id,
+        dueDate: entry.dueDate,
+        supplier: entry.supplier,
+        amount: entry.amount,
+        description: `Excluiu ${entry.supplier || 'sem fornecedor'} de ${formatDateBr(entry.dueDate)} (${formatCurrency(entry.amount)})`,
+      })
+    );
     if (editingId === entry.id) clearForm();
   };
 
@@ -1218,82 +1448,7 @@ export default function ComprasTab() {
     addOption(field, value, reset);
   };
 
-  const buildCsvLines = (list: PurchaseEntry[]) => {
-    const header = [
-      'vencimento',
-      'categoria',
-      'fornecedor',
-      'boleto_documento',
-      'emissao',
-      'parcela',
-      'valor',
-      'pago',
-      'instituicao_financeira',
-      'tipo_dif',
-    ];
-
-    const lines: string[] = [header.join(';')];
-    const sorted = [...list].sort((a, b) => {
-      if (a.dueDate !== b.dueDate) return a.dueDate.localeCompare(b.dueDate);
-      return a.supplier.localeCompare(b.supplier);
-    });
-
-    sorted.forEach((entry) => {
-      lines.push(
-        [
-          csvEscape(entry.dueDate),
-          csvEscape(entry.group),
-          csvEscape(entry.supplier),
-          csvEscape(entry.documentNumber),
-          csvEscape(entry.issueDate),
-          csvEscape(entry.installments),
-          csvEscape(entry.amount.toFixed(2).replace('.', ',')),
-          csvEscape(entry.paidDate || ''),
-          csvEscape(entry.financialInstitution),
-          csvEscape(entry.difType || ''),
-        ].join(';')
-      );
-    });
-    return lines;
-  };
-
-  const exportCsv = () => {
-    const lines = buildCsvLines(entries);
-
-    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `compras_${currentMonthKey}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('CSV exportado.');
-  };
-
-  const exportCsvAnualFile = () => {
-    const annualEntries = Object.entries(allEntries)
-      .filter(([month]) => month.startsWith(`${selectedYear}-`))
-      .flatMap(([, monthEntries]) => monthEntries || []);
-    if (annualEntries.length === 0) {
-      toast.error('Sem compras para exportar em CSV.');
-      return;
-    }
-    const lines = buildCsvLines(annualEntries);
-    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `compras_backup_${selectedYear}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Backup CSV anual exportado.');
-  };
-
-  const exportCsvAnual = () => {
+  const exportJsonBackup = () => {
     const yearPrefix = `${selectedYear}-`;
     const annualEntriesByMonth = Object.fromEntries(
       Object.entries(allEntries)
@@ -1387,185 +1542,58 @@ export default function ComprasTab() {
     reader.readAsText(file);
   };
 
-  const importCsv = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const content = String(reader.result || '').replace(/^\uFEFF/, '');
-        const rows = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
-        if (rows.length < 2) {
-          toast.error('CSV sem dados.');
-          return;
-        }
-
-        const imported: PurchaseEntry[] = [];
-        for (let i = 1; i < rows.length; i += 1) {
-          const cols = parseCsvLine(rows[i]);
-          if (cols.length < 9) continue;
-
-          const dueDate = cols[0];
-          const group = cols[1];
-          const supplier = cols[2];
-          const documentNumber = cols[3];
-          const issueDate = cols[4];
-          const installments = cols[5];
-          const amount = parseFloat((cols[6] || '0').replace(/\./g, '').replace(',', '.')) || 0;
-          const paidDate = cols[7] || undefined;
-          const financialInstitution = cols[8];
-          const difTypeRaw = (cols[9] || '').trim().toUpperCase();
-          const difType: 'D' | 'I' | 'F' | undefined = difTypeRaw === 'D' || difTypeRaw === 'I' || difTypeRaw === 'F' ? (difTypeRaw as 'D' | 'I' | 'F') : undefined;
-
-          if (!dueDate || !supplier || !issueDate || !financialInstitution || amount <= 0) continue;
-
-          imported.push({
-            id: `${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
-            dueDate,
-            group,
-            supplier,
-            documentNumber,
-            issueDate,
-            installments,
-            amount,
-            paidDate,
-            financialInstitution,
-            difType,
-          });
-        }
-
-        if (imported.length === 0) {
-          toast.error('Nenhuma linha valida encontrada.');
-          return;
-        }
-
-        saveSettingsEntries((prev) => {
-          const next = { ...prev };
-          const monthRows = imported.filter((x) => x.dueDate.slice(0, 7) === currentMonthKey);
-          next[currentMonthKey] = monthRows;
-          return next;
-        }, `CSV importado no servidor (${imported.length} linhas).`, (prevOptions) =>
-          withEntriesOptions(prevOptions, imported)
-        );
-      } catch {
-        toast.error('Erro ao importar CSV.');
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const importCsvAnual = (file: File) => {
+  const importJsonBackup = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const content = String(reader.result || '').replace(/^\uFEFF/, '');
         const trimmed = content.trim();
 
-        if (trimmed.startsWith('{')) {
-          const parsed = JSON.parse(trimmed);
-          const importedOptions = sanitizePurchaseOptions(parsed.purchaseOptions || {});
-          const importedEntriesByMonth = parsed.purchaseEntries && typeof parsed.purchaseEntries === 'object'
-            ? (parsed.purchaseEntries as Record<string, PurchaseEntry[]>)
-            : {};
-          const months = Object.keys(importedEntriesByMonth).filter((month) => month.startsWith(`${selectedYear}-`));
-          const importedCount = months.reduce(
-            (total, month) => total + (Array.isArray(importedEntriesByMonth[month]) ? importedEntriesByMonth[month].length : 0),
-            0
-          );
-
-          saveSettingsEntries((prev) => {
-            const next = { ...prev };
-
-            months.forEach((month) => {
-              next[month] = (importedEntriesByMonth[month] || []).map((entry, index) => ({
-                ...entry,
-                id: entry.id || `${Date.now()}_${month}_${index}_${Math.random().toString(36).slice(2, 6)}`,
-                supplier: sanitizeStoredText(entry.supplier || ''),
-                financialInstitution: sanitizeStoredText(entry.financialInstitution || ''),
-                group: sanitizeStoredText(entry.group || ''),
-                difType: normalizeDifType(entry.difType) as PurchaseEntry['difType'],
-              }));
-            });
-            return next;
-          }, `Backup importado no servidor (${importedCount} compras).`, (prevOptions) => {
-            const prevClean = sanitizePurchaseOptions(prevOptions);
-            return sanitizePurchaseOptions({
-              groups: mergeUnique(prevClean.groups, importedOptions.groups),
-              suppliers: mergeUnique(prevClean.suppliers, importedOptions.suppliers),
-              institutions: mergeUnique(prevClean.institutions, importedOptions.institutions),
-              supplierDifTypes: {
-                ...(prevClean.supplierDifTypes || {}),
-                ...(importedOptions.supplierDifTypes || {}),
-              },
-            });
-          });
+        if (!trimmed.startsWith('{')) {
+          toast.error('Importe um backup JSON de compras.');
           return;
         }
 
-        const rows = content.split(/\r?\n/).filter((line) => line.trim().length > 0);
-        if (rows.length < 2) {
-          toast.error('CSV sem dados.');
-          return;
-        }
-
-        const imported: PurchaseEntry[] = [];
-        const touchedMonths = new Set<string>();
-        for (let i = 1; i < rows.length; i += 1) {
-          const cols = parseCsvLine(rows[i]);
-          if (cols.length < 9) continue;
-
-          const dueDate = cols[0];
-          const group = cols[1];
-          const supplier = cols[2];
-          const documentNumber = cols[3];
-          const issueDate = cols[4];
-          const installments = cols[5];
-          const amount = parseFloat((cols[6] || '0').replace(/\./g, '').replace(',', '.')) || 0;
-          const paidDate = cols[7] || undefined;
-          const financialInstitution = cols[8];
-          const difTypeRaw = (cols[9] || '').trim().toUpperCase();
-          const difType: 'D' | 'I' | 'F' | undefined = difTypeRaw === 'D' || difTypeRaw === 'I' || difTypeRaw === 'F' ? (difTypeRaw as 'D' | 'I' | 'F') : undefined;
-
-          if (!dueDate.startsWith(`${selectedYear}-`)) continue;
-          const touchedMonth = dueDate.slice(0, 7);
-          if (/^\d{4}-\d{2}$/.test(touchedMonth)) touchedMonths.add(touchedMonth);
-          if (!dueDate || !supplier || !issueDate || !financialInstitution || amount <= 0) continue;
-
-          imported.push({
-            id: `${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
-            dueDate,
-            group,
-            supplier,
-            documentNumber,
-            issueDate,
-            installments,
-            amount,
-            paidDate,
-            financialInstitution,
-            difType,
-          });
-        }
-
-        if (imported.length === 0 && touchedMonths.size === 0) {
-          toast.error('Nenhuma linha valida ou mes do ano selecionado.');
-          return;
-        }
+        const parsed = JSON.parse(trimmed);
+        const importedOptions = sanitizePurchaseOptions(parsed.purchaseOptions || {});
+        const importedEntriesByMonth = parsed.purchaseEntries && typeof parsed.purchaseEntries === 'object'
+          ? (parsed.purchaseEntries as Record<string, PurchaseEntry[]>)
+          : {};
+        const months = Object.keys(importedEntriesByMonth).filter((month) => month.startsWith(`${selectedYear}-`));
+        const importedCount = months.reduce(
+          (total, month) => total + (Array.isArray(importedEntriesByMonth[month]) ? importedEntriesByMonth[month].length : 0),
+          0
+        );
 
         saveSettingsEntries((prev) => {
           const next = { ...prev };
-          touchedMonths.forEach((month) => {
-            next[month] = [];
-          });
 
-          imported.forEach((entry) => {
-            const month = entry.dueDate.slice(0, 7);
-            if (!next[month]) next[month] = [];
-            next[month].push(entry);
+          months.forEach((month) => {
+            next[month] = (importedEntriesByMonth[month] || []).map((entry, index) => ({
+              ...entry,
+              id: entry.id || `${Date.now()}_${month}_${index}_${Math.random().toString(36).slice(2, 6)}`,
+              supplier: sanitizeStoredText(entry.supplier || ''),
+              financialInstitution: sanitizeStoredText(entry.financialInstitution || ''),
+              group: sanitizeStoredText(entry.group || ''),
+              difType: normalizeDifType(entry.difType) as PurchaseEntry['difType'],
+            }));
           });
           return next;
-        }, `CSV importado no servidor (${imported.length} linhas).`, (prevOptions) =>
-          withEntriesOptions(prevOptions, imported)
-        );
+        }, `Backup importado no servidor (${importedCount} compras).`, (prevOptions) => {
+          const prevClean = sanitizePurchaseOptions(prevOptions);
+          return sanitizePurchaseOptions({
+            groups: mergeUnique(prevClean.groups, importedOptions.groups),
+            suppliers: mergeUnique(prevClean.suppliers, importedOptions.suppliers),
+            institutions: mergeUnique(prevClean.institutions, importedOptions.institutions),
+            supplierDifTypes: {
+              ...(prevClean.supplierDifTypes || {}),
+              ...(importedOptions.supplierDifTypes || {}),
+            },
+            purchaseHistory: prevClean.purchaseHistory || [],
+          });
+        });
       } catch {
-        toast.error('Erro ao importar CSV anual.');
+        toast.error('Erro ao importar backup JSON.');
       }
     };
     reader.readAsText(file);
@@ -1636,7 +1664,19 @@ export default function ComprasTab() {
       return;
     }
 
-    saveSettingsEntries((prev) => ({ ...prev, [currentMonthKey]: [] }), 'Compras do mes removidas no servidor.');
+    const monthEntries = entries;
+    const removedTotal = monthEntries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+    saveSettingsEntries(
+      (prev) => ({ ...prev, [currentMonthKey]: [] }),
+      'Compras do mes removidas no servidor.',
+      (prevOptions) =>
+        addPurchaseHistory(prevOptions, {
+          action: 'delete',
+          dueDate: currentMonthKey,
+          amount: removedTotal,
+          description: `Limpou todas as compras do mês ${currentMonthKey}: ${monthEntries.length} compra(s) removida(s), total ${formatCurrency(removedTotal)}`,
+        })
+    );
     if (editingId) clearForm();
     setShowClearMonthDialog(false);
     setClearMonthPassword('');
@@ -1707,29 +1747,42 @@ export default function ComprasTab() {
       <Card className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold">Compras</h3>
-          <div className="flex items-center gap-2">
-            <div className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/70 p-1">
-              <select
-                value={searchField}
-                onChange={(e) => setSearchField(e.target.value as typeof searchField)}
-                className="h-7 w-[112px] rounded-md border border-input bg-background px-2 text-[11px]"
-                title="Campo da pesquisa local"
-              >
-                <option value="all">Tudo</option>
-                <option value="dueDate">Vencimento</option>
-                <option value="supplier">Fornecedor</option>
-                <option value="document">Documento</option>
-                <option value="issueDate">Emissao</option>
-                <option value="amount">Valor</option>
-                <option value="institution">Instituicao</option>
-              </select>
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Filtro local"
-                className="h-7 w-[170px] px-2 text-xs"
-              />
-            </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 px-3 text-xs"
+            onClick={() => setShowQuickPurchaseForm((value) => !value)}
+          >
+            {showQuickPurchaseForm || editingId ? 'Ocultar opções' : 'Expandir opções'}
+          </Button>
+        </div>
+
+        {(showQuickPurchaseForm || !!editingId) && (
+          <div className="space-y-4 rounded-xl border border-border/70 bg-secondary/20 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-background/70 p-1">
+                <select
+                  value={searchField}
+                  onChange={(e) => setSearchField(e.target.value as typeof searchField)}
+                  className="h-7 w-[112px] rounded-md border border-input bg-background px-2 text-[11px]"
+                  title="Campo da pesquisa local"
+                >
+                  <option value="all">Tudo</option>
+                  <option value="dueDate">Vencimento</option>
+                  <option value="supplier">Fornecedor</option>
+                  <option value="document">Documento</option>
+                  <option value="issueDate">Emissao</option>
+                  <option value="amount">Valor</option>
+                  <option value="institution">Instituicao</option>
+                </select>
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Filtro local"
+                  className="h-7 w-[170px] px-2 text-xs"
+                />
+              </div>
             <label>
               <input
                 type="file"
@@ -1737,7 +1790,7 @@ export default function ComprasTab() {
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) importCsvAnual(file);
+                  if (file) importJsonBackup(file);
                   e.currentTarget.value = '';
                 }}
               />
@@ -1745,26 +1798,11 @@ export default function ComprasTab() {
                 <span>Importar</span>
               </Button>
             </label>
-            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportCsvAnual}>
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground" onClick={exportJsonBackup}>
               Backup
             </Button>
-            <label>
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) importCsvAnual(file);
-                  e.currentTarget.value = '';
-                }}
-              />
-              <Button asChild size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-muted-foreground">
-                <span>Importar CSV</span>
-              </Button>
-            </label>
-            <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-muted-foreground" onClick={exportCsvAnualFile}>
-              Backup CSV
+            <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px] text-muted-foreground" onClick={() => setShowPurchaseHistory(true)}>
+              Historico
             </Button>
             <Button
               size="sm"
@@ -1775,6 +1813,14 @@ export default function ComprasTab() {
               Limpar mes
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowManageOptions(true)}>Listas</Button>
+          </div>
+
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+          <div>
+            <p className="text-xs font-bold uppercase text-muted-foreground">Lançamento rápido</p>
+            <p className="text-[11px] text-muted-foreground">
+              {editingId ? 'Editando compra selecionada.' : 'Preencha aqui quando quiser adicionar sem abrir o pop-up.'}
+            </p>
           </div>
         </div>
 
@@ -1946,13 +1992,16 @@ export default function ComprasTab() {
             </div>
           </div>
         </div>
+          </div>
+        )}
 
-        <datalist id="group-list">{options.groups.map((item) => <option key={item} value={item} />)}</datalist>
-        <datalist id="suppliers-list">{options.suppliers.map((item) => <option key={item} value={item} />)}</datalist>
-        <datalist id="institutions-list">{options.institutions.map((item) => <option key={item} value={item} />)}</datalist>
+        <datalist id="group-list">{filteredGroupOptions.map((item) => <option key={item} value={item} />)}</datalist>
+        <datalist id="suppliers-list">{filteredSupplierOptions.map((item) => <option key={item} value={item} />)}</datalist>
+        <datalist id="institutions-list">{filteredInstitutionOptions.map((item) => <option key={item} value={item} />)}</datalist>
 
       </Card>
 
+      {!hasActiveSearch && (
       <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr_440px] gap-4 items-stretch">
         <Card className="p-4">
           <div className="space-y-3">
@@ -2044,6 +2093,7 @@ export default function ComprasTab() {
           )}
         </Card>
       </div>
+      )}
 
       <div className="space-y-3">
         {groupedByDueDate.length === 0 && (
@@ -2098,13 +2148,42 @@ export default function ComprasTab() {
                       <td className="px-3 py-2">{entry.issueDate ? formatDateBr(entry.issueDate) : '-'}</td>
                       <td className="px-3 py-2">{entry.installments || '-'}</td>
                       <td className="px-3 py-2 font-semibold">{formatCurrency(entry.amount)}</td>
-                      <td className="px-3 py-2">
+                      <td
+                        className="relative px-3 py-2"
+                        style={{
+                          background: !entry.paidDate && entry.boletoConciliado
+                            ? 'radial-gradient(circle at center, rgba(245,158,11,0.88) 0%, rgba(245,158,11,0.72) 42%, rgba(251,191,36,0.36) 76%, rgba(251,191,36,0.08) 100%)'
+                            : undefined,
+                        }}
+                      >
                         <div className="flex items-center gap-2">
-                          <span>{entry.paidDate ? formatDateBr(entry.paidDate) : '-'}</span>
+                          {!entry.paidDate && entry.boletoConciliado && (
+                            <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_22px_rgba(245,158,11,0.45)]" />
+                          )}
+                          {!entry.paidDate && (
+                            <button
+                              type="button"
+                              title={entry.boletoConciliado ? 'Boleto comigo / conciliado' : 'Marcar boleto comigo / conciliado'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleEntryBoletoConciliado(entry);
+                              }}
+                              className={`absolute left-1 top-1 z-10 h-3 w-3 rounded-full border transition active:scale-90 ${
+                                entry.boletoConciliado
+                                  ? 'border-amber-700 bg-amber-500'
+                                  : 'border-amber-400 bg-amber-100 hover:bg-amber-200'
+                              }`}
+                            />
+                          )}
+                          {entry.paidDate && (
+                            <span className="relative z-10 text-xs font-bold">
+                              {formatDateBr(entry.paidDate)}
+                            </span>
+                          )}
                           {!entry.paidDate && (
                             <Button
                               size="icon"
-                              className="h-7 w-7 bg-green-600 text-white hover:bg-green-700"
+                              className="relative z-10 h-7 w-7 bg-green-600 text-white hover:bg-green-700"
                               title="Marcar como pago hoje"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2321,9 +2400,12 @@ export default function ComprasTab() {
       <Dialog open={showGlobalSearch} onOpenChange={setShowGlobalSearch}>
         <DialogContent className="w-[96vw] sm:max-w-[96vw] lg:max-w-[1500px]">
           <DialogHeader>
-            <DialogTitle>Pesquisa global (todos os meses)</DialogTitle>
+            <DialogTitle>Pesquisa global ({globalSearchYears.join(', ')})</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Busca apenas o ano anterior, o ano atual selecionado e o ano seguinte. A pesquisa considera itens que começam com o texto digitado.
+            </p>
             <div className="flex gap-2">
               <select
                 value={globalSearchType}
@@ -2384,6 +2466,43 @@ export default function ComprasTab() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPurchaseHistory} onOpenChange={setShowPurchaseHistory}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Histórico de compras</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Últimas 200 alterações feitas em compras.</p>
+            <div className="max-h-[420px] overflow-y-auto rounded-lg border">
+              {purchaseHistory.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma alteração registrada ainda.</div>
+              ) : (
+                purchaseHistory.map((item) => (
+                  <div key={item.id} className="border-b px-3 py-2 last:border-b-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-bold uppercase">
+                        {historyActionLabel(item.action)}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {new Date(item.timestamp).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-sm font-semibold">{item.description}</div>
+                    {(item.oldDueDate || item.newDueDate || item.supplier || item.amount !== undefined) && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {item.supplier ? `Fornecedor: ${fixMojibakeSafe(item.supplier)} · ` : ''}
+                        {item.oldDueDate && item.newDueDate ? `Data: ${formatDateBr(item.oldDueDate)} → ${formatDateBr(item.newDueDate)} · ` : ''}
+                        {item.amount !== undefined ? `Valor: ${formatCurrency(item.amount)}` : ''}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </DialogContent>
@@ -2495,14 +2614,35 @@ export default function ComprasTab() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Pago (data)</label>
-                <div className="flex gap-1">
-                  <Input ref={rowPaidDateRef} type="date" value={rowEditForm.paidDate || ''} onChange={(e) => setRowEditForm((p) => (p ? { ...p, paidDate: e.target.value || undefined } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowInstitutionRef)} />
+                <div className="relative flex gap-1 rounded-xl p-0.5">
+                  {!rowEditForm.paidDate && rowEditForm.boletoConciliado && (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 left-0 right-0 rounded-xl"
+                      style={{
+                        background:
+                          'radial-gradient(circle at center, rgba(245,158,11,0.78) 0%, rgba(251,191,36,0.38) 42%, rgba(251,191,36,0.12) 72%, rgba(251,191,36,0) 100%)',
+                      }}
+                    />
+                  )}
+                  {!rowEditForm.paidDate && (
+                    <button
+                      type="button"
+                      title={rowEditForm.boletoConciliado ? 'Boleto comigo / conciliado' : 'Marcar boleto comigo / conciliado'}
+                      className={`relative z-10 mt-3 h-4 w-4 shrink-0 rounded-full border transition active:scale-90 ${
+                        rowEditForm.boletoConciliado
+                          ? 'border-amber-700 bg-amber-500'
+                          : 'border-amber-400 bg-amber-100 hover:bg-amber-200'
+                      }`}
+                      onClick={() => setRowEditForm((p) => (p ? { ...p, boletoConciliado: !p.boletoConciliado } : p))}
+                    />
+                  )}
+                  <Input className="relative z-10 bg-background/80" ref={rowPaidDateRef} type="date" value={rowEditForm.paidDate || ''} onChange={(e) => setRowEditForm((p) => (p ? { ...p, paidDate: e.target.value || undefined } : p))} onKeyDown={(e) => handleEnterAdvance(e, rowInstitutionRef)} />
                   {!showAddPurchase && (
                     <Button
                       type="button"
                       size="icon"
                       title="Marcar como pago hoje"
-                      className="h-10 w-10 shrink-0 bg-green-600 text-white hover:bg-green-700 active:scale-95"
+                      className="relative z-10 h-10 w-10 shrink-0 bg-green-600 text-white hover:bg-green-700 active:scale-95"
                       onClick={markRowPaidToday}
                     >
                       <BadgeCheck className="h-5 w-5" />
@@ -2526,12 +2666,12 @@ export default function ComprasTab() {
                   }}
                 />
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">D / I / F</label>
                 <div
                   ref={rowDifSelectorRef}
                   tabIndex={0}
-                  className="flex gap-2 h-10 items-center outline-none"
+                  className="flex flex-wrap gap-2 min-h-10 items-center outline-none"
                   onKeyDown={(e) => {
                     const order: Array<'D' | 'I' | 'F'> = ['D', 'I', 'F'];
                     const current = order.indexOf((rowEditForm.difType as 'D' | 'I' | 'F') || 'D');
@@ -2562,35 +2702,100 @@ export default function ComprasTab() {
                       {opt}
                     </button>
                   ))}
+                  {!showAddPurchase && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => {
+                          setTransferDueDate(rowEditForm.dueDate);
+                          setShowTransferDueDate((value) => !value);
+                        }}
+                      >
+                        Transferir
+                      </Button>
+                      {showTransferDueDate && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="date"
+                            value={transferDueDate}
+                            onChange={(e) => setTransferDueDate(e.target.value)}
+                            className="h-8 w-[142px] text-xs"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
+                            onClick={transferRowDueDate}
+                          >
+                            OK
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
             {showAddPurchase && rowExtraCount > 0 && (
-              <div className="mt-2 rounded-lg border border-border bg-secondary/15 px-3 py-2">
+              <div className="mt-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-bold">Vencimentos das próximas parcelas</p>
-                  <p className="text-xs text-muted-foreground">Opcional. Preencha apenas as parcelas que quiser criar agora.</p>
+                  <p className="text-xs text-muted-foreground">Opcional. Informe data e, se quiser, um valor diferente.</p>
                 </div>
-                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {Array.from({ length: rowExtraCount }, (_item, index) => {
                     const parcelaNumero = rowInstallmentInfo.current + index + 1;
                     const totalText = String(rowInstallmentInfo.total).padStart(2, '0');
                     return (
-                      <div key={`extra-due-${index}`}>
-                        <label className="text-xs font-bold text-muted-foreground uppercase">
-                          {String(parcelaNumero).padStart(2, '0')}/{totalText}
-                        </label>
-                        <Input
-                          type="date"
-                          value={rowExtraDueDates[index] || ''}
-                          className="h-11 text-base font-semibold"
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setRowExtraDueDates((prev) =>
-                              Array.from({ length: rowExtraCount }, (_unused, i) => (i === index ? value : prev[i] || ''))
-                            );
-                          }}
-                        />
+                      <div key={`extra-due-${index}`} className="rounded-lg border border-primary/25 bg-background p-2 shadow-sm">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-extrabold text-primary">
+                            {String(parcelaNumero).padStart(2, '0')}/{totalText}
+                          </span>
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Parcela</span>
+                        </div>
+                        <div className="grid grid-cols-[1fr_120px] gap-2">
+                          <div>
+                            <label className="mb-1 block text-[10px] font-bold uppercase text-muted-foreground">Data</label>
+                            <Input
+                              type="date"
+                              value={rowExtraDueDates[index] || ''}
+                              className="h-9 text-sm font-semibold"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setRowExtraDueDates((prev) =>
+                                  Array.from({ length: rowExtraCount }, (_unused, i) => (i === index ? value : prev[i] || ''))
+                                );
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[10px] font-bold uppercase text-muted-foreground">Valor</label>
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={rowExtraAmounts[index] || ''}
+                              placeholder={Number(rowEditForm.amount || 0).toFixed(2).replace('.', ',')}
+                              className="h-9 text-sm font-semibold"
+                              onChange={(e) => {
+                                const value = sanitizeAmountTyping(e.target.value);
+                                setRowExtraAmounts((prev) =>
+                                  Array.from({ length: rowExtraCount }, (_unused, i) => (i === index ? value : prev[i] || ''))
+                                );
+                              }}
+                              onBlur={(e) => {
+                                const value = e.target.value.trim();
+                                if (!value) return;
+                                setRowExtraAmounts((prev) =>
+                                  Array.from({ length: rowExtraCount }, (_unused, i) => (i === index ? normalizeAmountInput(value) : prev[i] || ''))
+                                );
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -2600,10 +2805,16 @@ export default function ComprasTab() {
             </div>
           )}
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => setShowRowEdit(false)}>
+            <Button variant="outline" className="flex-1" onClick={() => {
+              setShowRowEdit(false);
+              setTransferDueDate('');
+              setShowTransferDueDate(false);
+              setRowExtraDueDates([]);
+              setRowExtraAmounts([]);
+            }}>
               Cancelar
             </Button>
-            <Button className="flex-1" onClick={saveRowEdit}>
+            <Button className="flex-1" onClick={() => saveRowEdit()}>
               {showAddPurchase ? 'Adicionar' : 'Salvar'}
             </Button>
           </div>

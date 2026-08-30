@@ -48,6 +48,7 @@ export interface PurchaseEntry {
   installments: string; // ex: 1/10
   amount: number;
   paidDate?: string; // YYYY-MM-DD
+  boletoConciliado?: boolean;
   financialInstitution: string;
   difType?: 'D' | 'I' | 'F';
 }
@@ -57,18 +58,30 @@ export interface PurchaseOptions {
   suppliers: string[];
   institutions: string[];
   supplierDifTypes?: Record<string, 'D' | 'I' | 'F'>;
+  purchaseHistory?: {
+    id: string;
+    timestamp: number;
+    action: 'add' | 'edit' | 'transfer' | 'paid' | 'delete' | 'import';
+    description: string;
+    entryId?: string;
+    dueDate?: string;
+    oldDueDate?: string;
+    newDueDate?: string;
+    supplier?: string;
+    amount?: number;
+  }[];
 }
 
 export interface FieldMapping {
   fechamento_field: string; // dinheiro, sobra, cartao, boleto, sangria
-  lancamento_field: string; // dinheiro, pix, sobra, cartao, duplicata, cart_jb, est_desp, sangria
+  lancamento_field: string; // categoria do lançamento
 }
 
 export interface ActionUser {
   id: string;
   name: string;
   password: string;
-  permissions: ('delete' | 'edit' | 'changeDate')[];
+  permissions: ('delete' | 'edit' | 'changeDate' | 'viewSales')[];
 }
 
 export interface AccessLog {
@@ -85,7 +98,7 @@ export interface TimelineEntry {
   id: string;
   timestamp: number;
   module: 'caixa' | 'fechamento' | 'lancamentos';
-  storeId: 'loja1' | 'loja2';
+  storeId: StoreId;
   action: 'create' | 'update' | 'delete';
   date: string; // YYYY-MM-DD
   field?: string; // Nome do campo alterado
@@ -149,7 +162,7 @@ export interface AppSettings {
   purchaseOptions?: PurchaseOptions;
 }
 
-export type StoreId = 'loja1' | 'loja2';
+export type StoreId = 'loja1' | 'loja2' | 'loja3';
 export type AppScreen = 'login' | 'selection' | 'storeSelection' | 'caixaSelection' | 'caixa' | 'main' | 'compras';
 export type MainTab = 'dashboard' | 'lancamentos' | 'fechamentoCompacto' | 'compras' | 'dividas' | 'totais' | 'caixa' | 'opcoes';
 

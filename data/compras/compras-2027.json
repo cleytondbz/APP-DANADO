@@ -1,3 +1,62 @@
 {
-  "2027-01": []
+  "2027-01": [
+    {
+      "id": "1785587022105_4_no84vh",
+      "dueDate": "2027-01-05",
+      "group": "M",
+      "supplier": "ALUGUEL SERGIO",
+      "documentNumber": "DINHEIRO",
+      "issueDate": "2026-04-01",
+      "installments": "09/12",
+      "amount": 4400,
+      "financialInstitution": "PIX",
+      "difType": "D",
+      "boletoConciliado": false
+    }
+  ],
+  "2027-02": [
+    {
+      "id": "1785587022105_5_oos8i1",
+      "dueDate": "2027-02-05",
+      "group": "M",
+      "supplier": "ALUGUEL SERGIO",
+      "documentNumber": "DINHEIRO",
+      "issueDate": "2026-04-01",
+      "installments": "10/12",
+      "amount": 4400,
+      "financialInstitution": "PIX",
+      "difType": "D",
+      "boletoConciliado": false
+    }
+  ],
+  "2027-03": [
+    {
+      "id": "1785587022105_6_9u8yla",
+      "dueDate": "2027-03-05",
+      "group": "M",
+      "supplier": "ALUGUEL SERGIO",
+      "documentNumber": "DINHEIRO",
+      "issueDate": "2026-04-01",
+      "installments": "11/12",
+      "amount": 4400,
+      "financialInstitution": "PIX",
+      "difType": "D",
+      "boletoConciliado": false
+    }
+  ],
+  "2027-04": [
+    {
+      "id": "1785587022105_7_bnqdwh",
+      "dueDate": "2027-04-05",
+      "group": "M",
+      "supplier": "ALUGUEL SERGIO",
+      "documentNumber": "DINHEIRO",
+      "issueDate": "2026-04-01",
+      "installments": "12/12",
+      "amount": 4400,
+      "financialInstitution": "PIX",
+      "difType": "D",
+      "boletoConciliado": false
+    }
+  ]
 }

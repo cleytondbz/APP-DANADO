@@ -388,7 +388,7 @@
       "amount": 375,
       "paidDate": "2025-01-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193892_36_rodezr",
@@ -518,7 +518,7 @@
       "amount": 873.62,
       "paidDate": "2025-01-08",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193892_47_7q7y04",
@@ -1064,7 +1064,7 @@
       "amount": 3632.46,
       "paidDate": "2025-01-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193892_96_s5o2tc",
@@ -1688,7 +1688,7 @@
       "amount": 873.59,
       "paidDate": "2025-01-23",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193892_152_5f4nw6",
@@ -2091,7 +2091,7 @@
       "amount": 43.89,
       "paidDate": "2025-01-30",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193892_187_6nd7td",
@@ -2496,7 +2496,7 @@
       "amount": 590,
       "paidDate": "2025-02-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193892_223_2t1sg8",
@@ -2665,7 +2665,7 @@
       "amount": 873.59,
       "paidDate": "2025-02-07",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193892_239_71ka9n",
@@ -3237,7 +3237,7 @@
       "amount": 5196.07,
       "paidDate": "2025-02-17",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193893_462_5ljnka",
@@ -3263,7 +3263,7 @@
       "amount": 7687.26,
       "paidDate": "2025-03-17",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193893_287_m5m6re",
@@ -3978,7 +3978,7 @@
       "amount": 873.59,
       "paidDate": "2025-02-24",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193893_348_pmnbkr",
@@ -4630,7 +4630,7 @@
       "amount": 590,
       "paidDate": "2025-03-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193893_405_ki5uor",
@@ -4838,7 +4838,7 @@
       "amount": 382.62,
       "paidDate": "2025-03-08",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193893_424_d2xmfm",
@@ -4916,7 +4916,7 @@
       "amount": 873.59,
       "paidDate": "2025-03-10",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193893_430_76i0zm",
@@ -5826,7 +5826,7 @@
       "amount": 873.59,
       "paidDate": "2025-03-24",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193893_515_j3a5g4",
@@ -6673,7 +6673,7 @@
       "amount": 590,
       "paidDate": "2025-04-04",
       "financialInstitution": "CARTEIRA NA ADM",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193894_591_wv2ri0",
@@ -6855,7 +6855,7 @@
       "amount": 375,
       "paidDate": "2025-04-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193894_606_sl4r45",
@@ -9132,7 +9132,7 @@
       "amount": 325,
       "paidDate": "2025-05-05",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193894_800_d15jsp",
@@ -9184,7 +9184,7 @@
       "amount": 590,
       "paidDate": "2025-05-03",
       "financialInstitution": "NA ADM PIX MICHEL",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193894_804_vzea4c",
@@ -9353,7 +9353,7 @@
       "amount": 375,
       "paidDate": "2025-05-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193894_819_cso8ge",
@@ -9392,7 +9392,7 @@
       "amount": 325,
       "paidDate": "2025-05-08",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193894_824_7jx7jq",
@@ -11604,7 +11604,7 @@
       "amount": 590,
       "paidDate": "2025-06-04",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193895_1015_ebcjp6",
@@ -11812,7 +11812,7 @@
       "amount": 375,
       "paidDate": "2025-06-09",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193895_1033_qqj32t",
@@ -12709,7 +12709,7 @@
       "amount": 861.05,
       "paidDate": "2025-06-23",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193895_1112_xdvi2n",
@@ -12943,7 +12943,7 @@
       "amount": 280.65,
       "paidDate": "2025-06-25",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193895_1132_hlgl1l",
@@ -13894,7 +13894,7 @@
       "amount": 375,
       "paidDate": "2025-07-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1216_ddxkbz",
@@ -15103,7 +15103,7 @@
       "amount": 861.05,
       "paidDate": "2025-07-22",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1320_mv8df2",
@@ -15428,7 +15428,7 @@
       "amount": 280.65,
       "paidDate": "2025-07-25",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1348_z0phlu",
@@ -16145,7 +16145,7 @@
       "amount": 2192.04,
       "paidDate": "2025-08-04",
       "financialInstitution": "DEPOSITO EM C/CORRENTE",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1413_tayrwq",
@@ -16171,7 +16171,7 @@
       "amount": 590,
       "paidDate": "2025-08-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1415_pmnghr",
@@ -16275,7 +16275,7 @@
       "amount": 2594.72,
       "paidDate": "2025-08-06",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1424_0vb47u",
@@ -16327,7 +16327,7 @@
       "amount": 375,
       "paidDate": "2025-08-07",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193896_1428_m7ppb2",
@@ -17406,7 +17406,7 @@
       "amount": 2799.11,
       "paidDate": "2025-08-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193897_1520_ocm6g4",
@@ -17614,7 +17614,7 @@
       "amount": 861.06,
       "paidDate": "2025-08-21",
       "financialInstitution": "BRADESCO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193897_1538_zj8qtr",
@@ -18630,7 +18630,7 @@
       "amount": 160.86,
       "paidDate": "2025-10-02",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193898_1812_lppmrp",
@@ -18877,7 +18877,7 @@
       "amount": 2799.13,
       "paidDate": "2025-10-06",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193898_1834_ak0gdb",
@@ -19423,7 +19423,7 @@
       "amount": 1141.65,
       "paidDate": "2025-10-13",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193898_1880_a8w00d",
@@ -20788,7 +20788,7 @@
       "amount": 205.8,
       "paidDate": "2025-10-31",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193898_2003_z10ak5",
@@ -21128,7 +21128,7 @@
       "amount": 590,
       "paidDate": "2025-09-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193897_1637_leglhx",
@@ -21271,7 +21271,7 @@
       "amount": 375,
       "paidDate": "2025-09-08",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193897_1649_izpc8m",
@@ -22088,9 +22088,10 @@
       "issueDate": "2025-08-19",
       "installments": "01/01",
       "amount": 0,
-      "paidDate": "",
+      "paidDate": "2026-07-27",
       "financialInstitution": "VALOR 634,50 nf 4751",
-      "difType": ""
+      "month": "2025-09",
+      "boletoConciliado": false
     },
     {
       "id": "1782078193897_1719_0r2h58",
@@ -23340,7 +23341,7 @@
       "amount": 590,
       "paidDate": "2025-12-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193899_2218_80e4w6",
@@ -24380,7 +24381,7 @@
       "amount": 4953.97,
       "paidDate": "2025-12-18",
       "financialInstitution": "DP AG:3306-5 C/C:1205-0 BBC",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782078193899_2307_047agb",
@@ -24601,7 +24602,7 @@
       "amount": 357.7,
       "paidDate": "2025-12-20",
       "financialInstitution": "CAIXA 2X",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193899_2326_fhqq1t",
@@ -25630,7 +25631,7 @@
       "amount": 590,
       "paidDate": "2025-11-05",
       "financialInstitution": "SUPERLOGICA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782078193898_2026_w8g67m",

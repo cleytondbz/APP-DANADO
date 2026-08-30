@@ -25,14 +25,14 @@
       "despesa": 0
     },
     "2026-06-04": {
-      "dinheiro": "561,00",
+      "dinheiro": "0,00",
       "sobra": "",
-      "pix": "171,00",
-      "cartao": "188,00",
+      "pix": "0,00",
+      "cartao": "0,00",
       "boleto": "0,00",
       "sangrias": [],
       "despesas": [],
-      "nomeDigital": "teste",
+      "nomeDigital": "",
       "sangria": 0,
       "despesa": 0
     },
@@ -405,6 +405,822 @@
       "sobra": "15,90",
       "pix": "1387,48",
       "cartao": "2210,40",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-06-29": {
+      "dinheiro": "593,50",
+      "sobra": "",
+      "pix": "1472,90",
+      "cartao": "1283,20",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1782746242227",
+          "valor": 300
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 300,
+      "despesa": 0
+    },
+    "2026-06-30": {
+      "dinheiro": "1028,80",
+      "sobra": "25,00",
+      "pix": "1832,55",
+      "cartao": "3232,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-01": {
+      "dinheiro": "950,00",
+      "sobra": "",
+      "pix": "1829,49",
+      "cartao": "3023,00",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1782933644451",
+          "valor": 400
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 400,
+      "despesa": 0
+    },
+    "2026-07-02": {
+      "dinheiro": "1071,30",
+      "sobra": "25,00",
+      "pix": "2080,90",
+      "cartao": "3476,20",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1783020019471",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-07-03": {
+      "dinheiro": "1639,95",
+      "sobra": "",
+      "pix": "2073,00",
+      "cartao": "1937,90",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1783113452442",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-07-04": {
+      "dinheiro": "273,50",
+      "sobra": "67,70",
+      "pix": "947,30",
+      "cartao": "1711,20",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-05": {
+      "dinheiro": "860,00",
+      "sobra": "",
+      "pix": "1495,10",
+      "cartao": "3260,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-06": {
+      "dinheiro": "1255,00",
+      "sobra": "",
+      "pix": "1327,10",
+      "cartao": "2605,05",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-07": {
+      "dinheiro": "1781,00",
+      "sobra": "0,00",
+      "pix": "2053,10",
+      "cartao": "2330,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-08": {
+      "dinheiro": "1015,30",
+      "sobra": "0,00",
+      "pix": "1213,20",
+      "cartao": "3080,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-09": {
+      "dinheiro": "1198,20",
+      "sobra": "37,9",
+      "pix": "2397,60",
+      "cartao": "1627,30",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-10": {
+      "dinheiro": "977,85",
+      "sobra": "13,65",
+      "pix": "2747,50",
+      "cartao": "2916,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "bruno",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-11": {
+      "dinheiro": "426,30",
+      "sobra": "58,80",
+      "pix": "1716,50",
+      "cartao": "2745,93",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-12": {
+      "dinheiro": "825,30",
+      "sobra": "18,90",
+      "pix": "1467,10",
+      "cartao": "2203,70",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-13": {
+      "dinheiro": "826,25",
+      "sobra": "39,00",
+      "pix": "2207,10",
+      "cartao": "2401,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-14": {
+      "dinheiro": "1124,00",
+      "sobra": "16,90",
+      "pix": "2960,00",
+      "cartao": "2350,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-15": {
+      "dinheiro": "972,65",
+      "sobra": "34,75",
+      "pix": "1471,70",
+      "cartao": "3100,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-16": {
+      "dinheiro": "1262,70",
+      "sobra": "",
+      "pix": "784,50",
+      "cartao": "2465,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-17": {
+      "dinheiro": "870,25",
+      "sobra": "52,00",
+      "pix": "1352,10",
+      "cartao": "2683,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-18": {
+      "dinheiro": "610,30",
+      "sobra": "41,60",
+      "pix": "1487,50",
+      "cartao": "2033,30",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-19": {
+      "dinheiro": "807,05",
+      "sobra": "",
+      "pix": "1271,40",
+      "cartao": "1160,15",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-20": {
+      "dinheiro": "465,00",
+      "sobra": "49,80",
+      "pix": "969,10",
+      "cartao": "2459,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-21": {
+      "dinheiro": "1620,50",
+      "sobra": "0,00",
+      "pix": "2327,70",
+      "cartao": "1569,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-22": {
+      "dinheiro": "843,00",
+      "sobra": "42,70",
+      "pix": "1990,30",
+      "cartao": "1352,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-23": {
+      "dinheiro": "585,80",
+      "sobra": "51,70",
+      "pix": "2428,80",
+      "cartao": "3339,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-24": {
+      "dinheiro": "497,80",
+      "sobra": "12,00",
+      "pix": "1807,30",
+      "cartao": "2588,90",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1784918270960",
+          "valor": 200
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 200,
+      "despesa": 0
+    },
+    "2026-07-25": {
+      "dinheiro": "1171,75",
+      "sobra": "10,25",
+      "pix": "2225,90",
+      "cartao": "1891,30",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-26": {
+      "dinheiro": "1741,50",
+      "sobra": "23,00",
+      "pix": "2152,70",
+      "cartao": "3277,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-27": {
+      "dinheiro": "963,15",
+      "sobra": "70,00",
+      "pix": "1724,90",
+      "cartao": "1242,40",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-28": {
+      "dinheiro": "553,75",
+      "sobra": "0,50",
+      "pix": "1871,10",
+      "cartao": "1895,20",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-29": {
+      "dinheiro": "692,15",
+      "sobra": "0,10",
+      "pix": "1822,30",
+      "cartao": "1114,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-30": {
+      "dinheiro": "884,50",
+      "sobra": "73,00",
+      "pix": "570,60",
+      "cartao": "2512,40",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-07-31": {
+      "dinheiro": "590,90",
+      "sobra": "20,10",
+      "pix": "1129,10",
+      "cartao": "2626,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-01": {
+      "dinheiro": "1189,00",
+      "sobra": "58,00",
+      "pix": "2429,26",
+      "cartao": "4258,20",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "Eleomar",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-02": {
+      "dinheiro": "724,75",
+      "sobra": "3,00",
+      "pix": "1204,30",
+      "cartao": "1669,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-03": {
+      "dinheiro": "1119,25",
+      "sobra": "65,00",
+      "pix": "1616,00",
+      "cartao": "2482,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-04": {
+      "dinheiro": "918,25",
+      "sobra": "87,25",
+      "pix": "1999,50",
+      "cartao": "1996,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-05": {
+      "dinheiro": "1122,50",
+      "sobra": "",
+      "pix": "2463,39",
+      "cartao": "2840,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-06": {
+      "dinheiro": "1463,50",
+      "sobra": "10,00",
+      "pix": "1967,70",
+      "cartao": "2407,10",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1786051421100",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-07": {
+      "dinheiro": "1379,30",
+      "sobra": "29,00",
+      "pix": "2911,40",
+      "cartao": "2651,90",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1786129174192",
+          "valor": 900
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 900,
+      "despesa": 0
+    },
+    "2026-08-08": {
+      "dinheiro": "1527,50",
+      "sobra": "0,00",
+      "pix": "2050,20",
+      "cartao": "4338,30",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1786207083379",
+          "valor": 600
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 600,
+      "despesa": 0
+    },
+    "2026-08-09": {
+      "dinheiro": "1122,00",
+      "sobra": "",
+      "pix": "1532,10",
+      "cartao": "2491,60",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-10": {
+      "dinheiro": "1135,90",
+      "sobra": "66,75",
+      "pix": "1749,89",
+      "cartao": "2149,70",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1786389464734",
+          "valor": 700
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 700,
+      "despesa": 0
+    },
+    "2026-08-11": {
+      "dinheiro": "613,00",
+      "sobra": "",
+      "pix": "2573,30",
+      "cartao": "1383,80",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-12": {
+      "dinheiro": "1455,75",
+      "sobra": "83,00",
+      "pix": "1215,38",
+      "cartao": "1889,20",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-13": {
+      "dinheiro": "1309,00",
+      "sobra": "2,00",
+      "pix": "13934,70",
+      "cartao": "1395,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-14": {
+      "dinheiro": "750,25",
+      "sobra": "60,00",
+      "pix": "2298,90",
+      "cartao": "1772,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-15": {
+      "dinheiro": "1166,00",
+      "sobra": "0,00",
+      "pix": "1180,10",
+      "cartao": "2211,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "JONATHAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-16": {
+      "dinheiro": "945,50",
+      "sobra": "-18,00",
+      "pix": "2020,89",
+      "cartao": "2922,00",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-17": {
+      "dinheiro": "791,50",
+      "sobra": "50,00",
+      "pix": "1882,10",
+      "cartao": "1423,30",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1786999742315",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LILIAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-18": {
+      "dinheiro": "1112,90",
+      "sobra": "0,00",
+      "pix": "1879,50",
+      "cartao": "2475,90",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-19": {
+      "dinheiro": "576,10",
+      "sobra": "67,4",
+      "pix": "1616,49",
+      "cartao": "2016,40",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-20": {
+      "dinheiro": "1035,60",
+      "sobra": "0,20",
+      "pix": "918,70",
+      "cartao": "2314,20",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-21": {
+      "dinheiro": "946,25",
+      "sobra": "101,75",
+      "pix": "1007,40",
+      "cartao": "2152,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-22": {
+      "dinheiro": "843,50",
+      "sobra": "",
+      "pix": "2205,30",
+      "cartao": "3687,90",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1787417506938",
+          "valor": 400
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 400,
+      "despesa": 0
+    },
+    "2026-08-23": {
+      "dinheiro": "1272,00",
+      "sobra": "32,00",
+      "pix": "2003,00",
+      "cartao": "2384,30",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-24": {
+      "dinheiro": "655,25",
+      "sobra": "0,00",
+      "pix": "1506,40",
+      "cartao": "2142,80",
+      "boleto": "0,00",
+      "sangrias": [
+        {
+          "id": "1787602530601",
+          "valor": 500
+        }
+      ],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 500,
+      "despesa": 0
+    },
+    "2026-08-25": {
+      "dinheiro": "609,50",
+      "sobra": "37,00",
+      "pix": "965,80",
+      "cartao": "2536,70",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-26": {
+      "dinheiro": "506,00",
+      "sobra": "0,00",
+      "pix": "1674,60",
+      "cartao": "1813,50",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-27": {
+      "dinheiro": "730,10",
+      "sobra": "10,50",
+      "pix": "3055,90",
+      "cartao": "1216,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-28": {
+      "dinheiro": "1107,15",
+      "sobra": "19,75",
+      "pix": "2479,90",
+      "cartao": "1323,70",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "LÍLIAN",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-29": {
+      "dinheiro": "1181,60",
+      "sobra": "25,00",
+      "pix": "2566,00",
+      "cartao": "2878,10",
+      "boleto": "0,00",
+      "sangrias": [],
+      "despesas": [],
+      "nomeDigital": "jonathan",
+      "sangria": 0,
+      "despesa": 0
+    },
+    "2026-08-30": {
+      "dinheiro": "1036,00",
+      "sobra": "17,50",
+      "pix": "1927,30",
+      "cartao": "1829,70",
       "boleto": "0,00",
       "sangrias": [],
       "despesas": [],

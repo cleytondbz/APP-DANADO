@@ -479,7 +479,7 @@
       "amount": 420,
       "paidDate": "2021-01-05",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238624_40_71r2qh",
@@ -661,7 +661,7 @@
       "amount": 931.74,
       "paidDate": "2021-01-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238624_56_5f2vdi",
@@ -674,7 +674,7 @@
       "amount": 270,
       "paidDate": "2021-01-07",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238624_57_ljw76k",
@@ -960,7 +960,7 @@
       "amount": 1470.25,
       "paidDate": "2021-01-11",
       "financialInstitution": "SAFRA",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238624_81_h04e8f",
@@ -1649,7 +1649,7 @@
       "amount": 2935,
       "paidDate": "2021-01-15",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238624_138_tk4ite",
@@ -2949,7 +2949,7 @@
       "amount": 1470.25,
       "paidDate": "2021-01-25",
       "financialInstitution": "SAFRA",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238625_236_qafw8e",
@@ -3887,7 +3887,7 @@
       "amount": 934.78,
       "paidDate": "2021-02-05",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238625_321_ds8mus",
@@ -4069,7 +4069,7 @@
       "amount": 270,
       "paidDate": "2021-02-08",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238625_334_9r69e8",
@@ -4251,7 +4251,7 @@
       "amount": 1470.25,
       "paidDate": "2021-02-09",
       "financialInstitution": "SAFRA",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238625_352_34vwoi",
@@ -4914,7 +4914,7 @@
       "amount": 1000,
       "paidDate": "2021-02-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238625_399_8uiru8",
@@ -5486,7 +5486,7 @@
       "amount": 277.2,
       "paidDate": "2021-02-19",
       "financialInstitution": "COM RMA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_441_vc2y87",
@@ -5707,7 +5707,7 @@
       "amount": 5863,
       "paidDate": "2021-02-22",
       "financialInstitution": "CARTEIRO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_463_idchdw",
@@ -5798,7 +5798,7 @@
       "amount": 345,
       "paidDate": "2021-02-23",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_472_m8rl0z",
@@ -6489,7 +6489,7 @@
       "amount": 961.23,
       "paidDate": "2021-03-02",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_540_x4ign5",
@@ -6684,7 +6684,7 @@
       "amount": 0,
       "paidDate": "2021-03-04",
       "financialInstitution": "VALOR 721,00",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238626_556_9tzjxf",
@@ -6788,7 +6788,7 @@
       "amount": 1091.54,
       "paidDate": "2021-03-05",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238626_571_1yc63z",
@@ -6944,7 +6944,7 @@
       "amount": 5875,
       "paidDate": "2021-03-08",
       "financialInstitution": "TRNSFERECIA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_582_ut1gvg",
@@ -7087,7 +7087,7 @@
       "amount": 961.23,
       "paidDate": "2021-03-09",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_595_00x4lf",
@@ -7152,7 +7152,7 @@
       "amount": 5755,
       "paidDate": "2021-03-10",
       "financialInstitution": "TRANSFERENCIA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_600_1t78of",
@@ -7633,7 +7633,7 @@
       "amount": 961.23,
       "paidDate": "2021-03-16",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_641_36n4sx",
@@ -8257,7 +8257,7 @@
       "amount": 961.23,
       "paidDate": "2021-03-23",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238626_692_ndq3mu",
@@ -8725,7 +8725,7 @@
       "amount": 961.23,
       "paidDate": "2021-03-30",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_735_xfb94r",
@@ -8816,7 +8816,7 @@
       "amount": 6000,
       "paidDate": "2021-03-31",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_743_r3t2tk",
@@ -8870,7 +8870,7 @@
       "amount": 8271,
       "paidDate": "2021-04-01",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_750_f511ug",
@@ -9364,7 +9364,7 @@
       "amount": 1124.24,
       "paidDate": "2021-04-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238627_791_2rrcmf",
@@ -9949,7 +9949,7 @@
       "amount": 8300,
       "paidDate": "2021-04-14",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_841_651evx",
@@ -10196,7 +10196,7 @@
       "amount": 2900,
       "paidDate": "2021-04-17",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_863_kdsg3e",
@@ -10430,7 +10430,7 @@
       "amount": 7250,
       "paidDate": "2021-04-20",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_882_i1idd9",
@@ -11275,7 +11275,7 @@
       "amount": 6000,
       "paidDate": "2021-04-30",
       "financialInstitution": "CARTEIRA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_953_inq3e2",
@@ -11288,7 +11288,7 @@
       "amount": 2495,
       "paidDate": "2021-04-30",
       "financialInstitution": "DEPOSITO C/CORRENTE",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_954_kyp0zn",
@@ -11433,7 +11433,7 @@
       "amount": 3308,
       "paidDate": "2021-05-03",
       "financialInstitution": "DEPOSITO C/CORRENTE",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238627_968_jekp9x",
@@ -11875,7 +11875,7 @@
       "amount": 0,
       "paidDate": "",
       "financialInstitution": "VALOR",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238628_1006_k1mxys",
@@ -11914,7 +11914,7 @@
       "amount": 1144.52,
       "paidDate": "2021-05-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238628_1009_h5rnlj",
@@ -12018,7 +12018,7 @@
       "amount": 1817,
       "paidDate": "2021-05-10",
       "financialInstitution": "DEPOSITO C/CORRENTE",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238628_1017_8lavqr",
@@ -12161,7 +12161,7 @@
       "amount": 1500,
       "paidDate": "2021-05-10",
       "financialInstitution": "DEPOSITO C/CORRENTE",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238628_1028_zh1f1s",
@@ -12460,7 +12460,7 @@
       "amount": 900,
       "paidDate": "2021-05-14",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238628_1055_3estyk",
@@ -13578,7 +13578,7 @@
       "amount": 900,
       "paidDate": "2021-05-31",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238628_1152_cv8jc3",
@@ -13695,7 +13695,7 @@
       "amount": 0,
       "paidDate": "",
       "financialInstitution": "PELO GOVERNO 7.000,00",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238628_1161_4ud6wk",
@@ -14126,7 +14126,7 @@
       "amount": 4235,
       "paidDate": "2021-07-06",
       "financialInstitution": "TRANSFERENCIA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238629_1415_1z5z9e",
@@ -14776,7 +14776,7 @@
       "amount": 900,
       "paidDate": "2021-07-13",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238629_1472_1bx57r",
@@ -16206,7 +16206,7 @@
       "amount": 0,
       "paidDate": "",
       "financialInstitution": "VALOR 398,90 N 2342",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238630_1593_z5su6x",
@@ -16219,7 +16219,7 @@
       "amount": 0,
       "paidDate": "",
       "financialInstitution": "VALOR 398,90 N 2343",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238630_1594_gnwt4j",
@@ -16232,7 +16232,7 @@
       "amount": 0,
       "paidDate": "",
       "financialInstitution": "VALOR 413,90 N 2341",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238630_1595_2exxeq",
@@ -16338,7 +16338,7 @@
       "amount": 2640,
       "paidDate": "2021-06-01",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238628_1172_hyq2pf",
@@ -16871,7 +16871,7 @@
       "amount": 270,
       "paidDate": "2021-05-27",
       "financialInstitution": "BANPARA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238628_1216_zlfwwa",
@@ -17404,7 +17404,7 @@
       "amount": 900,
       "paidDate": "2021-06-14",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238629_1262_0uyqd4",
@@ -18236,7 +18236,7 @@
       "amount": 5880,
       "paidDate": "2021-06-23",
       "financialInstitution": "TRANSFERENCIA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238629_1331_n36wlv",
@@ -18327,7 +18327,7 @@
       "amount": 1337,
       "paidDate": "2021-06-24",
       "financialInstitution": "CARTÃO CREDITO 2X",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238629_1339_22wdzj",
@@ -18340,7 +18340,7 @@
       "amount": 36.54,
       "paidDate": "2021-06-24",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238629_1340_mpy3f4",
@@ -18639,7 +18639,7 @@
       "amount": 900,
       "paidDate": "2021-06-26",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238629_1366_3dbrtf",
@@ -18756,7 +18756,7 @@
       "amount": 342.74,
       "paidDate": "2021-06-30",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "I"
     },
     {
       "id": "1782110238629_1377_8yqood",
@@ -18769,7 +18769,7 @@
       "amount": 1400,
       "paidDate": "2021-06-30",
       "financialInstitution": "PELO GOVERNO 7.000,00",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238629_1378_3ir8k1",
@@ -18888,7 +18888,7 @@
       "amount": 2095,
       "paidDate": "2021-09-01",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_1845_pal8pc",
@@ -19148,7 +19148,7 @@
       "amount": 825,
       "paidDate": "2021-09-06",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238631_1868_sbuslo",
@@ -19265,7 +19265,7 @@
       "amount": 166.98,
       "paidDate": "2021-09-06",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238631_1877_kir5kg",
@@ -19486,7 +19486,7 @@
       "amount": 270,
       "paidDate": "2021-09-08",
       "financialInstitution": "BBC",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_1896_70hpgs",
@@ -19707,7 +19707,7 @@
       "amount": 4960,
       "paidDate": "2021-09-10",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_1915_ruzoyy",
@@ -20175,7 +20175,7 @@
       "amount": 4800,
       "paidDate": "2021-09-15",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_1954_totlhd",
@@ -20578,7 +20578,7 @@
       "amount": 825,
       "paidDate": "2021-09-20",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238631_1990_a7hwm0",
@@ -20747,7 +20747,7 @@
       "amount": 5282,
       "paidDate": "2021-09-22",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_2005_m0rezh",
@@ -21228,7 +21228,7 @@
       "amount": 1169.23,
       "paidDate": "2021-09-27",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_2044_tyl1ma",
@@ -21984,7 +21984,7 @@
       "amount": 0,
       "paidDate": "2021-08-05",
       "financialInstitution": "VALOR 194,70 N 2349",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238630_1640_8kfjsd",
@@ -22023,7 +22023,7 @@
       "amount": 825,
       "paidDate": "2021-08-06",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238630_1644_1xx3a2",
@@ -22660,7 +22660,7 @@
       "amount": 6568,
       "paidDate": "2021-08-13",
       "financialInstitution": "TRANSFERENCIA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1699_zkz3nt",
@@ -22933,7 +22933,7 @@
       "amount": 1074.55,
       "paidDate": "2021-08-16",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1721_gkrl2v",
@@ -23128,7 +23128,7 @@
       "amount": 6410,
       "paidDate": "2021-08-19",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1739_a4ylw5",
@@ -23414,7 +23414,7 @@
       "amount": 825,
       "paidDate": "2021-08-23",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238630_1763_cugklk",
@@ -23427,7 +23427,7 @@
       "amount": 4796,
       "paidDate": "2021-08-21",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1764_zulniu",
@@ -23635,7 +23635,7 @@
       "amount": 2200,
       "paidDate": "2021-08-24",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1781_r5pb53",
@@ -24051,7 +24051,7 @@
       "amount": 5595,
       "paidDate": "2021-08-28",
       "financialInstitution": "DEPODITO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1817_89rbba",
@@ -24181,7 +24181,7 @@
       "amount": 1205,
       "paidDate": "2021-08-30",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238630_1827_9whis9",
@@ -24404,7 +24404,7 @@
       "amount": 3732.71,
       "paidDate": "2021-10-04",
       "financialInstitution": "BANPARA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_2085_1amo5v",
@@ -24599,7 +24599,7 @@
       "amount": 825,
       "paidDate": "2021-10-05",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238631_2101_hjkjoe",
@@ -24716,7 +24716,7 @@
       "amount": 3585,
       "paidDate": "2021-10-06",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_2111_8h22hq",
@@ -24833,7 +24833,7 @@
       "amount": 3185,
       "paidDate": "2021-10-07",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238631_2121_pi07hx",
@@ -24846,7 +24846,7 @@
       "amount": 1001.9,
       "paidDate": "2021-10-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238631_2122_p1ogq6",
@@ -25028,7 +25028,7 @@
       "amount": 5400,
       "paidDate": "2021-10-11",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2139_nqdcvn",
@@ -25431,7 +25431,7 @@
       "amount": 5386,
       "paidDate": "2021-10-14",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2171_ptuplr",
@@ -25548,7 +25548,7 @@
       "amount": 6053.16,
       "paidDate": "2021-10-15",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2181_esbncg",
@@ -25561,7 +25561,7 @@
       "amount": 1174.95,
       "paidDate": "2021-11-11",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2182_zy4obc",
@@ -26211,7 +26211,7 @@
       "amount": 1484,
       "paidDate": "2021-10-25",
       "financialInstitution": "TRANSFERENCIA",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2237_bpafem",
@@ -26445,7 +26445,7 @@
       "amount": 3665,
       "paidDate": "2021-10-27",
       "financialInstitution": "",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2257_u4bbbo",
@@ -27045,7 +27045,7 @@
       "amount": 8220,
       "paidDate": "2021-11-04",
       "financialInstitution": "BANPARA FISICO",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2311_cthdc2",
@@ -27162,7 +27162,7 @@
       "amount": 1040.1,
       "paidDate": "2021-11-05",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238632_2321_fc03is",
@@ -27851,7 +27851,7 @@
       "amount": 1141.84,
       "paidDate": "2021-11-16",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2380_1l93b4",
@@ -27942,7 +27942,7 @@
       "amount": 6315.46,
       "paidDate": "2021-11-16",
       "financialInstitution": "ITAU",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238632_2387_w22csd",
@@ -28202,7 +28202,7 @@
       "amount": 961.6,
       "paidDate": "2021-11-18",
       "financialInstitution": "SAFRA",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238632_2409_i00t5p",
@@ -28397,7 +28397,7 @@
       "amount": 4225,
       "paidDate": "2021-11-22",
       "financialInstitution": "PIN N 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2426_qe5jdh",
@@ -29283,7 +29283,7 @@
       "amount": 961.6,
       "paidDate": "2021-12-03",
       "financialInstitution": "SAFRA",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238633_2506_4ccbs7",
@@ -29413,7 +29413,7 @@
       "amount": 335,
       "paidDate": "2021-12-06",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2517_wqvnc3",
@@ -29465,7 +29465,7 @@
       "amount": 6065,
       "paidDate": "2021-12-06",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2520_49maxz",
@@ -29608,7 +29608,7 @@
       "amount": 102.38,
       "paidDate": "2021-12-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238633_2533_k2piz1",
@@ -29621,7 +29621,7 @@
       "amount": 1331.38,
       "paidDate": "2021-12-07",
       "financialInstitution": "ITAU",
-      "difType": "D"
+      "difType": "I"
     },
     {
       "id": "1782110238633_2534_nwjgql",
@@ -29751,7 +29751,7 @@
       "amount": 7680,
       "paidDate": "2021-12-09",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2545_fm4esu",
@@ -29972,7 +29972,7 @@
       "amount": 4817,
       "paidDate": "2021-12-12",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2564_02k4vx",
@@ -30141,7 +30141,7 @@
       "amount": 1141.84,
       "paidDate": "2021-12-15",
       "financialInstitution": "SANTANDER",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2579_84p2wf",
@@ -30219,7 +30219,7 @@
       "amount": 3080,
       "paidDate": "2021-12-15",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2585_d5hqjm",
@@ -30245,7 +30245,7 @@
       "amount": 4445.2,
       "paidDate": "2021-12-15",
       "financialInstitution": "34191.75082.54166.112521.50451.630003.4.000",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2587_e73xzx",
@@ -30297,7 +30297,7 @@
       "amount": 5000,
       "paidDate": "2021-12-16",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2592_k8zoji",
@@ -30440,7 +30440,7 @@
       "amount": 961.6,
       "paidDate": "2021-12-20",
       "financialInstitution": "SAFRA",
-      "difType": ""
+      "difType": "F"
     },
     {
       "id": "1782110238633_2605_2jc91d",
@@ -30752,7 +30752,7 @@
       "amount": 2660,
       "paidDate": "2021-12-21",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2630_ksgsp6",
@@ -30791,7 +30791,7 @@
       "amount": 3185,
       "paidDate": "2021-12-22",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2634_o1ek35",
@@ -30908,7 +30908,7 @@
       "amount": 2839,
       "paidDate": "2021-12-23",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2644_7y5w7h",
@@ -31246,7 +31246,7 @@
       "amount": 4400,
       "paidDate": "2021-12-28",
       "financialInstitution": "PIX 34.972.947/0001-86",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2673_1trnuy",
@@ -31506,7 +31506,7 @@
       "amount": 2762,
       "paidDate": "2021-12-30",
       "financialInstitution": "PIX",
-      "difType": ""
+      "difType": "D"
     },
     {
       "id": "1782110238633_2695_yi6gf3",

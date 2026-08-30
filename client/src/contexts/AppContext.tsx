@@ -105,7 +105,11 @@ const defaultSettings: AppSettings = {
 };
 
 const mkStore = (id: StoreId, name: string, cnpj: string): StoreData => ({
-  storeId: id, storeName: name, cnpj, months: [], categories: [...DEFAULT_CATEGORIES],
+  storeId: id,
+  storeName: name,
+  cnpj,
+  months: [],
+  categories: id === 'loja3' ? DEFAULT_CATEGORIES.filter((cat) => cat.id !== 'cart_jb') : [...DEFAULT_CATEGORIES],
 });
 
 const parseSyncNumber = (value: any): number => {
@@ -132,7 +136,9 @@ const buildStoresFromFechamento = (
 
     const mapping = storeId === 'loja1'
       ? (appSettings.fieldMappingLan1 || [])
-      : (appSettings.fieldMappingLan2 || []);
+      : storeId === 'loja2'
+        ? (appSettings.fieldMappingLan2 || [])
+        : [];
 
     if (!mapping.length) return;
 
@@ -236,11 +242,54 @@ const collectBoletoCompaniesFromCaixa = (caixa: Record<string, Record<string, an
   return Array.from(companies).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 };
 
+const getCustomSaldoTime = (value: any) => {
+  const raw = String(value?.updatedAt || '').trim();
+  if (!raw) return 0;
+  const parsed = Date.parse(raw.replace(' ', 'T'));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const mergeCustomSaldoFromNewest = (serverSettings: AppSettings, localSettings: AppSettings): AppSettings => {
+  const mergedByStoreMonth: Record<string, Record<string, any>> = {
+    ...((serverSettings as any).customSaldoByStoreMonth || {}),
+  };
+
+  Object.entries((localSettings as any).customSaldoByStoreMonth || {}).forEach(([storeId, months]: [string, any]) => {
+    Object.entries(months || {}).forEach(([monthKey, localConfig]: [string, any]) => {
+      const serverConfig = mergedByStoreMonth?.[storeId]?.[monthKey];
+      if (getCustomSaldoTime(localConfig) > getCustomSaldoTime(serverConfig)) {
+        mergedByStoreMonth[storeId] = {
+          ...(mergedByStoreMonth[storeId] || {}),
+          [monthKey]: localConfig,
+        };
+      }
+    });
+  });
+
+  const historyById = new Map<string, any>();
+  [
+    ...(((serverSettings as any).customSaldoHistory || []) as any[]),
+    ...(((localSettings as any).customSaldoHistory || []) as any[]),
+  ].forEach((item) => {
+    if (item?.id) historyById.set(String(item.id), item);
+  });
+
+  return {
+    ...serverSettings,
+    customSaldoByStoreMonth: mergedByStoreMonth,
+    customSaldoHistory: Array.from(historyById.values())
+      .sort((a, b) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
+      .slice(-500),
+  };
+};
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const settingsRef = useRef<AppSettings>(defaultSettings);
   const [stores, setStores] = useState<Record<string, StoreData>>({
     loja1: mkStore('loja1', 'Loja 1', '09.545.637/0001/38'),
     loja2: mkStore('loja2', 'Loja 2', '42.016.151/0001-88'),
+    loja3: mkStore('loja3', 'Loja 3', ''),
   });
   const [currentStore, setCurrentStore] = useState<StoreId>('loja1');
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -272,6 +321,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveSequenceRef = useRef(0);
   const saveErrorNotifiedRef = useRef(false);
   const saveRetryTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   // Detectar conexão online/offline
   useEffect(() => {
@@ -398,18 +451,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...((serverData.settings?.boletoCompanies || []) as string[]).map((name) => String(name || '').trim()).filter(Boolean),
       ...collectBoletoCompaniesFromCaixa(serverData.caixa || {}),
     ])).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    const mergedSettings = { ...defaultSettings, ...(serverData.settings || {}), boletoCompanies };
+    const mergedSettings = mergeCustomSaldoFromNewest(
+      { ...defaultSettings, ...(serverData.settings || {}), boletoCompanies },
+      settingsRef.current
+    );
     setSettings(mergedSettings);
 
     const defaultStores = {
       loja1: mkStore('loja1', 'Loja 1', '09.545.637/0001/38'),
       loja2: mkStore('loja2', 'Loja 2', '42.016.151/0001-88'),
+      loja3: mkStore('loja3', 'Loja 3', ''),
     };
 
     const storesFromServer = serverData.stores || {};
-    const mergedStores = Object.keys(storesFromServer).length > 0
-      ? storesFromServer
-      : defaultStores;
+    const mergedStores = { ...defaultStores, ...storesFromServer };
 
     const fechamento = serverData.fechamento || { loja1: {}, loja2: {} };
     const storesWithLancamentos = buildStoresFromFechamento(
@@ -452,12 +507,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const defaultStores = {
             loja1: mkStore('loja1', 'Loja 1', '09.545.637/0001/38'),
             loja2: mkStore('loja2', 'Loja 2', '42.016.151/0001-88'),
+            loja3: mkStore('loja3', 'Loja 3', ''),
           };
           
           const storesFromServer = serverData.stores || {};
-          const mergedStores = Object.keys(storesFromServer).length > 0 
-            ? storesFromServer 
-            : defaultStores;
+          const mergedStores = { ...defaultStores, ...storesFromServer };
           
           setStores(mergedStores);
           setDebts(serverData.debts || []);

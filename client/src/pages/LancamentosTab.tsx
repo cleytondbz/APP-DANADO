@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { formatCurrency, getDaysInMonth, getDayOfWeek, dateStr } from '@/lib/helpers';
 import { DAY_NAMES } from '@/lib/types';
@@ -12,7 +12,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { MONTH_NAMES } from '@/lib/types';
 import type { Category } from '@/lib/types';
 
-export default function LancamentosTab() {
+const HIDDEN_LANCAMENTO_CATEGORY_IDS = new Set(['cart_jb', 'est_desp', 'sangria']);
+const STORE_THEME: Record<string, { label: string; color: string; soft: string; border: string; text: string }> = {
+  loja1: { label: 'Loja 1', color: '#0d6efd', soft: 'rgba(13,110,253,0.12)', border: 'rgba(13,110,253,0.35)', text: '#0d6efd' },
+  loja2: { label: 'Loja 2', color: '#f59e0b', soft: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.45)', text: '#b45309' },
+  loja3: { label: 'Loja 3', color: '#7c3aed', soft: 'rgba(124,58,237,0.14)', border: 'rgba(124,58,237,0.40)', text: '#7c3aed' },
+};
+
+export default function LancamentosTab({ readOnly = false }: { readOnly?: boolean }) {
   const { settings, setSettings, getCategories, getMonthData, saveEntry, clearManualFieldMark, deleteEntry, removeCategory, updateCategory, selectedYear, selectedMonth, currentStore, stores, setStores, fechamentoData, setFechamentoData, caixaData, addTimelineEntry } = useApp();
   const allCats = getCategories();
   const md = getMonthData(selectedYear, selectedMonth);
@@ -24,6 +31,7 @@ export default function LancamentosTab() {
   const [showCustomSaldo, setShowCustomSaldo] = useState(false);
   const [showBoletoLists, setShowBoletoLists] = useState(false);
   const [newBoletoCompany, setNewBoletoCompany] = useState('');
+  const [customSaldoLabelDraft, setCustomSaldoLabelDraft] = useState('');
   const [selDay, setSelDay] = useState(1);
   const [vals, setVals] = useState<Record<string, string>>({});
   const [editDate, setEditDate] = useState('');
@@ -34,9 +42,14 @@ export default function LancamentosTab() {
   const [draggedCat, setDraggedCat] = useState<string | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const customSaldoLabelEditingRef = useRef(false);
   const currentMonthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
   const boletoMappedCategory = useMemo(() => {
-    const mapping = currentStore === 'loja1' ? settings.fieldMappingLan1 : settings.fieldMappingLan2;
+    const mapping = currentStore === 'loja1'
+      ? settings.fieldMappingLan1
+      : currentStore === 'loja2'
+        ? settings.fieldMappingLan2
+        : [];
     return (mapping || []).find((item: any) => item?.fechamento_field === 'boleto')?.lancamento_field || '';
   }, [currentStore, settings.fieldMappingLan1, settings.fieldMappingLan2]);
 
@@ -54,6 +67,7 @@ export default function LancamentosTab() {
         amount: Number(String(item.valor || '0').replace(',', '.')) * (Number(item.quantidade || 1) || 1),
       }));
   };
+  const storeTheme = STORE_THEME[currentStore] || STORE_THEME.loja1;
   const cats = useMemo(() => {
     return allCats.filter((cat) => !cat.activeMonths?.length || cat.activeMonths.includes(currentMonthKey));
   }, [allCats, currentMonthKey]);
@@ -63,25 +77,33 @@ export default function LancamentosTab() {
   const allMonthDays = useMemo(() => Array.from({ length: days }, (_, i) => i + 1), [days]);
 
   const customSaldoOptions = useMemo(() => {
-    const opts: { key: string; storeLabel: string; catLabel: string }[] = [];
-    const store = stores[currentStore];
-    (store?.categories || [])
-      .filter((c) => !c.activeMonths?.length || c.activeMonths.includes(currentMonthKey))
-      .forEach((c) => {
-      opts.push({
-        key: c.id,
-        storeLabel: currentStore === 'loja1' ? 'Loja 1' : 'Loja 2',
-        catLabel: c.name,
-      });
+    const opts: { key: string; storeId: string; storeLabel: string; catId: string; catLabel: string; color: string; soft: string; border: string }[] = [];
+    (['loja1', 'loja2', 'loja3'] as const).forEach((storeId) => {
+      const store = stores[storeId];
+      (store?.categories || [])
+        .filter((c) => !HIDDEN_LANCAMENTO_CATEGORY_IDS.has(c.id) && (!c.activeMonths?.length || c.activeMonths.includes(currentMonthKey)))
+        .forEach((c) => {
+          const theme = STORE_THEME[storeId];
+          opts.push({
+            key: `${storeId}:${c.id}`,
+            storeId,
+            storeLabel: theme.label,
+            catId: c.id,
+            catLabel: c.name,
+            color: theme.text,
+            soft: theme.soft,
+            border: theme.border,
+          });
+        });
     });
     return opts;
-  }, [stores, currentStore, currentMonthKey]);
+  }, [stores, currentMonthKey]);
 
   const legacyCustomSaldoSelection = useMemo(() => {
     return (settings.customSaldoSelection || [])
       .map((key) => {
         const [storeId, categoryId] = key.split(':');
-        return storeId === currentStore && categoryId ? categoryId : key;
+        return categoryId ? `${storeId}:${categoryId}` : `${currentStore}:${key}`;
       })
       .filter((key) => customSaldoOptions.some((opt) => opt.key === key));
   }, [settings.customSaldoSelection, currentStore, customSaldoOptions]);
@@ -94,15 +116,17 @@ export default function LancamentosTab() {
     : (settings.customSaldoDays?.length ? settings.customSaldoDays : allMonthDays);
 
   const calculateCustomSaldoTotal = (selection: string[], selectedDays: number[]) => {
-    const store = stores[currentStore];
-    if (!store) return 0;
-    const monthData = store.months.find((m) => m.year === selectedYear && m.month === selectedMonth);
-    if (!monthData) return 0;
     return selection.reduce((acc, categoryId) => {
+      const opt = customSaldoOptions.find((item) => item.key === categoryId);
+      if (!opt) return acc;
+      const store = stores[opt.storeId as keyof typeof stores];
+      if (!store) return acc;
+      const monthData = store.months.find((m) => m.year === selectedYear && m.month === selectedMonth);
+      if (!monthData) return acc;
       const catTotal = monthData.entries.reduce((sum, e) => {
         const day = parseInt((e.date || '').split('-')[2] || '0', 10);
         if (!selectedDays.includes(day)) return sum;
-        return sum + (e.values?.[categoryId] || 0);
+        return sum + (e.values?.[opt.catId] || 0);
       }, 0);
       return acc + catTotal;
     }, 0);
@@ -113,7 +137,10 @@ export default function LancamentosTab() {
   }, [customSaldoSelection, activeCustomDays, stores, currentStore, selectedYear, selectedMonth]);
 
   const getCustomSaldoLabels = (selection: string[]) =>
-    selection.map((key) => customSaldoOptions.find((opt) => opt.key === key)?.catLabel || key);
+    selection.map((key) => {
+      const opt = customSaldoOptions.find((item) => item.key === key);
+      return opt ? `${opt.catLabel} (${opt.storeLabel})` : key;
+    });
 
   const saveCustomSaldoConfig = (selection: string[], selectedDays: number[], action: string, label = customSaldoLabel) => {
     const cleanSelection = selection.filter((key) => customSaldoOptions.some((opt) => opt.key === key));
@@ -140,7 +167,7 @@ export default function LancamentosTab() {
         [currentStore]: {
           ...(s.customSaldoByStoreMonth?.[currentStore] || {}),
           [currentMonthKey]: {
-            label: (label || '').trim() || 'Saldo Personalizado',
+            label: 'Contador',
             selection: cleanSelection,
             days: cleanDays,
             updatedAt,
@@ -176,6 +203,16 @@ export default function LancamentosTab() {
 
   const updateCustomSaldoLabel = (label: string) => {
     saveCustomSaldoConfig(customSaldoSelection, activeCustomDays, 'update_label', label);
+  };
+
+  useEffect(() => {
+    if (!showCustomSaldo) return;
+    if (customSaldoLabelEditingRef.current) return;
+    setCustomSaldoLabelDraft(customSaldoLabel);
+  }, [showCustomSaldo, customSaldoLabel]);
+
+  const commitCustomSaldoLabel = () => {
+    updateCustomSaldoLabel(customSaldoLabelDraft);
   };
 
   const addBoletoCompany = () => {
@@ -216,12 +253,14 @@ export default function LancamentosTab() {
   }, [md, cats]);
 
   const openAdd = () => {
+    if (readOnly) return;
     const v: Record<string, string> = {};
     cats.forEach(c => { v[c.id] = ''; });
     setVals(v); setSelDay(1); setShowAdd(true);
   };
 
   const openEdit = (ds: string) => {
+    if (readOnly) return;
     const entry = md?.entries.find(e => e.date === ds);
     const v: Record<string, string> = {};
     cats.forEach(c => { v[c.id] = entry?.values[c.id]?.toString() || ''; });
@@ -229,6 +268,7 @@ export default function LancamentosTab() {
   };
 
   const handleSave = () => {
+    if (readOnly) return;
     const ds = dateStr(selectedYear, selectedMonth, selDay);
     const values: Record<string, number> = {};
     cats.forEach(c => { values[c.id] = parseFloat(vals[c.id]?.replace(',', '.') || '0') || 0; });
@@ -262,6 +302,7 @@ export default function LancamentosTab() {
   };
 
   const handleUpdate = () => {
+    if (readOnly) return;
     const values: Record<string, number> = {};
     cats.forEach(c => { values[c.id] = parseFloat(vals[c.id]?.replace(',', '.') || '0') || 0; });
     saveEntry(editDate, values, 'manual');
@@ -290,6 +331,7 @@ export default function LancamentosTab() {
   };
 
   const handleDelete = (ds: string) => {
+    if (readOnly) return;
     if (confirm('Excluir este lançamento?')) {
       const entry = md?.entries.find(e => e.date === ds);
       deleteEntry(ds);
@@ -315,6 +357,7 @@ export default function LancamentosTab() {
   };
 
   const handleSyncToFechamento = (ds: string) => {
+    if (readOnly) return;
     const entry = md?.entries.find(e => e.date === ds);
     if (!entry) return;
 
@@ -576,34 +619,43 @@ export default function LancamentosTab() {
     <div className="space-y-3 pb-24">
       {/* Actions */}
       <div className="flex gap-2 flex-col">
-        <Button onClick={openAdd} className="w-full h-12 gap-2 text-base font-semibold"><Plus className="w-5 h-5" /> Lançar</Button>
-        <div className="flex gap-2 flex-wrap items-center">
-          <Button onClick={() => setShowCatMgr(true)} variant="secondary" className="gap-1 h-7 text-xs"><Settings2 className="w-3 h-3" /> Categorias</Button>
-          <Button onClick={handleExportExcel} variant="outline" className="gap-1 h-7 text-xs"><Download className="w-3 h-3" /> CSV</Button>
-          <label className="cursor-pointer h-7 w-7 flex items-center justify-center bg-secondary hover:bg-secondary/80 rounded text-xs">
-            <Upload className="w-3 h-3" />
-            <Input type="file" accept=".csv" onChange={e => setImportFile(e.target.files?.[0] || null)} className="hidden" />
-          </label>
-          <Button onClick={handleImportExcel} disabled={!importFile} variant="secondary" className="h-7 text-xs px-1">Imp</Button>
-          <Button onClick={handleExportAnnual} variant="outline" className="gap-1 h-7 text-xs"><Download className="w-3 h-3" /> Anual</Button>
-          <label className="cursor-pointer h-7 w-7 flex items-center justify-center bg-secondary hover:bg-secondary/80 rounded text-xs">
-            <Upload className="w-3 h-3" />
-            <Input type="file" accept=".csv" onChange={e => setImportFile(e.target.files?.[0] || null)} className="hidden" />
-          </label>
-          <Button onClick={handleImportAnnual} disabled={!importFile} variant="secondary" className="h-7 text-xs px-1">Imp</Button>
-        </div>
+        {!readOnly && (
+          <>
+            <Button onClick={openAdd} className="w-full h-12 gap-2 text-base font-semibold"><Plus className="w-5 h-5" /> Lançar</Button>
+            <div className="flex gap-2 flex-wrap items-center">
+              <Button onClick={() => setShowCatMgr(true)} variant="secondary" className="gap-1 h-7 text-xs"><Settings2 className="w-3 h-3" /> Categorias</Button>
+              <Button onClick={handleExportExcel} variant="outline" className="gap-1 h-7 text-xs"><Download className="w-3 h-3" /> CSV</Button>
+              <label className="cursor-pointer h-7 w-7 flex items-center justify-center bg-secondary hover:bg-secondary/80 rounded text-xs">
+                <Upload className="w-3 h-3" />
+                <Input type="file" accept=".csv" onChange={e => setImportFile(e.target.files?.[0] || null)} className="hidden" />
+              </label>
+              <Button onClick={handleImportExcel} disabled={!importFile} variant="secondary" className="h-7 text-xs px-1">Imp</Button>
+              <Button onClick={handleExportAnnual} variant="outline" className="gap-1 h-7 text-xs"><Download className="w-3 h-3" /> Anual</Button>
+              <label className="cursor-pointer h-7 w-7 flex items-center justify-center bg-secondary hover:bg-secondary/80 rounded text-xs">
+                <Upload className="w-3 h-3" />
+                <Input type="file" accept=".csv" onChange={e => setImportFile(e.target.files?.[0] || null)} className="hidden" />
+              </label>
+              <Button onClick={handleImportAnnual} disabled={!importFile} variant="secondary" className="h-7 text-xs px-1">Imp</Button>
+            </div>
+          </>
+        )}
+        {readOnly && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+            Acesso somente visualizacao: voce pode consultar Dashboard, Lancamentos e configurar o Contador.
+          </div>
+        )}
       </div>
 
       {/* Total bar */}
       <div className="flex flex-col md:flex-row gap-2 md:items-stretch">
-        <div className="bg-primary/20 border border-primary/30 rounded-xl px-3 py-1.5 text-center flex-1 min-w-0 flex items-center justify-center gap-2">
+        <div className="rounded-xl px-3 py-1.5 text-center flex-1 min-w-0 flex items-center justify-center gap-2" style={{ background: storeTheme.soft, border: `1px solid ${storeTheme.border}` }}>
           <span className="text-sm text-muted-foreground">Total:</span>
-          <span className="font-extrabold font-mono-num text-primary text-2xl md:text-3xl">{formatCurrency(monthTotal)}</span>
+          <span className="font-extrabold font-mono-num text-2xl md:text-3xl" style={{ color: storeTheme.text }}>{formatCurrency(monthTotal)}</span>
         </div>
-        <div className="bg-accent/15 border border-accent/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2 md:w-[260px] md:ml-auto">
+        <div className="rounded-xl px-3 py-2 flex items-center justify-between gap-2 md:w-[260px] md:ml-auto" style={{ background: storeTheme.soft, border: `1px solid ${storeTheme.border}` }}>
           <div>
-            <div className="text-[11px] text-muted-foreground">{customSaldoLabel}</div>
-            <div className="font-bold font-mono-num text-accent">{formatCurrency(customSaldoTotal)}</div>
+            <div className="text-[11px] text-muted-foreground">Contador</div>
+            <div className="font-bold font-mono-num" style={{ color: storeTheme.text }}>{formatCurrency(customSaldoTotal)}</div>
           </div>
           <Button onClick={() => setShowCustomSaldo(true)} variant="secondary" className="h-7 text-xs px-2">
             Configurar
@@ -624,13 +676,13 @@ export default function LancamentosTab() {
         <div className="overflow-x-auto flex-1">
           <div className="inline-block min-w-full">
             {/* Header */}
-            <div className={`flex bg-primary text-primary-foreground font-bold !static !top-auto !z-0 ${
+            <div className={`flex text-white font-bold !static !top-auto !z-0 ${
               settings.lancamentosHeaderFontSize === 'xs' ? 'text-sm' :
               settings.lancamentosHeaderFontSize === 'sm' ? 'text-base' :
               settings.lancamentosHeaderFontSize === 'lg' ? 'text-3xl' :
               settings.lancamentosHeaderFontSize === 'xl' ? 'text-4xl' :
               'text-2xl'
-            }`} style={{ fontFamily: 'Century, serif' }}>
+            }`} style={{ fontFamily: 'Century, serif', background: storeTheme.color }}>
               <div className="w-20 p-3 text-center shrink-0">Dia</div>
               {cats.map(c => <div key={c.id} className="w-36 p-3 text-center shrink-0">{c.name}</div>)}
               <div className="w-36 p-3 text-center shrink-0">Saldo</div>
@@ -640,7 +692,7 @@ export default function LancamentosTab() {
             {allDays.map(({ day, ds, entry, dow }) => {
               const isSun = dow === 0;
               return (
-                <div key={day} className={`flex text-2xl border-b border-border/50 ${isSun ? 'bg-destructive/10' : day % 2 === 0 ? 'bg-secondary/30' : ''} cursor-pointer hover:bg-primary/5 transition-colors`} style={{ fontFamily: 'Century, serif', minHeight: '74px' }} onClick={() => openEdit(ds)}>
+                <div key={day} className={`flex text-2xl border-b border-border/50 ${isSun ? 'bg-destructive/10' : day % 2 === 0 ? 'bg-secondary/30' : ''} ${readOnly ? '' : 'cursor-pointer hover:bg-primary/5'} transition-colors`} style={{ fontFamily: 'Century, serif', minHeight: '74px' }} onClick={() => !readOnly && openEdit(ds)}>
                   <div className="w-20 px-3 py-1.5 text-center shrink-0 flex flex-col justify-center">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -675,7 +727,7 @@ export default function LancamentosTab() {
                             <div>{c.name}</div>
                             {categoryDetails.length > 0 && (
                               <div className="pt-1 border-t border-primary-foreground/25 text-xs font-normal">
-                                {categoryDetails.slice(0, 8).map((detail, index) => (
+                                {categoryDetails.slice(0, 8).map((detail: { label: string; amount: number }, index: number) => (
                                   <div key={`${detail.label}-${index}`} className="flex justify-between gap-3">
                                     <span className="truncate max-w-[150px]">{detail.label}</span>
                                     <span className="font-bold">{formatCurrency(Number(detail.amount || 0))}</span>
@@ -703,7 +755,7 @@ export default function LancamentosTab() {
                     </Tooltip>
                   </div>
                   <div className="w-28 px-3 py-1.5 flex items-center justify-center gap-2 shrink-0">
-                    {entry && (
+                    {entry && !readOnly && (
                       <>
                         <button onClick={() => openEdit(ds)} className="p-1 rounded bg-warning/20 hover:bg-warning/30" title="Editar">
                           <Pencil className="w-4 h-4 text-warning" />
@@ -857,30 +909,27 @@ export default function LancamentosTab() {
       </Dialog>
 
       <Dialog open={showCustomSaldo} onOpenChange={setShowCustomSaldo}>
-        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
+        <DialogContent
+          className="max-h-[88vh] overflow-y-auto p-5 md:p-6"
+          style={{ borderColor: storeTheme.border, width: 'min(1280px, 96vw)', maxWidth: '96vw' }}
+        >
           <DialogHeader>
-            <DialogTitle>
-              {customSaldoLabel} - {currentStore === 'loja1' ? 'Loja 1' : 'Loja 2'} / {currentMonthKey}
+            <DialogTitle className="flex flex-col gap-1">
+              <span>Configurar contador - {storeTheme.label} / {currentMonthKey}</span>
+              <span className="text-4xl md:text-5xl font-extrabold font-mono-num" style={{ color: storeTheme.text }}>
+                {formatCurrency(customSaldoTotal)}
+              </span>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-1 mb-4">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Nome deste saldo no mês</label>
-            <Input
-              value={customSaldoLabel}
-              placeholder="Saldo Personalizado"
-              onChange={(e) => updateCustomSaldoLabel(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">Esse nome vale apenas para {currentMonthKey}.</p>
-          </div>
-          <div className="space-y-2 mb-4">
+          <div className="rounded-xl p-3 mb-4" style={{ background: storeTheme.soft, border: `1px solid ${storeTheme.border}` }}>
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">Dias incluidos</h4>
               <div className="flex gap-2">
-                <button type="button" onClick={setAllCustomSaldoDays} className="text-xs text-primary hover:underline">Todos</button>
-                <button type="button" onClick={clearCustomSaldoDays} className="text-xs text-primary hover:underline">Limpar</button>
+                <button type="button" onClick={setAllCustomSaldoDays} className="text-xs font-bold hover:underline" style={{ color: storeTheme.text }}>Todos</button>
+                <button type="button" onClick={clearCustomSaldoDays} className="text-xs font-bold hover:underline" style={{ color: storeTheme.text }}>Limpar</button>
               </div>
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid gap-1 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(34px, 1fr))' }}>
               {Array.from({ length: days }, (_, i) => i + 1).map((day) => {
                 const checked = activeCustomDays.includes(day);
                 return (
@@ -888,7 +937,8 @@ export default function LancamentosTab() {
                     key={day}
                     type="button"
                     onClick={() => toggleCustomSaldoDay(day)}
-                    className={`h-8 rounded-md text-xs font-bold border ${checked ? 'bg-primary text-primary-foreground border-primary' : 'bg-secondary/30 border-border text-muted-foreground'}`}
+                    className="h-8 rounded-md text-xs font-bold border"
+                    style={checked ? { background: storeTheme.color, color: '#fff', borderColor: storeTheme.color } : { background: 'rgba(148,163,184,0.12)', borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
                   >
                     {String(day).padStart(2, '0')}
                   </button>
@@ -898,27 +948,38 @@ export default function LancamentosTab() {
           </div>
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Selecione apenas categorias da loja atual. Cada loja e mês guarda sua própria configuração.
+              Selecione categorias das lojas 1, 2 e 3. Est/Desp, Sangria e Cart/JB ficam fora do contador.
             </p>
-            {customSaldoOptions.map((opt) => {
-              const checked = customSaldoSelection.includes(opt.key);
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => toggleCustomSaldo(opt.key)}
-                  className={`w-full text-left px-3 py-2 rounded-lg border flex items-center justify-between ${checked ? 'bg-primary/10 border-primary/40' : 'bg-secondary/30 border-border'}`}
-                >
-                  <span className="text-sm">
-                    <span className="font-semibold">{opt.catLabel}</span>
-                    <span className="text-muted-foreground"> ({opt.storeLabel})</span>
-                  </span>
-                  <span className={`text-xs font-semibold ${checked ? 'text-primary' : 'text-muted-foreground'}`}>
-                    {checked ? 'Somar' : 'Ignorar'}
-                  </span>
-                </button>
-              );
-            })}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {(['loja1', 'loja2', 'loja3'] as const).map((storeId) => {
+                const theme = STORE_THEME[storeId];
+                const opts = customSaldoOptions.filter((opt) => opt.storeId === storeId);
+                return (
+                  <div key={storeId} className="rounded-xl border p-4 min-w-0" style={{ borderColor: theme.border, background: theme.soft }}>
+                    <h4 className="text-sm font-extrabold mb-2" style={{ color: theme.text }}>{theme.label}</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {opts.map((opt) => {
+                        const checked = customSaldoSelection.includes(opt.key);
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => toggleCustomSaldo(opt.key)}
+                            className="w-full text-left px-3 py-2 rounded-lg border flex items-center justify-between gap-3 bg-card/80 min-w-0"
+                            style={checked ? { borderColor: theme.color, boxShadow: `0 0 0 1px ${theme.border}` } : { borderColor: 'var(--border)' }}
+                          >
+                            <span className="text-sm font-semibold truncate">{opt.catLabel}</span>
+                            <span className="text-xs font-bold shrink-0" style={{ color: checked ? theme.text : 'var(--muted-foreground)' }}>
+                              {checked ? 'Somar' : 'Ignorar'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

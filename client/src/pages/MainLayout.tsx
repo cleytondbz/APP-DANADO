@@ -1,5 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
-import type { MainTab } from '@/lib/types';
+import type { MainTab, StoreId } from '@/lib/types';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { MONTH_NAMES } from '@/lib/types';
@@ -22,20 +22,41 @@ const tabs: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'opcoes', label: 'Opcoes', icon: Settings },
 ];
 
+const STORE_THEME: Record<StoreId, { label: string; color: string; soft: string; border: string; text: string }> = {
+  loja1: { label: 'Loja 1', color: '#0d6efd', soft: 'rgba(13,110,253,0.10)', border: 'rgba(13,110,253,0.35)', text: '#0d6efd' },
+  loja2: { label: 'Loja 2', color: '#f59e0b', soft: 'rgba(245,158,11,0.14)', border: 'rgba(245,158,11,0.45)', text: '#b45309' },
+  loja3: { label: 'Loja 3', color: '#7c3aed', soft: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.40)', text: '#7c3aed' },
+};
+
 export default function MainLayout() {
   const { tab, setTab, setScreen, currentStore, setCurrentStore, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useApp();
   const [purchaseSearch, setPurchaseSearch] = useState('');
   const [purchaseServerStatus, setPurchaseServerStatus] = useState<'idle' | 'saving' | 'offline' | 'online'>('idle');
+  const readOnlySalesUser = typeof window !== 'undefined' ? localStorage.getItem('fd_sales_readonly_user') : null;
   const isAndroidAppMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('app') === 'android';
-  const availableTabs = isAndroidAppMode
+  const availableTabs = readOnlySalesUser
+    ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'lancamentos')
+    : isAndroidAppMode
     ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'fechamentoCompacto')
     : tabs;
+  const canUseLoja3 = tab === 'dashboard' || tab === 'lancamentos';
+  const visibleStores: StoreId[] = canUseLoja3 ? ['loja1', 'loja2', 'loja3'] : ['loja1', 'loja2'];
 
   useEffect(() => {
+    if (readOnlySalesUser && tab !== 'dashboard' && tab !== 'lancamentos') {
+      setTab('dashboard');
+      return;
+    }
     if (isAndroidAppMode && tab !== 'dashboard' && tab !== 'fechamentoCompacto') {
       setTab('dashboard');
     }
-  }, [isAndroidAppMode, tab, setTab]);
+  }, [isAndroidAppMode, readOnlySalesUser, tab, setTab]);
+
+  useEffect(() => {
+    if (!canUseLoja3 && currentStore === 'loja3') {
+      setCurrentStore('loja1');
+    }
+  }, [canUseLoja3, currentStore, setCurrentStore]);
 
   useEffect(() => {
     const handlePurchaseServerStatus = (event: Event) => {
@@ -113,27 +134,23 @@ export default function MainLayout() {
               />
             </div>
           ) : (
-            <div className="inline-flex rounded-lg border border-primary/30 bg-primary/10 p-1">
-              <button
-                onClick={() => setCurrentStore('loja1')}
-                className={`px-5 py-1.5 text-sm font-bold rounded-md transition-colors ${
-                  currentStore === 'loja1'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-primary hover:bg-primary/15'
-                }`}
-              >
-                Loja 1
-              </button>
-              <button
-                onClick={() => setCurrentStore('loja2')}
-                className={`px-5 py-1.5 text-sm font-bold rounded-md transition-colors ${
-                  currentStore === 'loja2'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-primary hover:bg-primary/15'
-                }`}
-              >
-                Loja 2
-              </button>
+            <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
+              {visibleStores.map((storeId) => {
+                const theme = STORE_THEME[storeId];
+                const active = currentStore === storeId;
+                return (
+                  <button
+                    key={storeId}
+                    onClick={() => setCurrentStore(storeId)}
+                    className="px-5 py-1.5 text-sm font-bold rounded-md transition-colors"
+                    style={active
+                      ? { background: theme.color, color: '#fff' }
+                      : { color: theme.text, background: theme.soft, border: `1px solid ${theme.border}` }}
+                  >
+                    {theme.label}
+                  </button>
+                );
+              })}
             </div>
           )}
           <div className="inline-flex items-center rounded-lg border border-border bg-card px-2 py-1 gap-2">
@@ -149,7 +166,7 @@ export default function MainLayout() {
             </button>
           </div>
         </div>
-        {!isAndroidAppMode && (
+        {!isAndroidAppMode && !readOnlySalesUser && (
           <button onClick={() => setTab('caixa')} className="p-2 rounded-lg bg-accent hover:bg-accent/80 transition-colors" title="Ir para CAIXA">
             <CreditCard className="w-4 h-4 text-accent-foreground" />
           </button>
@@ -165,11 +182,11 @@ export default function MainLayout() {
             <AnimatePresence mode="wait">
               <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
                 {tab === 'dashboard' && <DashboardTab />}
-                {!isAndroidAppMode && tab === 'lancamentos' && <LancamentosTab />}
+                {!isAndroidAppMode && tab === 'lancamentos' && <LancamentosTab readOnly={!!readOnlySalesUser} />}
                 {tab === 'fechamentoCompacto' && <FechamentoCompactoTab />}
-                {!isAndroidAppMode && tab === 'compras' && <ComprasTab />}
-                {!isAndroidAppMode && tab === 'caixa' && <CaixaTab />}
-                {!isAndroidAppMode && tab === 'opcoes' && <OpcoesTab />}
+                {!isAndroidAppMode && !readOnlySalesUser && tab === 'compras' && <ComprasTab />}
+                {!isAndroidAppMode && !readOnlySalesUser && tab === 'caixa' && <CaixaTab />}
+                {!isAndroidAppMode && !readOnlySalesUser && tab === 'opcoes' && <OpcoesTab />}
               </motion.div>
             </AnimatePresence>
           </Suspense>

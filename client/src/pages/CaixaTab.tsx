@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, Edit2, Calendar, Banknote, FileText, CreditCard, Save, X, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Calendar, Banknote, FileText, CreditCard, Save, X, ChevronLeft, ChevronRight, Printer, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
@@ -140,6 +140,31 @@ const formatarDataComDia = (dateString: string): string => {
   return `${day}/${month}/${year} - ${diaSemana}`;
 };
 
+const toDateStr = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getWeekRange = (dateString: string): { start: string; end: string } => {
+  const date = new Date(`${dateString}T00:00:00`);
+  const day = date.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const start = new Date(date);
+  start.setDate(date.getDate() + diffToMonday);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: toDateStr(start), end: toDateStr(end) };
+};
+
+const normalizeSearchText = (value: string): string => {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+};
+
 // Obter hora atual em formato HH:MM
 const obterHoraAtual = (): string => {
   const agora = new Date();
@@ -175,6 +200,8 @@ export default function CaixaTab() {
   const senhaEditInputRef = useRef<HTMLInputElement>(null);
   const [passwordInput, setPasswordInput] = useState('');
   const [pendingDate, setPendingDate] = useState<string | null>(null);
+  const [showWeeklySearch, setShowWeeklySearch] = useState(false);
+  const [weeklySearchTerm, setWeeklySearchTerm] = useState('');
   
   // Focus no input de senha quando dialog abre
   useEffect(() => {
@@ -226,6 +253,53 @@ export default function CaixaTab() {
   
   const caixaAtual = getCaixaDataAtual();
   const fechamentoAtual = getFechamentoDataAtual();
+  const weeklySearchRange = React.useMemo(() => getWeekRange(data), [data]);
+  const weeklySearchResults = React.useMemo(() => {
+    const term = normalizeSearchText(weeklySearchTerm.trim());
+    const results: Array<{
+      date: string;
+      tipo: string;
+      produto: Produto;
+      total: number;
+    }> = [];
+
+    Object.entries(caixaPorData || {}).forEach(([dateKey, dayData]) => {
+      if (dateKey < weeklySearchRange.start || dateKey > weeklySearchRange.end) return;
+
+      BASE_CAIXA_CATEGORIAS.forEach((tipo) => {
+        const produtos = ((dayData as CaixaData)?.[tipo] || []) as Produto[];
+        produtos.forEach((produto) => {
+          const total = limparDecimais((Number(produto.quantidade) || 0) * parseCommaNumber(produto.valor));
+          const searchable = normalizeSearchText([
+            dateKey,
+            formatarData(dateKey),
+            tipo,
+            produto.descricao,
+            produto.quantidade,
+            produto.valor,
+            produto.hora,
+            total.toFixed(2).replace('.', ','),
+          ].join(' '));
+
+          if (!term || searchable.includes(term)) {
+            results.push({ date: dateKey, tipo, produto, total });
+          }
+        });
+      });
+    });
+
+    return results.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return parseProdutoTimestamp(a.produto.id) - parseProdutoTimestamp(b.produto.id);
+    });
+  }, [caixaPorData, weeklySearchRange.start, weeklySearchRange.end, weeklySearchTerm]);
+  const weeklySearchTotals = React.useMemo(() => {
+    return weeklySearchResults.reduce((acc, item) => {
+      acc.total += item.total;
+      acc.byTipo[item.tipo] = (acc.byTipo[item.tipo] || 0) + item.total;
+      return acc;
+    }, { total: 0, byTipo: {} as Record<string, number> });
+  }, [weeklySearchResults]);
 
   // Verificar se a data mudou de mês
   const mudouDeMes = (dataAtual: string, novadata: string): boolean => {
@@ -720,7 +794,7 @@ export default function CaixaTab() {
 
   // Adicionar produto
   const adicionarProduto = (tipo: TipoPagamento) => {
-    const { descricao, quantidade, valor } = getCamposCategoria(tipo);
+    const { descricao, valor } = getCamposCategoria(tipo);
 
     if (!descricao.trim()) {
       toast.error('Descrição é obrigatória');
@@ -733,7 +807,7 @@ export default function CaixaTab() {
       return;
     }
 
-    const quantidadeNum = parseCommaNumber(quantidade) || 1;
+    const quantidadeNum = 1;
 
     const valorFormatado = valorNum.toFixed(2).replace('.', ',');
     
@@ -1195,15 +1269,10 @@ export default function CaixaTab() {
   ) => {
     const emEdicao = editandoTipo === tipo && editandoId;
 
-    const handleKeyDown = (field: 'desc' | 'qtd' | 'valor', e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (field: 'desc' | 'valor', e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (field === 'desc') {
-          setTimeout(() => {
-            inputRefs.current.qtd?.focus();
-            inputRefs.current.qtd?.select();
-          }, 0);
-        } else if (field === 'qtd') {
           setTimeout(() => {
             inputRefs.current.valor?.focus();
             inputRefs.current.valor?.select();
@@ -1237,32 +1306,19 @@ export default function CaixaTab() {
                 className="w-full text-xs h-8"
               />
             </div>
-            <div className="grid grid-cols-2 gap-1">
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-semibold">R$</span>
               <Input
-                ref={el => { if (el) inputRefs.current.qtd = el; }}
+                ref={el => { if (el) inputRefs.current.valor = el; }}
                 type="text"
                 inputMode="numeric"
                 disabled={bloqueado}
-                value={quantidade}
-                onChange={(e) => setQuantidade(handleNumberInput(e.target.value))}
-                onKeyDown={(e) => handleKeyDown('qtd', e)}
-                placeholder="1"
-                className="w-full text-xs h-8"
+                value={valor}
+                onChange={(e) => setValor(handleNumberInput(e.target.value))}
+                onKeyDown={(e) => handleKeyDown('valor', e)}
+                placeholder="0,00"
+                className="flex-1 text-xs h-8"
               />
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold">R$</span>
-                <Input
-                  ref={el => { if (el) inputRefs.current.valor = el; }}
-                  type="text"
-                  inputMode="numeric"
-                  disabled={bloqueado}
-                  value={valor}
-                  onChange={(e) => setValor(handleNumberInput(e.target.value))}
-                  onKeyDown={(e) => handleKeyDown('valor', e)}
-                  placeholder="0,00"
-                  className="flex-1 text-xs h-8"
-                />
-              </div>
             </div>
           </div>
           <Button
@@ -1275,16 +1331,16 @@ export default function CaixaTab() {
           >
             <Plus className="w-3 h-3" /> Adicionar
           </Button>
-          <div className={`${corBg} p-2 rounded-lg mt-2`}>
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total</p>
-            <p className={`text-lg font-bold ${cor}`}>{formatCurrency(total)}</p>
+          <div className={`${corBg} mt-2 flex items-center justify-between rounded-md px-2 py-1`}>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase">Total</p>
+            <p className={`text-sm font-bold ${cor}`}>{formatCurrency(total)}</p>
           </div>
           <div className="space-y-1 mt-2">
             {ordenarProdutosMaisRecentes(produtos).map((produto) => (
               <div key={produto.id} className="flex items-center justify-between p-1 bg-background rounded-lg border border-border text-xs">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{produto.descricao}</p>
-                  <p className="text-muted-foreground">{produto.quantidade}x R$ {formatCurrency(parseFloat(produto.valor.replace(',', '.')))}</p>
+                  <p className="text-muted-foreground">{formatCurrency(parseFloat(produto.valor.replace(',', '.')) * (Number(produto.quantidade) || 1))}</p>
                 </div>
                 <button onClick={() => removerProdutoConfirmado(tipo, produto.id)} className="ml-2 text-red-500 hover:text-red-700">
                   <Trash2 className="w-3 h-3" />
@@ -1297,11 +1353,11 @@ export default function CaixaTab() {
     }
 
     return (
-      <Card className={`p-4 border-l-4 ${corBg}`}>
-        <h3 className={`text-lg font-bold ${cor} mb-4`}>{titulo}</h3>
+      <Card className={`p-3 border-l-4 ${corBg}`}>
+        <h3 className={`text-base font-bold ${cor} mb-2`}>{titulo}</h3>
 
         {/* Formulário */}
-        <div className="space-y-3 mb-4 pb-4 border-b border-border">
+        <div className="space-y-2 mb-2 pb-2 border-b border-border">
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">
               Descrição <span className="text-red-500">*</span>
@@ -1314,26 +1370,11 @@ export default function CaixaTab() {
               onChange={(e) => setDescricao(e.target.value)}
               onKeyDown={(e) => handleKeyDown('desc', e)}
               placeholder="Ex: Produto"
-              className="w-full"
+              className="h-8 w-full"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">Qtd</label>
-              <Input
-                ref={el => { if (el) inputRefs.current.qtd = el; }}
-                type="text"
-                inputMode="numeric"
-                disabled={bloqueado}
-                value={quantidade}
-                onChange={(e) => setQuantidade(handleNumberInput(e.target.value))}
-                onKeyDown={(e) => handleKeyDown('qtd', e)}
-                placeholder="1"
-                className="w-full"
-              />
-            </div>
-            <div>
+          <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">
                 Valor <span className="text-red-500">*</span>
               </label>
@@ -1348,10 +1389,9 @@ export default function CaixaTab() {
                   onChange={(e) => setValor(handleNumberInput(e.target.value))}
                   onKeyDown={(e) => handleKeyDown('valor', e)}
                   placeholder="0,00"
-                  className="flex-1"
+                  className="h-8 flex-1"
                 />
               </div>
-            </div>
           </div>
 
           <Button
@@ -1359,7 +1399,7 @@ export default function CaixaTab() {
             onClick={() => adicionarProduto(tipo)}
             disabled={bloqueado}
             size="sm"
-            className={`w-full gap-2 ${cor.replace('text-', 'bg-').replace('-600', '-600')} hover:opacity-90`}
+            className={`h-8 w-full gap-2 ${cor.replace('text-', 'bg-').replace('-600', '-600')} hover:opacity-90`}
             style={{ backgroundColor: cor === 'text-green-600' ? '#16a34a' : cor === 'text-blue-600' ? '#2563eb' : cor === 'text-purple-600' ? '#9333ea' : '#dc2626' }}
           >
             <Plus className="w-4 h-4" /> Adicionar
@@ -1367,13 +1407,13 @@ export default function CaixaTab() {
         </div>
 
         {/* Total */}
-        <div className={`${corBg} p-3 rounded-lg mb-4`}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total</p>
-          <p className={`text-2xl font-bold ${cor}`}>{formatCurrency(total)}</p>
+        <div className={`${corBg} mb-1 flex items-center justify-between rounded-md px-2 py-0`}>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase">Total</p>
+          <p className={`text-xl font-extrabold leading-6 ${cor}`}>{formatCurrency(total)}</p>
         </div>
 
         {/* Lista de Produtos */}
-        <div className="space-y-2 mt-3">
+        <div className="space-y-2 mt-1">
           {ordenarProdutosMaisRecentes(produtos).map((produto) => (
             <div key={produto.id}>
               <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border">
@@ -1382,7 +1422,7 @@ export default function CaixaTab() {
                     <p className="text-sm font-medium text-foreground truncate">{produto.descricao}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {produto.quantidade}x {formatCurrency(parseFloat(produto.valor.replace(',', '.')))} = <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{formatCurrency(parseFloat(produto.valor.replace(',', '.')) * produto.quantidade)}</span>
+                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{formatCurrency(parseFloat(produto.valor.replace(',', '.')) * (Number(produto.quantidade) || 1))}</span>
                   </p>
                 </div>
                 <div className="flex flex-col gap-1 ml-2 items-center">
@@ -1460,60 +1500,150 @@ export default function CaixaTab() {
           >
             {/* Nome Digital - Obrigatório antes de editar valores */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
-              <Card className="p-4 border-2 border-primary">
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Nome Digital <span className="text-red-500">*</span></label>
+              <Card className="p-3 border-2 border-primary">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="min-w-[220px] flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">Nome Digital <span className="text-red-500">*</span></label>
+                    </div>
+                    <Input
+                      type="text"
+                      value={nomeDigital}
+                      onChange={(e) => {
+                        setNomeDigital(e.target.value);
+                        setFechamentoPorData((prev: any) => ({
+                          ...prev,
+                          [data]: { ...prev[data] || { dinheiro: '', sobra: '', pix: '', boleto: '', cartao: '', sangrias: [], despesas: [], nomeDigital: '' }, nomeDigital: e.target.value }
+                        }));
+                      }}
+                      placeholder="Seu nome"
+                      className="h-9 w-full"
+                    />
+                    {!nomeDigital.trim() && <p className="text-[11px] text-amber-600 mt-1">Preencha para editar os valores</p>}
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
+                    <div className="flex items-center gap-2 rounded-lg border bg-background px-2 py-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          validarSenhaNavegacao(addDaysToDateStr(data, -1));
+                        }}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <div className="min-w-[190px] px-1">
+                        <p className="text-[10px] font-semibold uppercase text-muted-foreground">Data Selecionada</p>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4 text-primary" />
+                          <p className="text-sm font-bold text-primary">{formatarDataComDia(data)}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          validarSenhaNavegacao(addDaysToDateStr(data, 1));
+                        }}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2"
+                    onClick={() => setShowWeeklySearch(true)}
+                  >
+                    <Search className="w-4 h-4" />
+                    Pesquisa da semana
+                  </Button>
+                  </div>
                 </div>
-                <Input
-                  type="text"
-                  value={nomeDigital}
-                  onChange={(e) => {
-                    setNomeDigital(e.target.value);
-                    setFechamentoPorData((prev: any) => ({
-                      ...prev,
-                      [data]: { ...prev[data] || { dinheiro: '', sobra: '', pix: '', boleto: '', cartao: '', sangrias: [], despesas: [], nomeDigital: '' }, nomeDigital: e.target.value }
-                    }));
-                  }}
-                  placeholder="Seu nome"
-                  className="w-full"
-                />
-                {!nomeDigital.trim() && <p className="text-xs text-amber-600 mt-2">Preencha o nome digital para editar os valores</p>}
               </Card>
             </motion.div>
 
             {/* Data - Com Navegação */}
-            <div className="flex items-center justify-between gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  validarSenhaNavegacao(addDaysToDateStr(data, -1));
-                }}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              
-              <div className="flex-1">
-                <Card className="p-4">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase mb-3 block">Data Selecionada</label>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    <p className="text-2xl font-bold text-primary">{formatarDataComDia(data)}</p>
+            <Dialog open={showWeeklySearch} onOpenChange={setShowWeeklySearch}>
+              <DialogContent className="!w-[96vw] !max-w-[1100px] h-[92vh] max-h-[92vh] overflow-hidden p-4 sm:p-6">
+                <DialogHeader>
+                  <DialogTitle>
+                    Pesquisa da semana: {formatarData(weeklySearchRange.start)} a {formatarData(weeklySearchRange.end)}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={weeklySearchTerm}
+                        onChange={(e) => setWeeklySearchTerm(e.target.value)}
+                        placeholder="Pesquisar por produto, valor, categoria, horario ou data..."
+                        className="pl-9"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm font-bold text-primary">
+                      Total: {formatCurrency(weeklySearchTotals.total)}
+                    </div>
                   </div>
-                </Card>
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  validarSenhaNavegacao(addDaysToDateStr(data, 1));
-                }}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                    {BASE_CAIXA_CATEGORIAS.map((tipo) => (
+                      <div key={tipo} className="rounded-lg border bg-card p-3">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground">{tipo}</p>
+                        <p className="text-base font-bold">{formatCurrency(weeklySearchTotals.byTipo[tipo] || 0)}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="min-h-0 flex-1 rounded-lg border overflow-auto">
+                      <div className="min-w-full">
+                      <div className="grid grid-cols-[92px_78px_minmax(160px,1fr)_100px_55px] gap-2 bg-muted px-3 py-2 text-xs font-bold uppercase text-muted-foreground">
+                        <span>Data</span>
+                        <span>Categoria</span>
+                        <span>Produto</span>
+                        <span>Valor</span>
+                        <span>Hora</span>
+                      </div>
+                      {weeklySearchResults.length === 0 ? (
+                        <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                          Nenhuma anotação encontrada nessa semana.
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {weeklySearchResults.map((item) => (
+                            <div
+                              key={`${item.date}-${item.tipo}-${item.produto.id}`}
+                              className="grid grid-cols-[92px_78px_minmax(160px,1fr)_100px_55px] gap-2 px-3 py-2 text-sm"
+                            >
+                              <span className="font-medium">{formatarData(item.date)}</span>
+                              <span className="capitalize">{item.tipo}</span>
+                              <span className="truncate" title={item.produto.descricao}>{item.produto.descricao}</span>
+                              <span className="font-semibold">{formatCurrency(item.total)}</span>
+                              <span>{item.produto.hora}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowWeeklySearch(false)}>
+                    Fechar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* 4 Colunas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -1637,68 +1767,68 @@ export default function CaixaTab() {
             className="space-y-4"
           >
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-              <Card className="p-4 border-2 border-primary">
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Nome Digital <span className="text-red-500">*</span></label>
+              <Card className="p-3 border-2 border-primary">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="min-w-[220px] flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">Nome Digital <span className="text-red-500">*</span></label>
+                    </div>
+                    <Input
+                      type="text"
+                      value={nomeDigital}
+                      onChange={(e) => {
+                        setNomeDigital(e.target.value);
+                        setFechamentoPorData((prev: any) => ({
+                          ...prev,
+                          [data]: { ...prev[data] || { dinheiro: '', sobra: '', pix: '', boleto: '', cartao: '', sangrias: [], despesas: [], nomeDigital: '' }, nomeDigital: e.target.value }
+                        }));
+                      }}
+                      placeholder="Seu nome"
+                      className="h-9 w-full"
+                    />
+                    {!nomeDigital.trim() && <p className="text-[11px] text-amber-600 mt-1">Preencha para editar os valores</p>}
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-lg border bg-background px-2 py-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        validarSenhaNavegacao(addDaysToDateStr(data, -1));
+                      }}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <div className="min-w-[190px] px-1">
+                      <p className="text-[10px] font-semibold uppercase text-muted-foreground">Data Selecionada <span className="text-red-500">*</span></p>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <p className="text-sm font-bold text-primary">{formatarDataComDia(data)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        validarSenhaNavegacao(addDaysToDateStr(data, 1));
+                      }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <Input
-                  type="text"
-                  value={nomeDigital}
-                  onChange={(e) => {
-                    setNomeDigital(e.target.value);
-                    setFechamentoPorData((prev: any) => ({
-                      ...prev,
-                      [data]: { ...prev[data] || { dinheiro: '', sobra: '', pix: '', boleto: '', cartao: '', sangrias: [], despesas: [], nomeDigital: '' }, nomeDigital: e.target.value }
-                    }));
-                  }}
-                  placeholder="Seu nome"
-                  className="w-full"
-                />
-                {!nomeDigital.trim() && <p className="text-xs text-amber-600 mt-2">Preencha o nome digital para editar os valores</p>}
               </Card>
             </motion.div>
 
-            <div className="flex items-center justify-between gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  validarSenhaNavegacao(addDaysToDateStr(data, -1));
-                }}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-
-              <div className="flex-1">
-                <Card className="p-4">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase mb-3 block">
-                    Data Selecionada <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    <p className="text-2xl font-bold text-primary">{formatarDataComDia(data)}</p>
-                  </div>
-                </Card>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  validarSenhaNavegacao(addDaysToDateStr(data, 1));
-                }}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-
             {/* Dinheiro e Sobra - Lado a Lado */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {/* Dinheiro */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <Card className="p-3 border-green-200 bg-green-50/80 dark:border-green-900 dark:bg-green-950/20">
+                  <div className="flex items-center gap-2 mb-1">
                     <Banknote className="w-5 h-5 text-green-600" />
                     <label className="text-xs font-semibold text-muted-foreground uppercase">
                       Dinheiro <span className="text-red-500">*</span>
@@ -1706,7 +1836,7 @@ export default function CaixaTab() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-muted-foreground">R$</span>
-                  <Input
+                    <Input
                     type="text"
                     inputMode="numeric"
                     disabled={!nomeDigital.trim()}
@@ -1719,6 +1849,7 @@ export default function CaixaTab() {
                         }));
                       }}
                       placeholder="0,00"
+                      className="h-8"
                     />
                   </div>
                 </Card>
@@ -1726,8 +1857,8 @@ export default function CaixaTab() {
 
               {/* Sobra */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <Card className="p-3 border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/20">
+                  <div className="flex items-center gap-2 mb-1">
                     <Banknote className="w-5 h-5 text-amber-600" />
                     <label className="text-xs font-semibold text-muted-foreground uppercase">
                       Sobra <span className="text-red-500">*</span>
@@ -1735,7 +1866,7 @@ export default function CaixaTab() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-muted-foreground">R$</span>
-                  <Input
+                    <Input
                     type="text"
                     inputMode="numeric"
                     disabled={!nomeDigital.trim()}
@@ -1748,16 +1879,18 @@ export default function CaixaTab() {
                         }));
                       }}
                       placeholder="0,00"
+                      className="h-8"
                     />
                   </div>
                 </Card>
               </motion.div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {/* PIX */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <Card className="p-3 border-blue-200 bg-blue-50/80 dark:border-blue-900 dark:bg-blue-950/20">
+                <div className="flex items-center gap-2 mb-1">
                   <FileText className="w-5 h-5 text-blue-600" />
                   <label className="text-xs font-semibold text-muted-foreground uppercase">
                     PIX <span className="text-red-500">*</span>
@@ -1778,6 +1911,7 @@ export default function CaixaTab() {
                       }));
                     }}
                     placeholder="0,00"
+                    className="h-8"
                   />
                 </div>
               </Card>
@@ -1785,8 +1919,8 @@ export default function CaixaTab() {
 
             {/* BOLETO */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <Card className="p-3 border-purple-200 bg-purple-50/80 dark:border-purple-900 dark:bg-purple-950/20">
+                <div className="flex items-center gap-2 mb-1">
                   <FileText className="w-5 h-5 text-purple-600" />
                   <label className="text-xs font-semibold text-muted-foreground uppercase">
                     Boleto <span className="text-red-500">*</span>
@@ -1807,15 +1941,19 @@ export default function CaixaTab() {
                       }));
                     }}
                     placeholder="0,00"
+                    className="h-8"
                   />
                 </div>
               </Card>
             </motion.div>
 
             {/* CARTÃO */}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <Card className="p-3 border-red-200 bg-red-50/80 dark:border-red-900 dark:bg-red-950/20">
+                <div className="flex items-center gap-2 mb-1">
                   <CreditCard className="w-5 h-5 text-red-600" />
                   <label className="text-xs font-semibold text-muted-foreground uppercase">
                     Cartão <span className="text-red-500">*</span>
@@ -1836,6 +1974,7 @@ export default function CaixaTab() {
                       }));
                     }}
                     placeholder="0,00"
+                    className="h-8"
                   />
                 </div>
               </Card>
@@ -1850,8 +1989,8 @@ export default function CaixaTab() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.32 + index * 0.02 }}
                 >
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
+                  <Card className="p-3 border-cyan-200 bg-cyan-50/80 dark:border-cyan-900 dark:bg-cyan-950/20">
+                    <div className="flex items-center gap-2 mb-1">
                       <FileText className="w-5 h-5 text-cyan-600" />
                       <label className="text-xs font-semibold text-muted-foreground uppercase">
                         {categoryName} <span className="text-red-500">*</span>
@@ -1876,23 +2015,16 @@ export default function CaixaTab() {
                           }));
                         }}
                         placeholder="0,00"
+                        className="h-8"
                       />
                     </div>
                   </Card>
                 </motion.div>
               );
             })}
+            </div>
 
-            {/* Total de Vendas - ANTES DE SANGRIAS */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.33 }}>
-              <Card className="p-4 bg-primary/10 border-primary/20">
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total de Vendas</p>
-                  <p className="text-2xl font-bold text-primary">{formatCurrency(limparDecimais(totalVendas))}</p>
-                </div>
-              </Card>
-            </motion.div>
-
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             {/* SANGRIAS */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
               <Card className="p-4">
@@ -2024,35 +2156,49 @@ export default function CaixaTab() {
 
 
 
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+            {/* Total de Vendas - ANTES DE SANGRIAS */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.33 }}>
+              <Card className="p-3 bg-primary/10 border-primary/20">
+                <div className="text-center">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase">Total de Vendas</p>
+                  <p className="text-xl font-bold text-primary">{formatCurrency(limparDecimais(totalVendas))}</p>
+                </div>
+              </Card>
+            </motion.div>
+
             {/* Total de Sangria */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <Card className="p-4 bg-destructive/10 border-destructive/20">
+              <Card className="p-3 bg-destructive/10 border-destructive/20">
                 <div className="text-center">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Total de Sangria</p>
-                  <p className="text-2xl font-bold text-destructive">{formatCurrency(totalSangria)}</p>
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase">Total de Sangria</p>
+                  <p className="text-xl font-bold text-destructive">{formatCurrency(totalSangria)}</p>
                 </div>
               </Card>
             </motion.div>
 
             {/* Saldo em Dinheiro */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
-              <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
+              <Card className="p-3 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
                 <div className="text-center">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Saldo em Dinheiro</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(limparDecimais(saldoDinheiro))}</p>
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase">Saldo em Dinheiro</p>
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(limparDecimais(saldoDinheiro))}</p>
                 </div>
               </Card>
             </motion.div>
 
             {/* Saldo Geral */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-              <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+              <Card className="p-4 bg-blue-100 dark:bg-blue-950/30 border-2 border-blue-300 dark:border-blue-800 lg:col-span-2">
                 <div className="text-center">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Saldo Geral</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(limparDecimais(saldoGeral))}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase">Total Geral</p>
+                  <p className="text-3xl font-extrabold text-blue-700 dark:text-blue-300">{formatCurrency(limparDecimais(saldoGeral))}</p>
                 </div>
               </Card>
             </motion.div>
+            </div>
 
             {/* Botões de Ação */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.62 }}>
@@ -2212,15 +2358,6 @@ export default function CaixaTab() {
                   value={editModalDescricao}
                   onChange={(e) => setEditModalDescricao(e.target.value)}
                   placeholder="Descrição"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase mb-1 block">Quantidade</label>
-                <Input
-                  type="text"
-                  value={editModalQuantidade}
-                  onChange={(e) => setEditModalQuantidade(handleNumberInput(e.target.value))}
-                  placeholder="1"
                 />
               </div>
               <div>

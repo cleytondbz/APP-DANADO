@@ -26,11 +26,27 @@ export default function SelectionScreen() {
   };
 
   const confirmarSenhaVendas = () => {
-    if (senhaVendasInput !== senhaVendasAtual && senhaVendasInput !== MATRIX_PASSWORD) {
+    const senha = senhaVendasInput.trim();
+    const usuarioVisual = (settings.actionUsers || []).find(
+      (item) => String(item.password || '').trim() === senha && item.permissions?.includes('viewSales' as any)
+    );
+
+    if (usuarioVisual) {
+      localStorage.setItem('fd_sales_readonly_user', JSON.stringify({ id: usuarioVisual.id, name: usuarioVisual.name, timestamp: Date.now() }));
+      logAccess('login', 'success', usuarioVisual.name, 'Entrada autorizada em vendas somente visualizacao');
+      setShowSenhaVendas(false);
+      setSenhaVendasInput('');
+      setTab('dashboard');
+      setScreen('main');
+      return;
+    }
+
+    if (senha !== senhaVendasAtual && senha !== MATRIX_PASSWORD) {
       toast.error('Senha incorreta!');
       setSenhaVendasInput('');
       return;
     }
+    localStorage.removeItem('fd_sales_readonly_user');
     setShowSenhaVendas(false);
     setSenhaVendasInput('');
     setTab('fechamentoCompacto');
