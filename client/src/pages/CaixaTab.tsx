@@ -147,14 +147,10 @@ const toDateStr = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-const getWeekRange = (dateString: string): { start: string; end: string } => {
-  const date = new Date(`${dateString}T00:00:00`);
-  const day = date.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const start = new Date(date);
-  start.setDate(date.getDate() + diffToMonday);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+const getMonthRange = (dateString: string): { start: string; end: string } => {
+  const [year, month] = dateString.split('-').map(Number);
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 0);
   return { start: toDateStr(start), end: toDateStr(end) };
 };
 
@@ -200,8 +196,8 @@ export default function CaixaTab() {
   const senhaEditInputRef = useRef<HTMLInputElement>(null);
   const [passwordInput, setPasswordInput] = useState('');
   const [pendingDate, setPendingDate] = useState<string | null>(null);
-  const [showWeeklySearch, setShowWeeklySearch] = useState(false);
-  const [weeklySearchTerm, setWeeklySearchTerm] = useState('');
+  const [showMonthlySearch, setShowMonthlySearch] = useState(false);
+  const [monthlySearchTerm, setMonthlySearchTerm] = useState('');
   
   // Focus no input de senha quando dialog abre
   useEffect(() => {
@@ -253,9 +249,9 @@ export default function CaixaTab() {
   
   const caixaAtual = getCaixaDataAtual();
   const fechamentoAtual = getFechamentoDataAtual();
-  const weeklySearchRange = React.useMemo(() => getWeekRange(data), [data]);
-  const weeklySearchResults = React.useMemo(() => {
-    const term = normalizeSearchText(weeklySearchTerm.trim());
+  const monthlySearchRange = React.useMemo(() => getMonthRange(data), [data]);
+  const monthlySearchResults = React.useMemo(() => {
+    const term = normalizeSearchText(monthlySearchTerm.trim());
     const results: Array<{
       date: string;
       tipo: string;
@@ -264,7 +260,7 @@ export default function CaixaTab() {
     }> = [];
 
     Object.entries(caixaPorData || {}).forEach(([dateKey, dayData]) => {
-      if (dateKey < weeklySearchRange.start || dateKey > weeklySearchRange.end) return;
+      if (dateKey < monthlySearchRange.start || dateKey > monthlySearchRange.end) return;
 
       BASE_CAIXA_CATEGORIAS.forEach((tipo) => {
         const produtos = ((dayData as CaixaData)?.[tipo] || []) as Produto[];
@@ -292,14 +288,14 @@ export default function CaixaTab() {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return parseProdutoTimestamp(a.produto.id) - parseProdutoTimestamp(b.produto.id);
     });
-  }, [caixaPorData, weeklySearchRange.start, weeklySearchRange.end, weeklySearchTerm]);
-  const weeklySearchTotals = React.useMemo(() => {
-    return weeklySearchResults.reduce((acc, item) => {
+  }, [caixaPorData, monthlySearchRange.start, monthlySearchRange.end, monthlySearchTerm]);
+  const monthlySearchTotals = React.useMemo(() => {
+    return monthlySearchResults.reduce((acc, item) => {
       acc.total += item.total;
       acc.byTipo[item.tipo] = (acc.byTipo[item.tipo] || 0) + item.total;
       return acc;
     }, { total: 0, byTipo: {} as Record<string, number> });
-  }, [weeklySearchResults]);
+  }, [monthlySearchResults]);
 
   // Verificar se a data mudou de mês
   const mudouDeMes = (dataAtual: string, novadata: string): boolean => {
@@ -1559,10 +1555,10 @@ export default function CaixaTab() {
                     variant="outline"
                     size="sm"
                     className="h-9 gap-2"
-                    onClick={() => setShowWeeklySearch(true)}
+                    onClick={() => setShowMonthlySearch(true)}
                   >
                     <Search className="w-4 h-4" />
-                    Pesquisa da semana
+                    Pesquisa do mês
                   </Button>
                   </div>
                 </div>
@@ -1570,11 +1566,11 @@ export default function CaixaTab() {
             </motion.div>
 
             {/* Data - Com Navegação */}
-            <Dialog open={showWeeklySearch} onOpenChange={setShowWeeklySearch}>
+            <Dialog open={showMonthlySearch} onOpenChange={setShowMonthlySearch}>
               <DialogContent className="!w-[96vw] !max-w-[1100px] h-[92vh] max-h-[92vh] overflow-hidden p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>
-                    Pesquisa da semana: {formatarData(weeklySearchRange.start)} a {formatarData(weeklySearchRange.end)}
+                    Pesquisa do mês: {formatarData(monthlySearchRange.start)} a {formatarData(monthlySearchRange.end)}
                   </DialogTitle>
                 </DialogHeader>
 
@@ -1583,15 +1579,15 @@ export default function CaixaTab() {
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        value={weeklySearchTerm}
-                        onChange={(e) => setWeeklySearchTerm(e.target.value)}
+                        value={monthlySearchTerm}
+                        onChange={(e) => setMonthlySearchTerm(e.target.value)}
                         placeholder="Pesquisar por produto, valor, categoria, horario ou data..."
                         className="pl-9"
                         autoFocus
                       />
                     </div>
                     <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm font-bold text-primary">
-                      Total: {formatCurrency(weeklySearchTotals.total)}
+                      Total: {formatCurrency(monthlySearchTotals.total)}
                     </div>
                   </div>
 
@@ -1599,7 +1595,7 @@ export default function CaixaTab() {
                     {BASE_CAIXA_CATEGORIAS.map((tipo) => (
                       <div key={tipo} className="rounded-lg border bg-card p-3">
                         <p className="text-xs font-semibold uppercase text-muted-foreground">{tipo}</p>
-                        <p className="text-base font-bold">{formatCurrency(weeklySearchTotals.byTipo[tipo] || 0)}</p>
+                        <p className="text-base font-bold">{formatCurrency(monthlySearchTotals.byTipo[tipo] || 0)}</p>
                       </div>
                     ))}
                   </div>
@@ -1613,13 +1609,13 @@ export default function CaixaTab() {
                         <span>Valor</span>
                         <span>Hora</span>
                       </div>
-                      {weeklySearchResults.length === 0 ? (
+                      {monthlySearchResults.length === 0 ? (
                         <div className="px-3 py-8 text-center text-sm text-muted-foreground">
-                          Nenhuma anotação encontrada nessa semana.
+                          Nenhuma anotação encontrada nesse mês.
                         </div>
                       ) : (
                         <div className="divide-y">
-                          {weeklySearchResults.map((item) => (
+                          {monthlySearchResults.map((item) => (
                             <div
                               key={`${item.date}-${item.tipo}-${item.produto.id}`}
                               className="grid grid-cols-[92px_78px_minmax(160px,1fr)_100px_55px] gap-2 px-3 py-2 text-sm"
@@ -1638,7 +1634,7 @@ export default function CaixaTab() {
                 </div>
 
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowWeeklySearch(false)}>
+                  <Button variant="outline" onClick={() => setShowMonthlySearch(false)}>
                     Fechar
                   </Button>
                 </DialogFooter>

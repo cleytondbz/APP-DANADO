@@ -12,10 +12,12 @@ interface CustomTooltipProps {
   label?: string | number;
   tooltipTextColor?: string;
   tooltipBgColor?: string;
+  formatLabel?: (label: string | number | undefined) => string | number | undefined;
 }
 
-const CustomTooltip = ({ active, payload, label, tooltipTextColor = '#000000', tooltipBgColor = '#ffffff' }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload, label, tooltipTextColor = '#000000', tooltipBgColor = '#ffffff', formatLabel }: CustomTooltipProps) => {
   if (!active || !payload || payload.length === 0) return null;
+  const displayLabel = formatLabel ? formatLabel(label) : label;
   
   return (
     <div style={{
@@ -26,7 +28,7 @@ const CustomTooltip = ({ active, payload, label, tooltipTextColor = '#000000', t
       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
     }}>
       <p style={{ color: tooltipTextColor, fontSize: '12px', fontWeight: 'bold', margin: '0 0 4px 0' }}>
-        {label}
+        {displayLabel}
       </p>
       {payload.map((entry, index) => (
         <p key={index} style={{ color: tooltipTextColor, fontSize: '12px', margin: '2px 0' }}>
@@ -119,6 +121,13 @@ export default function TotaisTab({ embedded = false }: { embedded?: boolean }) 
 
   const tooltipTextColor = settings.dasColors?.tooltipText || '#000000';
   const tooltipBgColor = settings.dasColors?.tooltipBg || '#ffffff';
+  const formatDailyTooltipLabel = (label: string | number | undefined) => {
+    const day = Number(label || 0);
+    if (!Number.isFinite(day) || day <= 0) return label;
+    const weekday = new Date(selectedYear, selectedMonth - 1, day).toLocaleDateString('pt-BR', { weekday: 'long' });
+    const weekdayLabel = weekday ? `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}` : '';
+    return weekdayLabel ? `${day} - ${weekdayLabel}` : day;
+  };
 
   return (
     <div className={`space-y-4 ${embedded ? '' : 'pb-24'}`}>
@@ -155,7 +164,7 @@ export default function TotaisTab({ embedded = false }: { embedded?: boolean }) 
               <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
               <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={60}
                 tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<CustomTooltip tooltipTextColor={tooltipTextColor} tooltipBgColor={tooltipBgColor} />} />
+              <Tooltip content={<CustomTooltip tooltipTextColor={tooltipTextColor} tooltipBgColor={tooltipBgColor} formatLabel={formatDailyTooltipLabel} />} />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
               <Bar dataKey="loja1" name="Loja 1" fill={CHART_HEX[0]} radius={[4, 4, 0, 0]} />
               <Bar dataKey="loja2" name="Loja 2" fill={CHART_HEX[1]} radius={[4, 4, 0, 0]} />

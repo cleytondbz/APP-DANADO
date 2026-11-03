@@ -1,11 +1,12 @@
 import { useApp } from '@/contexts/AppContext';
 import type { MainTab, StoreId } from '@/lib/types';
 import { useEffect, lazy, Suspense, useState } from 'react';
-import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, CreditCard, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { LayoutDashboard, FileSpreadsheet, Receipt, ShoppingCart, Settings, ArrowLeft, Archive, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { MONTH_NAMES } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MorningSalesPanel } from '@/components/MorningSalesPanel';
 
 const DashboardTab = lazy(() => import('./DashboardTab'));
 const LancamentosTab = lazy(() => import('./LancamentosTab'));
@@ -21,6 +22,17 @@ const tabs: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'compras', label: 'Compras', icon: ShoppingCart },
   { id: 'opcoes', label: 'Opcoes', icon: Settings },
 ];
+
+const TAB_THEME: Record<MainTab, { color: string; soft: string; shadow: string }> = {
+  dashboard: { color: '#2563eb', soft: 'rgba(37,99,235,0.14)', shadow: 'rgba(37,99,235,0.35)' },
+  lancamentos: { color: '#16a34a', soft: 'rgba(22,163,74,0.14)', shadow: 'rgba(22,163,74,0.35)' },
+  fechamentoCompacto: { color: '#7c3aed', soft: 'rgba(124,58,237,0.14)', shadow: 'rgba(124,58,237,0.35)' },
+  compras: { color: '#f97316', soft: 'rgba(249,115,22,0.16)', shadow: 'rgba(249,115,22,0.35)' },
+  dividas: { color: '#dc2626', soft: 'rgba(220,38,38,0.14)', shadow: 'rgba(220,38,38,0.35)' },
+  totais: { color: '#0891b2', soft: 'rgba(8,145,178,0.14)', shadow: 'rgba(8,145,178,0.35)' },
+  caixa: { color: '#0f766e', soft: 'rgba(15,118,110,0.14)', shadow: 'rgba(15,118,110,0.35)' },
+  opcoes: { color: '#64748b', soft: 'rgba(100,116,139,0.16)', shadow: 'rgba(100,116,139,0.35)' },
+};
 
 const STORE_THEME: Record<StoreId, { label: string; color: string; soft: string; border: string; text: string }> = {
   loja1: { label: 'Loja 1', color: '#0d6efd', soft: 'rgba(13,110,253,0.10)', border: 'rgba(13,110,253,0.35)', text: '#0d6efd' },
@@ -90,6 +102,7 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <MorningSalesPanel />
       <header className={`sticky top-0 z-40 backdrop-blur-xl border-b px-4 py-3 flex items-center gap-3 transition-colors ${
         tab === 'compras' && purchaseServerStatus === 'offline'
           ? 'border-red-700 bg-red-600/95 text-white'
@@ -111,6 +124,11 @@ export default function MainLayout() {
               <Plus className="h-4 w-4" />
               Adicionar
             </Button>
+          )}
+          {!isAndroidAppMode && tab === 'compras' && purchaseServerStatus === 'offline' && (
+            <div className="animate-pulse rounded-lg border-2 border-white bg-red-800 px-4 py-1 text-xl font-black tracking-wide text-white shadow-lg">
+              NÃO SALVO
+            </div>
           )}
           {!isAndroidAppMode && tab === 'compras' && (
             <Button
@@ -167,13 +185,15 @@ export default function MainLayout() {
           </div>
         </div>
         {!isAndroidAppMode && !readOnlySalesUser && (
-          <button onClick={() => setTab('caixa')} className="p-2 rounded-lg bg-accent hover:bg-accent/80 transition-colors" title="Ir para CAIXA">
-            <CreditCard className="w-4 h-4 text-accent-foreground" />
+          <button
+            onClick={() => setTab('caixa')}
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-extrabold text-accent-foreground shadow-sm transition-colors hover:bg-accent/80"
+            title="Ir para CAIXA"
+          >
+            <Archive className="w-5 h-5" />
+            Caixa
           </button>
         )}
-        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">
-          {tabs.find(t => t.id === tab)?.label}
-        </span>
       </header>
 
       <main className="flex-1 px-4 py-4">
@@ -193,16 +213,25 @@ export default function MainLayout() {
         </div>
       </main>
 
-      <nav className="sticky bottom-0 z-30 bg-card/90 backdrop-blur-xl border-t border-border px-2 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex justify-around">
+      <nav className="sticky bottom-0 z-30 border-t border-border bg-card/90 px-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur-xl">
+        <div className="flex justify-around gap-2 py-1.5">
           {availableTabs.map(t => {
             const active = tab === t.id;
+            const theme = TAB_THEME[t.id];
             return (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`flex flex-col items-center py-2 px-1 min-w-[56px] transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}>
-                <t.icon className={`w-5 h-5 ${active ? 'drop-shadow-[0_0_6px_var(--primary)]' : ''}`} />
-                <span className="text-[9px] font-semibold mt-0.5">{t.label}</span>
-                {active && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
+                className="flex min-w-[82px] flex-1 flex-col items-center justify-center rounded-xl border px-2 py-1.5 transition-all active:scale-95 sm:min-w-[112px] sm:px-3 sm:py-2"
+                style={{
+                  color: active ? '#ffffff' : theme.color,
+                  background: active
+                    ? `linear-gradient(135deg, ${theme.color}, ${theme.color}dd)`
+                    : theme.soft,
+                  borderColor: active ? theme.color : `${theme.color}55`,
+                  boxShadow: active ? `0 10px 24px ${theme.shadow}` : '0 2px 8px rgba(15,23,42,0.06)',
+                }}
+              >
+                <t.icon className={`h-5 w-5 ${active ? 'scale-110' : 'opacity-90'} transition-transform sm:h-6 sm:w-6`} />
+                <span className={`mt-0.5 text-[12px] font-black leading-none sm:text-sm ${active ? '' : 'opacity-90'}`}>{t.label}</span>
               </button>
             );
           })}

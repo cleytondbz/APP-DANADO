@@ -97,7 +97,7 @@ export interface AccessLog {
 export interface TimelineEntry {
   id: string;
   timestamp: number;
-  module: 'caixa' | 'fechamento' | 'lancamentos';
+  module: 'caixa' | 'fechamento' | 'lancamentos' | 'opcoes';
   storeId: StoreId;
   action: 'create' | 'update' | 'delete';
   date: string; // YYYY-MM-DD
@@ -142,6 +142,8 @@ export interface AppSettings {
     label?: string;
     selection: string[];
     days: number[];
+    daysByStore?: Record<string, number[]>;
+    daysBySelection?: Record<string, number[]>;
     updatedAt?: string;
     total?: number;
   }>>;
@@ -154,8 +156,42 @@ export interface AppSettings {
     selection: string[];
     selectionLabels: string[];
     days: number[];
+    daysByStore?: Record<string, number[]>;
+    daysBySelection?: Record<string, number[]>;
+    previousSelection?: string[];
+    previousSelectionLabels?: string[];
+    previousDays?: number[];
+    previousDaysByStore?: Record<string, number[]>;
+    previousDaysBySelection?: Record<string, number[]>;
+    previousTotal?: number;
+    actor?: string;
     total: number;
     action: string;
+  }>;
+  customSaldoBackups?: Array<{
+    id: string;
+    timestamp: number;
+    updatedAt: string;
+    storeId: StoreId;
+    monthKey: string;
+    actor?: string;
+    action: string;
+    before?: {
+      label?: string;
+      selection?: string[];
+      days?: number[];
+      daysByStore?: Record<string, number[]>;
+      daysBySelection?: Record<string, number[]>;
+      total?: number;
+    };
+    after: {
+      label?: string;
+      selection: string[];
+      days: number[];
+      daysByStore: Record<string, number[]>;
+      daysBySelection?: Record<string, number[]>;
+      total: number;
+    };
   }>;
   syncPreference?: 'site' | 'program';
   purchaseEntries?: Record<string, PurchaseEntry[]>;

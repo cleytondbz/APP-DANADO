@@ -36,8 +36,8 @@ export default function LoginScreen() {
         <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-4 card-glow">
           <DollarSign className="w-10 h-10 text-primary-foreground" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-        <span className="text-xl font-extrabold text-accent glow-primary">DANADO</span>
+        <h1 className="text-2xl font-bold text-foreground">Danado</h1>
+        <span className="text-xl font-extrabold text-accent glow-primary">SIM</span>
       </motion.div>
 
       <p className="text-muted-foreground text-sm mt-8 mb-4">Digite sua senha</p>

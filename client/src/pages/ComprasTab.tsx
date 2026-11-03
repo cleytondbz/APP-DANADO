@@ -251,6 +251,7 @@ export default function ComprasTab() {
   const purchaseSaveSuccessMessageRef = useRef('');
   const purchaseSaveTimeoutRef = useRef<number | null>(null);
   const purchaseHealthCheckRef = useRef<number | null>(null);
+  const purchaseSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const dueDateRef = useRef<HTMLInputElement | null>(null);
   const groupRef = useRef<HTMLInputElement | null>(null);
   const supplierRef = useRef<HTMLInputElement | null>(null);
@@ -896,7 +897,7 @@ export default function ComprasTab() {
     }
   };
 
-  const confirmPurchaseSave = async (
+  const performPurchaseSave = async (
     partialSettings: Partial<{
       purchaseEntries: Record<string, PurchaseEntry[]>;
       purchaseOptions: PurchaseOptions;
@@ -976,6 +977,21 @@ export default function ComprasTab() {
     } finally {
       window.clearTimeout(timer);
     }
+  };
+
+  const confirmPurchaseSave = (
+    partialSettings: Partial<{
+      purchaseEntries: Record<string, PurchaseEntry[]>;
+      purchaseOptions: PurchaseOptions;
+    }>,
+    attemptId: number
+  ) => {
+    // Mantem a ordem dos cliques. Sem a fila, duas marcacoes rapidas podiam
+    // chegar invertidas e uma copia mais antiga do mes vencer por ultimo.
+    purchaseSaveQueueRef.current = purchaseSaveQueueRef.current
+      .catch(() => undefined)
+      .then(() => performPurchaseSave(partialSettings, attemptId));
+    return purchaseSaveQueueRef.current;
   };
 
   const markPurchaseSavePending = (successMessage: string) => {
@@ -1709,12 +1725,13 @@ export default function ComprasTab() {
         </div>
       )}
       {saveFailureMessage && (
-        <div className="rounded-xl border-2 border-red-700 bg-red-600 p-4 text-white shadow-lg">
+        <div className="rounded-2xl border-4 border-red-900 bg-red-600 p-5 text-white shadow-2xl ring-4 ring-red-200">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0" />
+            <AlertTriangle className="mt-0.5 h-9 w-9 shrink-0" />
             <div>
-              <div className="text-base font-bold">Falha ao salvar compras</div>
-              <div className="text-sm font-semibold">{saveFailureMessage}</div>
+              <div className="text-3xl font-black tracking-wide">NÃO SALVO</div>
+              <div className="mt-1 text-lg font-extrabold">Falha ao salvar compras no servidor</div>
+              <div className="mt-1 text-base font-bold">{saveFailureMessage}</div>
             </div>
           </div>
         </div>
@@ -1733,9 +1750,9 @@ export default function ComprasTab() {
       <Dialog open={showSaveFailureDialog} onOpenChange={setShowSaveFailureDialog}>
         <DialogContent className="border-2 border-red-600">
           <DialogHeader>
-            <DialogTitle className="text-red-700">Falha ao salvar compras</DialogTitle>
+            <DialogTitle className="text-3xl font-black text-red-700">NÃO SALVO</DialogTitle>
           </DialogHeader>
-          <div className="rounded-lg bg-red-50 p-4 text-sm font-semibold text-red-700">
+          <div className="rounded-lg border-2 border-red-600 bg-red-50 p-4 text-lg font-black text-red-700">
             {saveFailureMessage || 'A alteracao em compras nao foi confirmada pelo servidor.'}
           </div>
           <p className="text-sm text-muted-foreground">

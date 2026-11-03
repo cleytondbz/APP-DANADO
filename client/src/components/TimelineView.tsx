@@ -6,14 +6,19 @@ import type { TimelineEntry } from '@/lib/types';
 import { localDateStr } from '@/lib/helpers';
 
 export function TimelineView() {
-  const { getTimeline, clearTimeline } = useApp();
-  const timeline = getTimeline();
+  const { getTimeline, clearTimeline, settings } = useApp();
+  const timeline = getTimeline().filter((entry) => {
+    if (entry.module === 'opcoes') return true;
+    if (entry.module !== 'lancamentos') return false;
+    return !String(entry.id || '').includes('program') && !String(entry.description || '').toLowerCase().includes('programa');
+  });
 
   const getModuleLabel = (module: string) => {
     const labels: Record<string, string> = {
       caixa: '💰 CAIXA',
       fechamento: '📋 FECHAMENTO',
       lancamentos: '📊 LANÇAMENTOS',
+      opcoes: '⚙️ OPÇÕES',
     };
     return labels[module] || module;
   };
@@ -28,7 +33,7 @@ export function TimelineView() {
   };
 
   const getStoreLabel = (storeId: string) => {
-    return storeId === 'loja1' ? 'Loja 1' : 'Loja 2';
+    return storeId === 'loja1' ? 'Loja 1' : storeId === 'loja2' ? 'Loja 2' : storeId === 'loja3' ? 'Loja 3' : storeId;
   };
 
   const formatDate = (dateStr: string) => {
@@ -77,10 +82,28 @@ export function TimelineView() {
     toast.success('Timeline exportada!');
   };
 
-  const handleClear = () => {
+  const handleClear = async () => {
     if (confirm('Tem certeza que deseja limpar toda a timeline?')) {
-      clearTimeline();
-      toast.success('Timeline limpa!');
+      const password = window.prompt('Digite a senha de vendas para limpar a timeline:');
+      if (password === null) return;
+      if (password !== (settings.senhaVendas || '2512')) {
+        toast.error('Senha de vendas incorreta.');
+        return;
+      }
+      try {
+        const serverUrl = localStorage.getItem('fd_serverUrl') || window.location.origin;
+        const resp = await fetch(`${serverUrl}/api/settings/clear-timeline`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        clearTimeline();
+        toast.success('Timeline limpa no servidor!');
+      } catch (error) {
+        console.error('[TimelineView] Erro ao limpar timeline no servidor:', error);
+        toast.error('Não foi possível limpar a timeline no servidor.');
+      }
     }
   };
 

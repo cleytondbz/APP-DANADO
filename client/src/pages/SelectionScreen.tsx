@@ -1,15 +1,22 @@
 import { useApp } from '@/contexts/AppContext';
-import { TrendingUp, CreditCard } from 'lucide-react';
+import { TrendingUp, Calculator, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import './SelectionScreen.css';
+
+const SELECTION_BACKGROUNDS: { vendas?: string; caixa?: string } = {
+  vendas: '/selection-backgrounds/gerencial-bg.png',
+  caixa: '/selection-backgrounds/caixa-bg.png',
+};
 
 const MATRIX_PASSWORD = 'Spys32636995';
 
 export default function SelectionScreen() {
-  const { setScreen, setTab, settings, setSettings, logAccess } = useApp();
+  const { accessContext, setScreen, setTab, settings, setSettings, logAccess } = useApp();
+  const autoOpenedSalesRef = useRef(false);
   const [showSenhaVendas, setShowSenhaVendas] = useState(false);
   const [senhaVendasInput, setSenhaVendasInput] = useState('');
   const [showSenhaCaixa, setShowSenhaCaixa] = useState(false);
@@ -24,6 +31,12 @@ export default function SelectionScreen() {
     setShowSenhaVendas(true);
     setSenhaVendasInput('');
   };
+
+  useEffect(() => {
+    if (!accessContext?.directSalesLogin || autoOpenedSalesRef.current) return;
+    autoOpenedSalesRef.current = true;
+    abrirVendas();
+  }, [accessContext?.directSalesLogin]);
 
   const confirmarSenhaVendas = () => {
     const senha = senhaVendasInput.trim();
@@ -103,34 +116,39 @@ export default function SelectionScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-        <h1 className="text-2xl font-bold text-foreground">app <span className="text-accent">Danado</span></h1>
-        <p className="text-muted-foreground text-sm mt-2">Selecione a area desejada</p>
-      </motion.div>
+    <div className="split-selection">
+      <header className="split-selection__header">
+        <h1>Danado <span>SIM</span></h1>
+        <p>Selecione a área desejada</p>
+      </header>
 
-      <div className="flex flex-col gap-4 w-full max-w-sm">
-        <motion.button initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
-          onClick={abrirVendas}
-          className="w-full bg-primary rounded-2xl p-6 flex flex-col items-center gap-3 hover:opacity-90 active:scale-95 transition-all card-glow"
-        >
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
-            <TrendingUp className="w-7 h-7 text-primary-foreground" />
-          </div>
-          <span className="text-primary-foreground font-bold text-lg">VENDAS</span>
-          <span className="text-primary-foreground/70 text-xs">Gerenciar vendas</span>
-        </motion.button>
-
-        <motion.button initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          onClick={abrirCaixa}
-          className="w-full bg-accent rounded-2xl p-6 flex flex-col items-center gap-3 hover:opacity-90 active:scale-95 transition-all card-glow"
-        >
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
-            <CreditCard className="w-7 h-7 text-accent-foreground" />
-          </div>
-          <span className="text-accent-foreground font-bold text-lg">CAIXA</span>
-          <span className="text-accent-foreground/70 text-xs">Fechamento de caixa</span>
-        </motion.button>
+      <div className="split-selection__panels">
+        {([
+          { key: 'vendas', title: 'Gerencial', description: 'Resultados, lançamentos e gestão', Icon: TrendingUp, open: abrirVendas },
+          { key: 'caixa', title: 'Caixa', description: 'Anotações e fechamento', Icon: Calculator, open: abrirCaixa },
+        ] as const).map(({ key, title, description, Icon, open }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={open}
+            className={`split-selection__panel split-selection__panel--${key}`}
+            aria-label={`Acessar ${title}`}
+            aria-haspopup="dialog"
+          >
+            <span
+              className="split-selection__background"
+              aria-hidden="true"
+              style={SELECTION_BACKGROUNDS[key] ? { backgroundImage: `url("${SELECTION_BACKGROUNDS[key]}")` } : undefined}
+            />
+            <span className="split-selection__overlay" aria-hidden="true" />
+            <span className="split-selection__content">
+              <Icon className="split-selection__icon" aria-hidden="true" />
+              <span className="split-selection__title">{title}</span>
+              <span className="split-selection__description">{description}</span>
+              <span className="split-selection__enter">Acessar {title}<ArrowRight aria-hidden="true" /></span>
+            </span>
+          </button>
+        ))}
       </div>
 
       {showAlterarSenha && (
@@ -170,7 +188,7 @@ export default function SelectionScreen() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="bg-background rounded-lg shadow-lg p-6 w-96 max-w-[90vw]"
           >
-            <h2 className="text-lg font-bold text-foreground mb-4">Acesso a Area de Vendas</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">Acesso a Area Gerencial</h2>
             <p className="text-sm text-muted-foreground mb-4">Digite a senha para acessar a area.</p>
             <div className="mb-4">
               <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Senha</label>

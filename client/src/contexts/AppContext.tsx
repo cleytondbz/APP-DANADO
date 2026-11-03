@@ -6,6 +6,16 @@ import { useSyncServer } from '@/hooks/useSyncServer';
 import { toast } from 'sonner';
 
 interface AppContextType {
+  accessContext: {
+    clientIp: string;
+    directSalesLogin: boolean;
+    specialMorning: boolean;
+    fechamentoPreviousDay?: boolean;
+    serverDate: string;
+    serverTime: string;
+    defaultDate: string;
+    morningWindow?: { start: string; end: string };
+  } | null;
   saldoDia: number;
   setSaldoDia: (value: number) => void;
   caixaData: Record<string, any>;
@@ -29,8 +39,8 @@ interface AppContextType {
   logAccess: (action: string, status: 'success' | 'failed', userName?: string, details?: string) => void;
   getAccessLogs: () => any[];
   clearAccessLogs: () => void;
-  clearAccessLogsByDate: (date: string, storeId?: string) => Promise<void>;
-  addTimelineEntry: (module: 'caixa' | 'fechamento' | 'lancamentos', action: 'create' | 'update' | 'delete', date: string, field?: string, oldValue?: string | number, newValue?: string | number, description?: string) => void;
+  clearAccessLogsByDate: (date: string, storeId?: string, password?: string) => Promise<void>;
+  addTimelineEntry: (module: 'caixa' | 'fechamento' | 'lancamentos' | 'opcoes', action: 'create' | 'update' | 'delete', date: string, field?: string, oldValue?: string | number, newValue?: string | number, description?: string) => void;
   getTimeline: () => any[];
   clearTimeline: () => void;
   getCaixaCategories: () => { id: string; name: string }[];
@@ -51,8 +61,12 @@ interface AppContextType {
   saveEntry: (date: string, values: Record<string, number>, source?: 'sync' | 'manual') => void;
   clearManualFieldMark: (date: string, fieldId: string) => void;
   saveLancamentoEntry: (date: string, values: Record<string, number>) => void;
+  lancamentosData: Record<string, any>;
+  setLancamentosData: (value: Record<string, any>) => void;
+  refreshPeriodData: (storeId: StoreId, year: number, month: number) => Promise<void>;
   deleteEntry: (date: string) => void;
   debts: Debt[];
+  setDebts: (value: Debt[]) => void;
   addDebt: (name: string, desc: string, amount: number, date: string) => void;
   payDebt: (id: string, amt?: number) => void;
   removeDebt: (id: string) => void;
@@ -274,12 +288,23 @@ const mergeCustomSaldoFromNewest = (serverSettings: AppSettings, localSettings: 
     if (item?.id) historyById.set(String(item.id), item);
   });
 
+  const backupsById = new Map<string, any>();
+  [
+    ...(((serverSettings as any).customSaldoBackups || []) as any[]),
+    ...(((localSettings as any).customSaldoBackups || []) as any[]),
+  ].forEach((item) => {
+    if (item?.id) backupsById.set(String(item.id), item);
+  });
+
   return {
     ...serverSettings,
     customSaldoByStoreMonth: mergedByStoreMonth,
     customSaldoHistory: Array.from(historyById.values())
       .sort((a, b) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
-      .slice(-500),
+      .slice(-1000),
+    customSaldoBackups: Array.from(backupsById.values())
+      .sort((a, b) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
+      .slice(-1000),
   };
 };
 
@@ -304,7 +329,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hasLoadedFromServer, setHasLoadedFromServer] = useState(false);
   const [saveRetryTick, setSaveRetryTick] = useState(0);
 
-  const { loadFromServer, saveToServer, checkServerHealth } = useSyncServer();
+  const { loadFromServer, saveToServer, checkServerHealth, serverUrl } = useSyncServer();
+  const [accessContext, setAccessContext] = useState<AppContextType['accessContext']>(null);
   
   // Estado para dados de Caixa e Fechamento (sincronizados com servidor)
   // Estrutura: { loja1: { data: {...} }, loja2: { data: {...} } }
@@ -325,6 +351,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAccessContext = async () => {
+      try {
+        const baseUrl = serverUrl || window.location.origin;
+        const response = await fetch(`${baseUrl}/api/access/context`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (!cancelled && result?.success) {
+          setAccessContext(result.data || null);
+        }
+      } catch (error) {
+        console.warn('[AppContext] Falha ao carregar contexto de acesso:', error);
+        if (!cancelled) setAccessContext(null);
+      }
+    };
+
+    loadAccessContext();
+    const timer = window.setInterval(loadAccessContext, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [serverUrl]);
 
   // Detectar conexão online/offline
   useEffect(() => {
@@ -389,58 +441,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.clearInterval(timer);
     };
   }, [hasInitialized, hasLoadedFromServer]);
-
-  // Atualizar automaticamente com alteracoes vindas de outros clientes (desktop/web), sem F5
-  useEffect(() => {
-    if (!hasInitialized || !hasLoadedFromServer || !isOnline) return;
-
-    const pullLatest = async () => {
-      if (document.visibilityState === 'hidden') return;
-      // Evita sobrescrever alteracoes locais antes do save ao servidor concluir
-      if (pendingServerSaveRef.current || savingServerRef.current) return;
-      if (Date.now() - lastLocalChangeRef.current < 2500) return;
-
-      try {
-        setIsPullingServerData(true);
-        const serverData = await loadFromServer();
-        if (serverData) {
-          setIsOnline(true);
-          const snapshot = JSON.stringify({
-            settings: serverData.settings || {},
-            stores: serverData.stores || {},
-            debts: serverData.debts || [],
-            saldoDia: serverData.saldoDia || 0,
-            caixa: serverData.caixa || {},
-            fechamento: serverData.fechamento || {},
-            lancamentos: serverData.lancamentos || {},
-          });
-
-          if (snapshot !== lastServerSnapshotRef.current) {
-            lastServerSnapshotRef.current = snapshot;
-            applyServerData(serverData);
-          }
-        } else {
-          setIsOnline(false);
-        }
-      } catch (e) {
-        setIsOnline(false);
-        console.warn('[AppContext] Auto refresh failed:', e);
-      } finally {
-        setIsPullingServerData(false);
-      }
-    };
-
-    const timer = setInterval(pullLatest, 3000);
-    const onFocus = () => { if (document.visibilityState === 'visible') pullLatest(); };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onFocus);
-
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onFocus);
-    };
-  }, [hasInitialized, hasLoadedFromServer, isOnline, loadFromServer]);
 
   function applyServerData(serverData: any) {
     if (!serverData) return;
@@ -556,6 +556,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // compras no pacote geral evita payload grande e impede sobrescrita
         // de meses que a tela nem carregou.
         delete settingsForSync.purchaseEntries;
+        // As listas de compras tambem possuem uma rota exclusiva. Uma guia
+        // antiga nao pode restaurar fornecedores/instituicoes desatualizados.
+        delete settingsForSync.purchaseOptions;
         const payload = {
           settings: settingsForSync,
           stores, 
@@ -744,6 +747,113 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return stores[currentStore]?.months.find(md => md.year === y && md.month === m);
   }, [stores, currentStore]);
 
+  const refreshPeriodData = useCallback(async (storeId: StoreId, year: number, month: number) => {
+    if (document.visibilityState === 'hidden') return;
+    if (pendingServerSaveRef.current || savingServerRef.current) return;
+
+    const monthText = String(month).padStart(2, '0');
+    const baseUrl = serverUrl || '';
+    const branches = ['caixa', 'fechamento', 'lancamentos'] as const;
+
+    try {
+      setIsPullingServerData(true);
+      const responses = await Promise.all(branches.map(async (branch) => {
+        const response = await fetch(`${baseUrl}/api/periodo/${branch}/${storeId}/${year}/${monthText}`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) throw new Error(`${branch}: HTTP ${response.status}`);
+        const result = await response.json();
+        if (!result?.success) throw new Error(`${branch}: resposta invalida`);
+        return result.data || {};
+      }));
+
+      const [caixaPeriod, fechamentoPeriod, lancamentosPeriod] = responses;
+      setCaixaData((prev) => ({
+        ...prev,
+        [storeId]: { ...(prev[storeId] || {}), ...caixaPeriod },
+      }));
+      setFechamentoData((prev) => ({
+        ...prev,
+        [storeId]: { ...(prev[storeId] || {}), ...fechamentoPeriod },
+      }));
+      setLancamentosData((prev) => ({
+        ...prev,
+        [storeId]: { ...(prev[storeId] || {}), ...lancamentosPeriod },
+      }));
+
+      setStores((prev) => {
+        const mapped = buildStoresFromFechamento(
+          prev,
+          { [storeId]: fechamentoPeriod },
+          settingsRef.current,
+        );
+        const sourceStore = mapped[storeId];
+        if (!sourceStore) return mapped;
+
+        const nextStore: StoreData = {
+          ...sourceStore,
+          months: (sourceStore.months || []).map((item) => ({
+            ...item,
+            entries: [...(item.entries || [])],
+          })),
+        };
+        let targetMonth = nextStore.months.find((item) => item.year === year && item.month === month);
+        if (!targetMonth) {
+          targetMonth = { year, month, entries: [] };
+          nextStore.months.push(targetMonth);
+        }
+
+        Object.entries(lancamentosPeriod || {}).forEach(([date, incoming]: [string, any]) => {
+          const mapping = storeId === 'loja1'
+            ? (settingsRef.current.fieldMappingLan1 || [])
+            : storeId === 'loja2'
+              ? (settingsRef.current.fieldMappingLan2 || [])
+              : [];
+          const mappedFields = new Set(mapping.map((item: any) => item?.lancamento_field).filter(Boolean));
+          const hasFechamentoForDate = Object.prototype.hasOwnProperty.call(fechamentoPeriod || {}, date);
+          const index = targetMonth!.entries.findIndex((entry) => entry.date === date);
+          if (index < 0) {
+            targetMonth!.entries.push({
+              date,
+              values: { ...(incoming?.values || {}) },
+              details: incoming?.details,
+              manualFields: incoming?.manualFields || [],
+            });
+            return;
+          }
+
+          const previous = targetMonth!.entries[index];
+          const manualFields = Array.from(new Set([
+            ...(previous.manualFields || []),
+            ...(incoming?.manualFields || []),
+          ]));
+          const values = { ...(previous.values || {}) };
+          Object.entries(incoming?.values || {}).forEach(([field, value]) => {
+            // Campos mapeados automaticamente sempre vem do Fechamento.
+            // So uma marcacao manual explicita pode substituir esse valor.
+            if (!hasFechamentoForDate || !mappedFields.has(field) || manualFields.includes(field)) {
+              values[field] = Number(value || 0);
+            }
+          });
+          targetMonth!.entries[index] = {
+            ...previous,
+            values,
+            details: incoming?.details || previous.details,
+            manualFields,
+          };
+        });
+
+        return { ...mapped, [storeId]: nextStore };
+      });
+      setIsOnline(true);
+    } catch (error) {
+      setIsOnline(false);
+      console.warn('[AppContext] Falha ao atualizar periodo parcial:', error);
+    } finally {
+      setIsPullingServerData(false);
+    }
+  }, [serverUrl]);
+
   const saveEntry = (date: string, values: Record<string, number>, source: 'sync' | 'manual' = 'sync') => {
     setStores(prev => {
       const store = { ...prev[currentStore], months: [...prev[currentStore].months] };
@@ -921,7 +1031,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setSettings(s => ({
       ...s,
-      accessLogs: [...(s.accessLogs || []), newLog].slice(-100), // Manter últimas 100 tentativas
+      accessLogs: [...(s.accessLogs || []), newLog].slice(-2000), // manter histórico maior para backup/auditoria
     }));
   };
 
@@ -933,7 +1043,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings(s => ({ ...s, accessLogs: [] }));
   };
 
-  const clearAccessLogsByDate = async (date: string, storeId: string = currentStore) => {
+  const clearAccessLogsByDate = async (date: string, storeId: string = currentStore, password = '') => {
     const getLogDate = (log: any) => {
       if (log?.date) return String(log.date).slice(0, 10);
       const d = new Date(log?.timestamp || 0);
@@ -954,12 +1064,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const resp = await fetch(`${serverUrl}/api/settings/clear-occurrences-by-date`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, storeId }),
+      body: JSON.stringify({ date, storeId, password }),
     });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   };
 
-  const addTimelineEntry = (module: 'caixa' | 'fechamento' | 'lancamentos', action: 'create' | 'update' | 'delete', date: string, field?: string, oldValue?: string | number, newValue?: string | number, description?: string) => {
+  const addTimelineEntry = (module: 'caixa' | 'fechamento' | 'lancamentos' | 'opcoes', action: 'create' | 'update' | 'delete', date: string, field?: string, oldValue?: string | number, newValue?: string | number, description?: string) => {
     const newEntry = {
       id: Date.now().toString(),
       timestamp: Date.now(),
@@ -974,7 +1084,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setSettings(s => ({
       ...s,
-      timeline: [...(s.timeline || []), newEntry].slice(-500),
+      timeline: [...(s.timeline || []), newEntry].slice(-2000),
     }));
   };
 
@@ -987,6 +1097,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value: AppContextType = {
+    accessContext,
     saldoDia,
     setSaldoDia,
     caixaData,
@@ -1031,8 +1142,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveEntry,
     clearManualFieldMark,
     saveLancamentoEntry,
+    lancamentosData,
+    setLancamentosData,
+    refreshPeriodData,
     deleteEntry,
     debts,
+    setDebts,
     addDebt,
     payDebt,
     removeDebt,

@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { MONTH_NAMES } from '@/lib/types';
 import type { Category } from '@/lib/types';
 
-const HIDDEN_LANCAMENTO_CATEGORY_IDS = new Set(['cart_jb', 'est_desp', 'sangria']);
+const HIDDEN_LANCAMENTO_CATEGORY_IDS = new Set(['dinheiro', 'sobra', 'cart_jb', 'est_desp', 'sangria']);
 const STORE_THEME: Record<string, { label: string; color: string; soft: string; border: string; text: string }> = {
   loja1: { label: 'Loja 1', color: '#0d6efd', soft: 'rgba(13,110,253,0.12)', border: 'rgba(13,110,253,0.35)', text: '#0d6efd' },
   loja2: { label: 'Loja 2', color: '#f59e0b', soft: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.45)', text: '#b45309' },
@@ -20,7 +20,7 @@ const STORE_THEME: Record<string, { label: string; color: string; soft: string; 
 };
 
 export default function LancamentosTab({ readOnly = false }: { readOnly?: boolean }) {
-  const { settings, setSettings, getCategories, getMonthData, saveEntry, clearManualFieldMark, deleteEntry, removeCategory, updateCategory, selectedYear, selectedMonth, currentStore, stores, setStores, fechamentoData, setFechamentoData, caixaData, addTimelineEntry } = useApp();
+  const { settings, setSettings, getCategories, getMonthData, saveEntry, clearManualFieldMark, deleteEntry, removeCategory, updateCategory, selectedYear, selectedMonth, currentStore, stores, setStores, fechamentoData, setFechamentoData, caixaData, addTimelineEntry, refreshPeriodData } = useApp();
   const allCats = getCategories();
   const md = getMonthData(selectedYear, selectedMonth);
   const days = getDaysInMonth(selectedYear, selectedMonth);
@@ -29,9 +29,13 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
   const [showEdit, setShowEdit] = useState(false);
   const [showCatMgr, setShowCatMgr] = useState(false);
   const [showCustomSaldo, setShowCustomSaldo] = useState(false);
+  const [expandedCustomSaldoCategory, setExpandedCustomSaldoCategory] = useState<string | null>(null);
   const [showBoletoLists, setShowBoletoLists] = useState(false);
   const [newBoletoCompany, setNewBoletoCompany] = useState('');
   const [customSaldoLabelDraft, setCustomSaldoLabelDraft] = useState('');
+  const [customSaldoSelectionDraft, setCustomSaldoSelectionDraft] = useState<string[]>([]);
+  const [customSaldoDaysByStoreDraft, setCustomSaldoDaysByStoreDraft] = useState<Record<string, number[]>>({ loja1: [], loja2: [] });
+  const [customSaldoDaysBySelectionDraft, setCustomSaldoDaysBySelectionDraft] = useState<Record<string, number[]>>({});
   const [selDay, setSelDay] = useState(1);
   const [vals, setVals] = useState<Record<string, string>>({});
   const [editDate, setEditDate] = useState('');
@@ -42,8 +46,14 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
   const [draggedCat, setDraggedCat] = useState<string | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const customSaldoLabelEditingRef = useRef(false);
   const currentMonthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+  useEffect(() => {
+    void refreshPeriodData(currentStore, selectedYear, selectedMonth);
+    const timer = window.setInterval(() => {
+      void refreshPeriodData(currentStore, selectedYear, selectedMonth);
+    }, 3 * 60_000);
+    return () => window.clearInterval(timer);
+  }, [currentStore, selectedYear, selectedMonth, refreshPeriodData]);
   const boletoMappedCategory = useMemo(() => {
     const mapping = currentStore === 'loja1'
       ? settings.fieldMappingLan1
@@ -77,8 +87,8 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
   const allMonthDays = useMemo(() => Array.from({ length: days }, (_, i) => i + 1), [days]);
 
   const customSaldoOptions = useMemo(() => {
-    const opts: { key: string; storeId: string; storeLabel: string; catId: string; catLabel: string; color: string; soft: string; border: string }[] = [];
-    (['loja1', 'loja2', 'loja3'] as const).forEach((storeId) => {
+    const opts: { key: string; storeId: 'loja1' | 'loja2'; storeLabel: string; catId: string; catLabel: string; color: string; soft: string; border: string }[] = [];
+    (['loja1', 'loja2'] as const).forEach((storeId) => {
       const store = stores[storeId];
       (store?.categories || [])
         .filter((c) => !HIDDEN_LANCAMENTO_CATEGORY_IDS.has(c.id) && (!c.activeMonths?.length || c.activeMonths.includes(currentMonthKey)))
@@ -111,14 +121,37 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
   const customSaldoConfig = settings.customSaldoByStoreMonth?.[currentStore]?.[currentMonthKey];
   const customSaldoLabel = customSaldoConfig?.label || 'Saldo Personalizado';
   const customSaldoSelection = customSaldoConfig?.selection || legacyCustomSaldoSelection;
-  const activeCustomDays = customSaldoConfig
-    ? customSaldoConfig.days
-    : (settings.customSaldoDays?.length ? settings.customSaldoDays : allMonthDays);
+  const activeCustomDaysByStore = useMemo(() => {
+    const fallbackDays = customSaldoConfig
+      ? customSaldoConfig.days
+      : (settings.customSaldoDays?.length ? settings.customSaldoDays : allMonthDays);
+    const saved = customSaldoConfig?.daysByStore || {};
+    const getSavedOrFallback = (storeId: string) => (
+      Object.prototype.hasOwnProperty.call(saved, storeId)
+        ? (Array.isArray(saved[storeId]) ? saved[storeId] : [])
+        : fallbackDays
+    );
+    return {
+      loja1: getSavedOrFallback('loja1'),
+      loja2: getSavedOrFallback('loja2'),
+    };
+  }, [customSaldoConfig, settings.customSaldoDays, allMonthDays]);
 
-  const calculateCustomSaldoTotal = (selection: string[], selectedDays: number[]) => {
+  const activeCustomDaysBySelection = useMemo(() => (
+    customSaldoConfig?.daysBySelection || {}
+  ), [customSaldoConfig]);
+
+  const calculateCustomSaldoTotal = (
+    selection: string[],
+    selectedDaysByStore: Record<string, number[]>,
+    selectedDaysBySelection: Record<string, number[]> = {},
+  ) => {
     return selection.reduce((acc, categoryId) => {
       const opt = customSaldoOptions.find((item) => item.key === categoryId);
       if (!opt) return acc;
+      const selectedDays = Object.prototype.hasOwnProperty.call(selectedDaysBySelection, categoryId)
+        ? (Array.isArray(selectedDaysBySelection[categoryId]) ? selectedDaysBySelection[categoryId] : [])
+        : (selectedDaysByStore[opt.storeId] || []);
       const store = stores[opt.storeId as keyof typeof stores];
       if (!store) return acc;
       const monthData = store.months.find((m) => m.year === selectedYear && m.month === selectedMonth);
@@ -133,8 +166,12 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
   };
 
   const customSaldoTotal = useMemo(() => {
-    return calculateCustomSaldoTotal(customSaldoSelection, activeCustomDays);
-  }, [customSaldoSelection, activeCustomDays, stores, currentStore, selectedYear, selectedMonth]);
+    return calculateCustomSaldoTotal(customSaldoSelection, activeCustomDaysByStore, activeCustomDaysBySelection);
+  }, [customSaldoSelection, activeCustomDaysByStore, activeCustomDaysBySelection, stores, currentStore, selectedYear, selectedMonth]);
+
+  const customSaldoDraftTotal = useMemo(() => {
+    return calculateCustomSaldoTotal(customSaldoSelectionDraft, customSaldoDaysByStoreDraft, customSaldoDaysBySelectionDraft);
+  }, [customSaldoSelectionDraft, customSaldoDaysByStoreDraft, customSaldoDaysBySelectionDraft, stores, currentStore, selectedYear, selectedMonth]);
 
   const getCustomSaldoLabels = (selection: string[]) =>
     selection.map((key) => {
@@ -142,13 +179,49 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
       return opt ? `${opt.catLabel} (${opt.storeLabel})` : key;
     });
 
-  const saveCustomSaldoConfig = (selection: string[], selectedDays: number[], action: string, label = customSaldoLabel) => {
+  const getCustomSaldoActor = () => {
+    try {
+      const raw = localStorage.getItem('fd_sales_readonly_user');
+      const parsed = raw ? JSON.parse(raw) : null;
+      return String(parsed?.name || parsed?.id || '').trim() || 'Administrador';
+    } catch (_error) {
+      return 'Administrador';
+    }
+  };
+
+  const cleanCustomDaysByStore = (daysByStore: Record<string, number[]>) => (
+    Object.fromEntries((['loja1', 'loja2'] as const).map((storeId) => [
+      storeId,
+      Array.from(new Set((daysByStore[storeId] || []).filter((day) => day >= 1 && day <= days))).sort((a, b) => a - b),
+    ]))
+  );
+
+  const cleanCustomDaysBySelection = (selection: string[], daysBySelection: Record<string, number[]>) => (
+    Object.fromEntries(Object.entries(daysBySelection || {})
+      .filter(([key]) => selection.includes(key) && customSaldoOptions.some((opt) => opt.key === key))
+      .map(([key, selectedDays]) => [
+        key,
+        Array.from(new Set((selectedDays || []).filter((day) => day >= 1 && day <= days))).sort((a, b) => a - b),
+      ]))
+  );
+
+  const saveCustomSaldoConfig = (
+    selection: string[],
+    selectedDaysByStore: Record<string, number[]>,
+    action: string,
+    label = customSaldoLabel,
+    selectedDaysBySelection: Record<string, number[]> = activeCustomDaysBySelection,
+  ) => {
     const cleanSelection = selection.filter((key) => customSaldoOptions.some((opt) => opt.key === key));
-    const cleanDays = Array.from(new Set(selectedDays.filter((day) => day >= 1 && day <= days))).sort((a, b) => a - b);
-    const total = calculateCustomSaldoTotal(cleanSelection, cleanDays);
+    const cleanDaysByStore = cleanCustomDaysByStore(selectedDaysByStore);
+    const cleanDaysBySelection = cleanCustomDaysBySelection(cleanSelection, selectedDaysBySelection);
+    const cleanDays = Array.from(new Set(Object.values(cleanDaysByStore).flat())).sort((a, b) => a - b);
+    const total = calculateCustomSaldoTotal(cleanSelection, cleanDaysByStore, cleanDaysBySelection);
     const updatedAt = new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace('T', ' ');
-    const historyEntry = {
-      id: `custom_saldo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    const historyId = `custom_saldo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const actor = getCustomSaldoActor();
+    const historyEntryBase = {
+      id: historyId,
       timestamp: Date.now(),
       updatedAt,
       storeId: currentStore,
@@ -156,63 +229,159 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
       selection: cleanSelection,
       selectionLabels: getCustomSaldoLabels(cleanSelection),
       days: cleanDays,
+      daysByStore: cleanDaysByStore,
+      daysBySelection: cleanDaysBySelection,
       total,
       action,
+      actor,
     };
 
-    setSettings((s) => ({
-      ...s,
-      customSaldoByStoreMonth: {
-        ...(s.customSaldoByStoreMonth || {}),
-        [currentStore]: {
-          ...(s.customSaldoByStoreMonth?.[currentStore] || {}),
-          [currentMonthKey]: {
-            label: 'Contador',
-            selection: cleanSelection,
-            days: cleanDays,
-            updatedAt,
-            total,
+    setSettings((s) => {
+      const previousConfig = s.customSaldoByStoreMonth?.[currentStore]?.[currentMonthKey];
+      const previousDaysByStore = previousConfig?.daysByStore || {};
+      const previousDaysBySelection = previousConfig?.daysBySelection || {};
+      const previousDays = previousConfig?.days || [];
+      const previousSelection = previousConfig?.selection || [];
+      const previousTotal = Number(previousConfig?.total || 0);
+      const previousSelectionLabels = getCustomSaldoLabels(previousSelection);
+      const historyEntry = {
+        ...historyEntryBase,
+        previousSelection,
+        previousSelectionLabels,
+        previousDays,
+        previousDaysByStore,
+        previousDaysBySelection,
+        previousTotal,
+      };
+      const backupEntry = {
+        id: historyId,
+        timestamp: historyEntry.timestamp,
+        updatedAt,
+        storeId: currentStore,
+        monthKey: currentMonthKey,
+        actor,
+        action,
+        before: previousConfig ? {
+          label: previousConfig.label,
+          selection: previousSelection,
+          days: previousDays,
+          daysByStore: previousDaysByStore,
+          daysBySelection: previousDaysBySelection,
+          total: previousTotal,
+        } : undefined,
+        after: {
+          label: 'Contador',
+          selection: cleanSelection,
+          days: cleanDays,
+          daysByStore: cleanDaysByStore,
+          daysBySelection: cleanDaysBySelection,
+          total,
+        },
+      };
+      const description = [
+        `Contador alterado por ${actor}`,
+        `${STORE_THEME[currentStore]?.label || currentStore} ${currentMonthKey}`,
+        `total ${formatCurrency(previousTotal)} -> ${formatCurrency(total)}`,
+        `categorias: ${getCustomSaldoLabels(cleanSelection).join(', ') || 'nenhuma'}`,
+      ].join(' | ');
+      const timelineEntry = {
+        id: historyId,
+        timestamp: historyEntry.timestamp,
+        module: 'lancamentos' as const,
+        storeId: currentStore,
+        action: 'update' as const,
+        date: `${currentMonthKey}-01`,
+        field: 'contador',
+        oldValue: previousTotal,
+        newValue: total,
+        description,
+      };
+
+      return {
+        ...s,
+        customSaldoByStoreMonth: {
+          ...(s.customSaldoByStoreMonth || {}),
+          [currentStore]: {
+            ...(s.customSaldoByStoreMonth?.[currentStore] || {}),
+            [currentMonthKey]: {
+              label: 'Contador',
+              selection: cleanSelection,
+              days: cleanDays,
+              daysByStore: cleanDaysByStore,
+              daysBySelection: cleanDaysBySelection,
+              updatedAt,
+              total,
+            },
           },
         },
-      },
-      customSaldoHistory: [...(s.customSaldoHistory || []), historyEntry].slice(-500),
-    }));
+        customSaldoHistory: [...(s.customSaldoHistory || []), historyEntry].slice(-1000),
+        customSaldoBackups: [...(s.customSaldoBackups || []), backupEntry].slice(-1000),
+        timeline: [...(s.timeline || []), timelineEntry].slice(-1000),
+      };
+    });
   };
 
   const toggleCustomSaldo = (key: string) => {
-    const next = customSaldoSelection.includes(key)
-      ? customSaldoSelection.filter((x) => x !== key)
-      : [...customSaldoSelection, key];
-    saveCustomSaldoConfig(next, activeCustomDays, 'toggle_category');
+    setCustomSaldoSelectionDraft((current) => current.includes(key)
+      ? current.filter((x) => x !== key)
+      : [...current, key]);
   };
 
-  const toggleCustomSaldoDay = (day: number) => {
-    const next = activeCustomDays.includes(day)
-      ? activeCustomDays.filter((d) => d !== day)
-      : [...activeCustomDays, day].sort((a, b) => a - b);
-    saveCustomSaldoConfig(customSaldoSelection, next, 'toggle_day');
+  const toggleCustomSaldoDay = (storeId: 'loja1' | 'loja2', day: number) => {
+    const currentDays = customSaldoDaysByStoreDraft[storeId] || [];
+    const nextDays = currentDays.includes(day)
+      ? currentDays.filter((d: number) => d !== day)
+      : [...currentDays, day].sort((a, b) => a - b);
+    setCustomSaldoDaysByStoreDraft((current) => ({ ...current, [storeId]: nextDays }));
   };
 
-  const setAllCustomSaldoDays = () => {
-    saveCustomSaldoConfig(customSaldoSelection, allMonthDays, 'select_all_days');
+  const setAllCustomSaldoDays = (storeId: string) => {
+    setCustomSaldoDaysByStoreDraft((current) => ({ ...current, [storeId]: allMonthDays }));
   };
 
-  const clearCustomSaldoDays = () => {
-    saveCustomSaldoConfig(customSaldoSelection, [], 'clear_days');
+  const clearCustomSaldoDays = (storeId: string) => {
+    setCustomSaldoDaysByStoreDraft((current) => ({ ...current, [storeId]: [] }));
   };
 
-  const updateCustomSaldoLabel = (label: string) => {
-    saveCustomSaldoConfig(customSaldoSelection, activeCustomDays, 'update_label', label);
+  const updateCustomSaldoCategoryDays = (key: string, selectedDays: number[] | null, action: string) => {
+    const nextDaysBySelection = { ...customSaldoDaysBySelectionDraft };
+    if (selectedDays === null) delete nextDaysBySelection[key];
+    else nextDaysBySelection[key] = Array.from(new Set(selectedDays)).sort((a, b) => a - b);
+    setCustomSaldoDaysBySelectionDraft(nextDaysBySelection);
+  };
+
+  const toggleCustomSaldoCategoryDay = (key: string, day: number) => {
+    const option = customSaldoOptions.find((item) => item.key === key);
+    if (!option) return;
+    const inheritedDays = customSaldoDaysByStoreDraft[option.storeId] || [];
+    const currentDays = Object.prototype.hasOwnProperty.call(customSaldoDaysBySelectionDraft, key)
+      ? (customSaldoDaysBySelectionDraft[key] || [])
+      : inheritedDays;
+    const nextDays = currentDays.includes(day)
+      ? currentDays.filter((item) => item !== day)
+      : [...currentDays, day];
+    updateCustomSaldoCategoryDays(key, nextDays, 'toggle_category_day');
   };
 
   useEffect(() => {
     if (!showCustomSaldo) return;
-    if (customSaldoLabelEditingRef.current) return;
     setCustomSaldoLabelDraft(customSaldoLabel);
-  }, [showCustomSaldo, customSaldoLabel]);
+    setCustomSaldoSelectionDraft([...customSaldoSelection]);
+    setCustomSaldoDaysByStoreDraft({
+      loja1: [...(activeCustomDaysByStore.loja1 || [])],
+      loja2: [...(activeCustomDaysByStore.loja2 || [])],
+    });
+    setCustomSaldoDaysBySelectionDraft(Object.fromEntries(
+      Object.entries(activeCustomDaysBySelection).map(([key, value]) => [key, [...value]])
+    ));
+    setExpandedCustomSaldoCategory(null);
+  }, [showCustomSaldo]);
 
-  const commitCustomSaldoLabel = () => {
-    updateCustomSaldoLabel(customSaldoLabelDraft);
+  const confirmCustomSaldoConfig = () => {
+    saveCustomSaldoConfig(customSaldoSelectionDraft, customSaldoDaysByStoreDraft, 'save_configuration',
+      customSaldoLabelDraft, customSaldoDaysBySelectionDraft);
+    setShowCustomSaldo(false);
+    toast.success('Configuração do contador salva.');
   };
 
   const addBoletoCompany = () => {
@@ -917,41 +1086,49 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
             <DialogTitle className="flex flex-col gap-1">
               <span>Configurar contador - {storeTheme.label} / {currentMonthKey}</span>
               <span className="text-4xl md:text-5xl font-extrabold font-mono-num" style={{ color: storeTheme.text }}>
-                {formatCurrency(customSaldoTotal)}
+                {formatCurrency(customSaldoDraftTotal)}
               </span>
             </DialogTitle>
           </DialogHeader>
-          <div className="rounded-xl p-3 mb-4" style={{ background: storeTheme.soft, border: `1px solid ${storeTheme.border}` }}>
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Dias incluidos</h4>
-              <div className="flex gap-2">
-                <button type="button" onClick={setAllCustomSaldoDays} className="text-xs font-bold hover:underline" style={{ color: storeTheme.text }}>Todos</button>
-                <button type="button" onClick={clearCustomSaldoDays} className="text-xs font-bold hover:underline" style={{ color: storeTheme.text }}>Limpar</button>
-              </div>
-            </div>
-            <div className="grid gap-1 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(34px, 1fr))' }}>
-              {Array.from({ length: days }, (_, i) => i + 1).map((day) => {
-                const checked = activeCustomDays.includes(day);
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleCustomSaldoDay(day)}
-                    className="h-8 rounded-md text-xs font-bold border"
-                    style={checked ? { background: storeTheme.color, color: '#fff', borderColor: storeTheme.color } : { background: 'rgba(148,163,184,0.12)', borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
-                  >
-                    {String(day).padStart(2, '0')}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="space-y-3 mb-4">
+            {(['loja1', 'loja2'] as const).map((storeId) => {
+              const theme = STORE_THEME[storeId];
+              const storeDays = customSaldoDaysByStoreDraft[storeId] || [];
+              return (
+                <div key={`custom-days-${storeId}`} className="rounded-xl p-3" style={{ background: theme.soft, border: `1px solid ${theme.border}` }}>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-extrabold" style={{ color: theme.text }}>Dias incluídos - {theme.label}</h4>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setAllCustomSaldoDays(storeId)} className="text-xs font-bold hover:underline" style={{ color: theme.text }}>Todos</button>
+                      <button type="button" onClick={() => clearCustomSaldoDays(storeId)} className="text-xs font-bold hover:underline" style={{ color: theme.text }}>Limpar</button>
+                    </div>
+                  </div>
+                  <div className="grid gap-1 mt-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(34px, 1fr))' }}>
+                    {Array.from({ length: days }, (_, i) => i + 1).map((day) => {
+                      const checked = storeDays.includes(day);
+                      return (
+                        <button
+                          key={`${storeId}-${day}`}
+                          type="button"
+                          onClick={() => toggleCustomSaldoDay(storeId, day)}
+                          className="h-8 rounded-md text-xs font-bold border"
+                          style={checked ? { background: theme.color, color: '#fff', borderColor: theme.color } : { background: 'rgba(255,255,255,0.58)', borderColor: theme.border, color: 'var(--muted-foreground)' }}
+                        >
+                          {String(day).padStart(2, '0')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Selecione categorias das lojas 1, 2 e 3. Est/Desp, Sangria e Cart/JB ficam fora do contador.
+              Os dias acima são o padrão de cada loja. Depois de selecionar uma categoria, use “Dias” somente quando ela precisar de datas diferentes.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {(['loja1', 'loja2', 'loja3'] as const).map((storeId) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {(['loja1', 'loja2'] as const).map((storeId) => {
                 const theme = STORE_THEME[storeId];
                 const opts = customSaldoOptions.filter((opt) => opt.storeId === storeId);
                 return (
@@ -959,20 +1136,82 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
                     <h4 className="text-sm font-extrabold mb-2" style={{ color: theme.text }}>{theme.label}</h4>
                     <div className="grid grid-cols-1 gap-2">
                       {opts.map((opt) => {
-                        const checked = customSaldoSelection.includes(opt.key);
+                        const checked = customSaldoSelectionDraft.includes(opt.key);
+                        const hasCustomDays = Object.prototype.hasOwnProperty.call(customSaldoDaysBySelectionDraft, opt.key);
+                        const categoryDays = hasCustomDays
+                          ? (customSaldoDaysBySelectionDraft[opt.key] || [])
+                          : (customSaldoDaysByStoreDraft[opt.storeId] || []);
+                        const expanded = expandedCustomSaldoCategory === opt.key;
                         return (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => toggleCustomSaldo(opt.key)}
-                            className="w-full text-left px-3 py-2 rounded-lg border flex items-center justify-between gap-3 bg-card/80 min-w-0"
-                            style={checked ? { borderColor: theme.color, boxShadow: `0 0 0 1px ${theme.border}` } : { borderColor: 'var(--border)' }}
-                          >
-                            <span className="text-sm font-semibold truncate">{opt.catLabel}</span>
-                            <span className="text-xs font-bold shrink-0" style={{ color: checked ? theme.text : 'var(--muted-foreground)' }}>
-                              {checked ? 'Somar' : 'Ignorar'}
-                            </span>
-                          </button>
+                          <div key={opt.key} className="space-y-2">
+                            <div className="flex items-stretch gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleCustomSaldo(opt.key)}
+                                className="flex-1 text-left px-3 py-2 rounded-lg border flex items-center justify-between gap-3 bg-card/80 min-w-0"
+                                style={checked ? { borderColor: theme.color, boxShadow: `0 0 0 1px ${theme.border}` } : { borderColor: 'var(--border)' }}
+                              >
+                                <span className="min-w-0">
+                                  <span className="block text-sm font-semibold truncate">{opt.catLabel}</span>
+                                  {checked && (
+                                    <span className="block text-[10px] mt-0.5" style={{ color: hasCustomDays ? theme.text : 'var(--muted-foreground)' }}>
+                                      {hasCustomDays ? `${categoryDays.length} dia(s) específico(s)` : `Padrão da loja • ${categoryDays.length} dia(s)`}
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="text-xs font-bold shrink-0" style={{ color: checked ? theme.text : 'var(--muted-foreground)' }}>
+                                  {checked ? 'Somar' : 'Ignorar'}
+                                </span>
+                              </button>
+                              {checked && (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedCustomSaldoCategory(expanded ? null : opt.key)}
+                                  className="w-16 rounded-lg border bg-card/80 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold"
+                                  style={{ borderColor: hasCustomDays ? theme.color : theme.border, color: theme.text }}
+                                  title={`Escolher dias específicos para ${opt.catLabel}`}
+                                >
+                                  <Settings2 className="w-4 h-4" />
+                                  Dias
+                                </button>
+                              )}
+                            </div>
+                            {checked && expanded && (
+                              <div className="rounded-xl border p-3 bg-card/90" style={{ borderColor: theme.border }}>
+                                <div className="flex items-start justify-between gap-3 mb-2">
+                                  <div>
+                                    <div className="text-xs font-extrabold" style={{ color: theme.text }}>Dias específicos — {opt.catLabel}</div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      {hasCustomDays ? 'Esta categoria não usa mais o padrão da loja.' : 'Ainda usando os dias padrão da loja.'}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2 text-[10px] font-bold shrink-0">
+                                    <button type="button" onClick={() => updateCustomSaldoCategoryDays(opt.key, null, 'reset_category_days')} className="hover:underline" style={{ color: theme.text }}>Usar padrão</button>
+                                    <button type="button" onClick={() => updateCustomSaldoCategoryDays(opt.key, allMonthDays, 'select_all_category_days')} className="hover:underline" style={{ color: theme.text }}>Todos</button>
+                                    <button type="button" onClick={() => updateCustomSaldoCategoryDays(opt.key, [], 'clear_category_days')} className="hover:underline" style={{ color: theme.text }}>Limpar</button>
+                                  </div>
+                                </div>
+                                <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(31px, 1fr))' }}>
+                                  {allMonthDays.map((day) => {
+                                    const dayChecked = categoryDays.includes(day);
+                                    return (
+                                      <button
+                                        key={`${opt.key}-${day}`}
+                                        type="button"
+                                        onClick={() => toggleCustomSaldoCategoryDay(opt.key, day)}
+                                        className="h-7 rounded-md text-[10px] font-bold border"
+                                        style={dayChecked
+                                          ? { background: theme.color, color: '#fff', borderColor: theme.color }
+                                          : { background: 'rgba(255,255,255,0.6)', borderColor: theme.border, color: 'var(--muted-foreground)' }}
+                                      >
+                                        {String(day).padStart(2, '0')}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
@@ -980,6 +1219,14 @@ export default function LancamentosTab({ readOnly = false }: { readOnly?: boolea
                 );
               })}
             </div>
+          </div>
+          <div className="sticky bottom-0 -mx-5 md:-mx-6 -mb-5 md:-mb-6 mt-5 px-5 md:px-6 py-4 border-t bg-background/95 backdrop-blur flex gap-3">
+            <Button variant="secondary" onClick={() => setShowCustomSaldo(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button onClick={confirmCustomSaldoConfig} className="flex-1 font-bold">
+              Salvar configuração
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

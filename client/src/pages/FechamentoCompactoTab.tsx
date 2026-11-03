@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AccessLogsReport } from '@/components/AccessLogsReport';
-import { Banknote, FileText, CreditCard, ChevronLeft, ChevronRight, UserRound } from 'lucide-react';
+import { AlertTriangle, Banknote, FileText, CreditCard, ChevronLeft, ChevronRight, UserRound, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { addDaysToDateStr, localDateStr } from '@/lib/helpers';
 import { toast } from 'sonner';
@@ -78,9 +78,28 @@ const isAnnotationActionLog = (details?: string) => {
 };
 
 export default function FechamentoCompactoTab() {
-  const { currentStore, getAccessLogs, clearAccessLogsByDate, fechamentoData, caixaData, settings } = useApp();
+  const { accessContext, currentStore, getAccessLogs, clearAccessLogsByDate, fechamentoData, caixaData, settings, refreshPeriodData } = useApp();
   const [data, setData] = useState<string>(() => localDateStr());
   const [showBoletoCompanies, setShowBoletoCompanies] = useState(false);
+  const [showOccurrences, setShowOccurrences] = useState(false);
+  const [showSangrias, setShowSangrias] = useState(false);
+  const morningDefaultDateAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (!accessContext?.fechamentoPreviousDay || !accessContext.defaultDate || morningDefaultDateAppliedRef.current) return;
+    morningDefaultDateAppliedRef.current = true;
+    setData(accessContext.defaultDate);
+  }, [accessContext?.defaultDate, accessContext?.fechamentoPreviousDay]);
+
+  useEffect(() => {
+    const [year, month] = data.split('-').map(Number);
+    if (!year || !month) return;
+    void refreshPeriodData(currentStore, year, month);
+    const timer = window.setInterval(() => {
+      void refreshPeriodData(currentStore, year, month);
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [currentStore, data, refreshPeriodData]);
 
   const fechamentoPorData = fechamentoData[currentStore] || {};
   const fechamentoAtual = fechamentoPorData[data] || {};
@@ -148,8 +167,14 @@ export default function FechamentoCompactoTab() {
       return;
     }
     if (!window.confirm(`Limpar ${todayLogs.length} ocorrência(s) de ${formatarDataComDia(data)}?`)) return;
+    const password = window.prompt('Digite a senha de vendas para limpar as ocorrências deste dia:');
+    if (password === null) return;
+    if (password !== (settings.senhaVendas || '2512')) {
+      toast.error('Senha de vendas incorreta.');
+      return;
+    }
     try {
-      await clearAccessLogsByDate(data, currentStore);
+      await clearAccessLogsByDate(data, currentStore, password);
       toast.success('Ocorrências do dia limpas.');
     } catch (error) {
       console.error('[FechamentoCompacto] Erro ao limpar ocorrências do dia:', error);
@@ -157,22 +182,33 @@ export default function FechamentoCompactoTab() {
     }
   };
 
+  const getValorCardFill = (label: string) => {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('dinheiro')) return 'bg-green-50/90 dark:bg-green-950/25';
+    if (normalized.includes('pix')) return 'bg-blue-50/90 dark:bg-blue-950/25';
+    if (normalized.includes('cart')) return 'bg-purple-50/90 dark:bg-purple-950/25';
+    if (normalized.includes('boleto')) return 'bg-red-50/90 dark:bg-red-950/25';
+    return 'bg-card';
+  };
+
   const renderValorCard = (label: string, value: number, Icon: any, accent: string, onClick?: () => void) => (
     <Card
       key={label}
       onClick={onClick}
-      className={`p-3 md:p-4 border-l-4 ${accent.split(' ')[0]} min-h-[96px] ${onClick ? 'cursor-pointer hover:bg-primary/5 transition-colors' : ''}`}
+      className={`px-3 py-2 border-l-[6px] ${accent.split(' ')[0]} ${getValorCardFill(label)} min-h-[68px] shadow-sm ${onClick ? 'cursor-pointer hover:brightness-95 transition-all' : ''}`}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-0">
         <Icon className={`w-5 h-5 ${accent.split(' ')[1]}`} />
-        <span className="text-sm font-semibold text-muted-foreground">{label}</span>
+        <span className={`text-base font-extrabold ${accent.split(' ')[1]}`}>{label}</span>
       </div>
-      <p className={`text-xl font-bold ${accent.split(' ')[1]}`}>{formatCurrency(value)}</p>
+      <p className={`text-3xl font-black leading-none ${accent.split(' ')[1]}`}>{formatCurrency(value)}</p>
     </Card>
   );
 
   return (
-    <div className="flex gap-4 pb-24 px-2 max-w-6xl mx-auto flex-col md:flex-row">
+    <div className={`flex gap-4 pb-24 px-2 mx-auto flex-col md:flex-row transition-[max-width] duration-300 ${
+      showOccurrences ? 'max-w-[1500px]' : 'max-w-[980px]'
+    }`}>
       <div className="flex-1 space-y-2 min-w-0">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" onClick={() => mudarDia(-1)} className="h-8 w-8 p-0">
@@ -231,9 +267,22 @@ export default function FechamentoCompactoTab() {
               <p className="text-[10px] font-semibold text-muted-foreground uppercase">Sobra</p>
               <p className="text-sm font-bold text-amber-600 truncate">{formatCurrency(valores[4].value)}</p>
             </Card>
-            <Card className="p-2 border-l-4 border-l-red-500 min-w-0">
+            <Card
+              onClick={() => sangrias.length > 0 && setShowSangrias((value) => !value)}
+              className={`p-2 border-l-4 border-l-red-500 min-w-0 ${
+                sangrias.length > 0 ? 'cursor-pointer hover:bg-red-50/70 transition-colors' : ''
+              }`}
+              title={sangrias.length > 0 ? 'Clique para ver as sangrias' : undefined}
+            >
               <p className="text-[10px] font-semibold text-muted-foreground uppercase">Total Sangria</p>
-              <p className="text-sm font-bold text-red-600 truncate">{formatCurrency(totalSangrias)}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-red-600 truncate">{formatCurrency(totalSangrias)}</p>
+                {sangrias.length > 0 && (
+                  <span className="text-[10px] font-black text-red-600">
+                    {showSangrias ? '▲' : '▼'}
+                  </span>
+                )}
+              </div>
             </Card>
             <Card className="p-2 border-l-4 border-l-green-500 bg-green-50/60 dark:bg-green-950/20 min-w-0">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase">Saldo Dinheiro</p>
@@ -249,9 +298,9 @@ export default function FechamentoCompactoTab() {
           )}
         </motion.div>
 
-        {(sangrias.length > 0 || despesas.length > 0) && (
+        {((showSangrias && sangrias.length > 0) || despesas.length > 0) && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-            {sangrias.length > 0 && (
+            {showSangrias && sangrias.length > 0 && (
               <Card className="p-2">
                 <p className="text-xs font-semibold text-muted-foreground mb-1">Sangrias ({sangrias.length})</p>
                 <div className="space-y-1">
@@ -282,22 +331,51 @@ export default function FechamentoCompactoTab() {
         )}
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="p-4 md:p-5 bg-primary/10 border-2 border-primary/30 flex items-center justify-between gap-4">
-            <p className="text-lg md:text-xl font-extrabold text-primary uppercase">Total Geral</p>
-            <p className="text-2xl md:text-3xl font-extrabold text-primary text-right">{formatCurrency(totalGeral)}</p>
+          <Card className="p-4 bg-primary/15 border-2 border-primary/40 flex items-center justify-between gap-4 shadow-sm">
+            <p className="text-xl md:text-2xl font-black text-primary uppercase">Total Geral</p>
+            <p className="text-3xl md:text-4xl font-black text-primary text-right">{formatCurrency(totalGeral)}</p>
           </Card>
         </motion.div>
       </div>
 
-      <div className="hidden md:block">
-        {todayLogs.length > 0 && (
-          <div className="mb-2 flex justify-end">
-            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={limparOcorrenciasDoDia}>
-              Limpar dia
-            </Button>
-          </div>
+      <div className={`hidden md:flex md:h-[calc(100vh-120px)] shrink-0 flex-col transition-all duration-300 ${
+        showOccurrences ? 'md:w-[360px] lg:w-[460px] xl:w-[540px]' : 'md:w-16'
+      }`}>
+        {!showOccurrences ? (
+          <button
+            type="button"
+            onClick={() => setShowOccurrences(true)}
+            className={`relative flex h-20 w-20 items-center justify-center rounded-3xl border shadow-md transition-all ${
+              todayLogs.length > 0
+                ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
+                : 'border-border bg-card text-muted-foreground hover:bg-secondary'
+            }`}
+            title={todayLogs.length > 0 ? `${todayLogs.length} ocorrência(s)` : 'Sem ocorrências'}
+          >
+            {todayLogs.length > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-7 min-w-7 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-black text-white">
+                {todayLogs.length > 99 ? '99+' : todayLogs.length}
+              </span>
+            )}
+            {todayLogs.length > 0 && <span className="absolute inset-0 rounded-3xl bg-red-500/25 animate-ping" />}
+            <AlertTriangle className="relative h-10 w-10" />
+          </button>
+        ) : (
+          <>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => setShowOccurrences(false)}>
+                <X className="mr-1 h-4 w-4" />
+                Ocultar
+              </Button>
+              {todayLogs.length > 0 && (
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={limparOcorrenciasDoDia}>
+                  Limpar dia
+                </Button>
+              )}
+            </div>
+            <AccessLogsReport logs={todayLogs} />
+          </>
         )}
-        <AccessLogsReport logs={todayLogs} />
       </div>
     </div>
   );

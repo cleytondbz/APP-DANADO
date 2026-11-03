@@ -133,7 +133,6 @@ export function useSyncServer(options: UseSyncServerOptions = {}) {
       const result = await response.json();
 
       if (result.success && result.data) {
-        console.log('[useSyncServer] Dados carregados:', result.data);
         lastSyncRef.current = result.timestamp;
         // Garantir que caixa e fechamento sejam objetos vazios se não existirem
         const dataWithDefaults = {

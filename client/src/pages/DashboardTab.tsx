@@ -4,8 +4,6 @@ import { formatCurrency, getDaysInMonth, getDayOfWeek } from '@/lib/helpers';
 import { CHART_HEX, DAY_NAMES_FULL } from '@/lib/types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend, AreaChart, Area } from 'recharts';
 import { motion } from 'framer-motion';
-import { exportReportPDF } from '@/lib/pdf-export';
-import { Download } from 'lucide-react';
 import TotaisTab from './TotaisTab';
 
 
@@ -94,7 +92,7 @@ const STORE_THEME: Record<string, { color: string; soft: string; border: string;
 };
 
 export default function DashboardTab() {
-  const { settings, stores, currentStore, getCategories, getMonthData, selectedYear, selectedMonth, caixaData } = useApp();
+  const { settings, stores, currentStore, getCategories, getMonthData, selectedYear, selectedMonth, caixaData, refreshPeriodData } = useApp();
   const storeTheme = STORE_THEME[currentStore] || STORE_THEME.loja1;
   const cats = getCategories();
   const md = getMonthData(selectedYear, selectedMonth);
@@ -114,7 +112,7 @@ export default function DashboardTab() {
 
   useEffect(() => {
     let cancelled = false;
-    const controller = new AbortController();
+    let controller = new AbortController();
 
     const loadDashboardSummary = async () => {
       try {
@@ -132,12 +130,24 @@ export default function DashboardTab() {
 
     setAnnualDashboardSummary(null);
     loadDashboardSummary();
+    void Promise.all((['loja1', 'loja2', 'loja3'] as const).map((storeId) =>
+      refreshPeriodData(storeId, selectedYear, selectedMonth)
+    ));
+    const timer = window.setInterval(() => {
+      controller.abort();
+      controller = new AbortController();
+      loadDashboardSummary();
+      void Promise.all((['loja1', 'loja2', 'loja3'] as const).map((storeId) =>
+        refreshPeriodData(storeId, selectedYear, selectedMonth)
+      ));
+    }, 3 * 60_000);
 
     return () => {
       cancelled = true;
       controller.abort();
+      window.clearInterval(timer);
     };
-  }, [selectedYear]);
+  }, [selectedYear, selectedMonth, refreshPeriodData]);
   const [pieChartType, setPieChartType] = useState<'pie' | 'donut'>('pie');
 
   // Get previous month data for comparison
@@ -163,13 +173,21 @@ export default function DashboardTab() {
   const customSaldoCategoryTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     const selectedCategories = customSaldoConfig?.selection || [];
-    const selectedDays = customSaldoConfig?.days || [];
-    if (selectedCategories.length === 0 || selectedDays.length === 0) return totals;
+    const fallbackDays = customSaldoConfig?.days || [];
+    const selectedDaysByStore = customSaldoConfig?.daysByStore || {};
+    const selectedDaysBySelection = customSaldoConfig?.daysBySelection || {};
+    if (selectedCategories.length === 0) return totals;
 
     selectedCategories.forEach((selectionKey) => {
       const [maybeStoreId, maybeCatId] = String(selectionKey).split(':');
       const storeId = maybeCatId ? maybeStoreId : currentStore;
       const categoryId = maybeCatId || maybeStoreId;
+      const selectedDays = Object.prototype.hasOwnProperty.call(selectedDaysBySelection, selectionKey)
+        ? (Array.isArray(selectedDaysBySelection[selectionKey]) ? selectedDaysBySelection[selectionKey] : [])
+        : Object.prototype.hasOwnProperty.call(selectedDaysByStore, storeId)
+          ? (Array.isArray(selectedDaysByStore[storeId]) ? selectedDaysByStore[storeId] : [])
+          : fallbackDays;
+      if (selectedDays.length === 0) return;
       const store = stores[storeId];
       const monthData = store?.months?.find((m) => m.year === selectedYear && m.month === selectedMonth);
       monthData?.entries?.forEach((entry) => {
@@ -325,33 +343,11 @@ export default function DashboardTab() {
 
   const toggleDay = (d: number) => setSelDays(p => p.includes(d) ? p.filter(x => x !== d) : [...p, d].sort());
 
-  const handleExportPDF = () => {
-    const storeData = [{ name: 'Loja 1', total: monthTotal }];
-    exportReportPDF({
-      year: selectedYear,
-      month: selectedMonth,
-      monthTotal,
-      prevMonthTotal,
-      monthComparison,
-      categories: cats,
-      catTotals,
-      dailyData,
-      stores: storeData,
-    });
-  };
-
   const tooltipTextColor = settings.dasColors?.tooltipText || '#000000';
   const tooltipBgColor = settings.dasColors?.tooltipBg || '#ffffff';
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-
-      {/* Botão de Exportação */}
-      <button onClick={handleExportPDF}
-        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl p-3 font-semibold transition-colors">
-        <Download className="w-5 h-5" />
-        Exportar Relatório em PDF
-      </button>
 
       {/* Total do Mês com Comparação */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}

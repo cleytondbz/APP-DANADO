@@ -25,6 +25,16 @@ export default function OpcoesTab() {
     updateDateProtection,
     stores,
     setStores,
+    debts,
+    setDebts,
+    caixaData,
+    setCaixaData,
+    fechamentoData,
+    setFechamentoData,
+    lancamentosData,
+    setLancamentosData,
+    saldoDia,
+    setSaldoDia,
     currentStore,
     getCaixaCategories,
     addCaixaCategory,
@@ -39,6 +49,7 @@ export default function OpcoesTab() {
     removeActionUser,
     getAccessLogs,
     clearAccessLogs,
+    addTimelineEntry,
   } = useApp();
   const { theme, toggleTheme } = useTheme();
   const [showPwd, setShowPwd] = useState(false);
@@ -112,6 +123,15 @@ export default function OpcoesTab() {
     const updatedUser = { ...nextUser, ...updates };
     setActionUsers((prev) => prev.map((user) => (user.id === id ? updatedUser : user)));
     updateActionUser(id, updatedUser);
+    addTimelineEntry(
+      'opcoes',
+      'update',
+      localDateStr(),
+      'usuario_acao',
+      nextUser.name,
+      updatedUser.name,
+      `Usuário de ação alterado: ${updatedUser.name || nextUser.name}`
+    );
   };
 
   // Categorias
@@ -131,6 +151,7 @@ export default function OpcoesTab() {
     actionUsers: false,
     accessLogs: false,
     timeline: false,
+    customSaldoHistory: false,
     caixaCategories: false,
     fechamentoCategories: false,
     mapeamento: false,
@@ -184,12 +205,6 @@ export default function OpcoesTab() {
   };
 
   const filteredAccessLogs = getAccessLogs()
-    .filter(
-      (log) =>
-        (log.action === 'edit' || log.action === 'delete') &&
-        log.status === 'success' &&
-        isAnnotationItemLog(log.details)
-    )
     .map((log) => ({
       ...log,
       userName: normalizeLogText(log.userName),
@@ -199,7 +214,9 @@ export default function OpcoesTab() {
   const syncPreference = settings.syncPreference === 'site' ? 'site' : 'program';
   const setSyncPreference = async (mode: 'site' | 'program') => {
     // Atualização local imediata
+    const previousMode = syncPreference;
     setSettings((current) => ({ ...current, syncPreference: mode }));
+    addTimelineEntry('opcoes', 'update', localDateStr(), 'syncPreference', previousMode, mode, `Preferência de sincronização alterada: ${previousMode} -> ${mode}`);
     try {
       const host = window.location.hostname;
       const protocol = window.location.protocol;
@@ -337,6 +354,7 @@ export default function OpcoesTab() {
       return;
     }
     addActionUser(newActionUserName, newActionUserPassword, newActionUserPermissions);
+    addTimelineEntry('opcoes', 'create', localDateStr(), 'usuario_acao', '', newActionUserName, `Usuário de ação criado: ${newActionUserName}`);
     setActionUsers(getActionUsers());
     setNewActionUserName('');
     setNewActionUserPassword('');
@@ -358,7 +376,9 @@ export default function OpcoesTab() {
     }
 
     if (pendingDeleteAction.type === 'actionUser') {
+      const removedUser = actionUsers.find((user) => user.id === pendingDeleteAction.id);
       removeActionUser(pendingDeleteAction.id);
+      addTimelineEntry('opcoes', 'delete', localDateStr(), 'usuario_acao', removedUser?.name || '', '', `Usuário de ação removido: ${removedUser?.name || pendingDeleteAction.id}`);
       setActionUsers(getActionUsers());
       toast.success('Usuário de ação removido!');
     } else if (pendingDeleteAction.type === 'caixaCategory') {
@@ -378,10 +398,34 @@ export default function OpcoesTab() {
 
   const handleExportBackup = () => {
     const backup = {
+      backupType: 'manual-completo-opcoes',
+      createdAt: new Date().toISOString(),
+      createdAtLocal: new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }).replace('T', ' '),
+      version: '2.0',
       settings,
       stores,
-      timestamp: new Date().toISOString(),
-      version: '1.0'
+      debts,
+      saldoDia,
+      caixa: caixaData,
+      fechamento: fechamentoData,
+      lancamentos: lancamentosData,
+      compras: settings.purchaseEntries || {},
+      listasCompras: settings.purchaseOptions || {},
+      historicoCompras: settings.purchaseOptions?.purchaseHistory || [],
+      ocorrenciasFechamentoCompacto: {
+        accessLogs: settings.accessLogs || [],
+        timeline: settings.timeline || [],
+      },
+      contador: {
+        customSaldoByStoreMonth: settings.customSaldoByStoreMonth || {},
+        customSaldoHistory: settings.customSaldoHistory || [],
+        customSaldoBackups: settings.customSaldoBackups || [],
+      },
+      usuariosESenhas: {
+        senhaPrincipal: settings.password,
+        senhaVendas: settings.senhaVendas,
+        actionUsers: settings.actionUsers || [],
+      },
     };
     const dataStr = JSON.stringify(backup, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -402,19 +446,58 @@ export default function OpcoesTab() {
       try {
         const content = e.target?.result as string;
         const backup = JSON.parse(content);
-        if (!backup.settings || !backup.stores) {
+        const restoredData = backup.data && typeof backup.data === 'object' ? backup.data : backup;
+        if (!restoredData.settings || !restoredData.stores) {
           toast.error('Arquivo de backup inválido!');
           return;
         }
-        setSettings((current) => ({ ...current, ...backup.settings }));
-        setStores(backup.stores);
-        toast.success('Backup restaurado e enviado para o servidor!');
+        const restoredSettings = {
+          ...restoredData.settings,
+          purchaseEntries: restoredData.settings.purchaseEntries || restoredData.compras || restoredData.settings.purchaseEntries,
+          purchaseOptions: restoredData.settings.purchaseOptions || restoredData.listasCompras || restoredData.settings.purchaseOptions,
+        };
+        setSettings((current) => ({ ...current, ...restoredSettings }));
+        setStores(restoredData.stores);
+        if (Array.isArray(restoredData.debts)) setDebts(restoredData.debts);
+        if (Number.isFinite(Number(restoredData.saldoDia))) setSaldoDia(Number(restoredData.saldoDia));
+        if (restoredData.caixa && typeof restoredData.caixa === 'object') setCaixaData(restoredData.caixa);
+        if (restoredData.fechamento && typeof restoredData.fechamento === 'object') setFechamentoData(restoredData.fechamento);
+        if (restoredData.lancamentos && typeof restoredData.lancamentos === 'object') setLancamentosData(restoredData.lancamentos);
+        toast.success('Backup completo restaurado e enviado para o servidor!');
       } catch (error) {
         toast.error('Erro ao restaurar backup!');
       }
     };
     reader.readAsText(file);
   };
+
+  const formatCustomSaldoCurrency = (value?: number) =>
+    (Number(value || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const formatCustomSaldoDaysByStore = (value?: Record<string, number[]>) => {
+    const labels: Record<string, string> = { loja1: 'L1', loja2: 'L2', loja3: 'L3' };
+    return Object.entries(value || {})
+      .map(([storeId, days]) => `${labels[storeId] || storeId}: ${(days || []).length ? [...days].sort((a, b) => a - b).map((day) => String(day).padStart(2, '0')).join(', ') : '-'}`)
+      .join(' | ') || '-';
+  };
+
+  const formatCustomSaldoList = (items?: string[]) => (items && items.length ? items.join(', ') : '-');
+
+  const formatCustomSaldoDaysBySelection = (value?: Record<string, number[]>) => (
+    Object.entries(value || {}).map(([key, days]) => {
+      const [storeId, categoryId] = key.split(':');
+      const storeLabel = ({ loja1: 'L1', loja2: 'L2', loja3: 'L3' } as Record<string, string>)[storeId] || storeId;
+      const categoryLabel = stores[storeId]?.categories?.find((category) => category.id === categoryId)?.name || categoryId;
+      const dayList = (days || []).length
+        ? [...days].sort((a, b) => a - b).map((day) => String(day).padStart(2, '0')).join(', ')
+        : '-';
+      return `${storeLabel} ${categoryLabel}: ${dayList}`;
+    }).join(' | ')
+  );
+
+  const customSaldoHistoryEntries = [...(settings.customSaldoHistory || [])]
+    .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
+    .slice(0, 50);
 
   const store = stores[currentStore];
 
@@ -512,7 +595,7 @@ export default function OpcoesTab() {
                               onChange={(e) => {
                                 const nextPermissions = e.target.checked
                                   ? Array.from(new Set([...user.permissions, perm]))
-                                  : user.permissions.filter((item) => item !== perm);
+                                  : user.permissions.filter((item: string) => item !== perm);
                                 updateActionUserAndRefresh(user.id, { permissions: nextPermissions });
                               }}
                             />
@@ -593,6 +676,12 @@ export default function OpcoesTab() {
               variant="outline"
               onClick={async (e) => {
                 e.stopPropagation();
+                const password = window.prompt('Digite a senha de vendas para limpar o relatório de acessos:');
+                if (password === null) return;
+                if (password !== (settings.senhaVendas || '2512')) {
+                  toast.error('Senha de vendas incorreta.');
+                  return;
+                }
                 try {
                   const host = window.location.hostname;
                   const protocol = window.location.protocol;
@@ -601,6 +690,8 @@ export default function OpcoesTab() {
                     : `${protocol}//${host}`;
                   const resp = await fetch(`${serverUrl}/api/settings/clear-access-logs`, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password }),
                   });
                   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                   clearAccessLogs();
@@ -624,7 +715,7 @@ export default function OpcoesTab() {
         {expandedSections.accessLogs && (
           <div className="border-t border-border p-4 space-y-3">
             {filteredAccessLogs.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sem edições/exclusões registradas</p>
+              <p className="text-xs text-muted-foreground">Sem acessos registrados</p>
             ) : (
               <div className="max-h-96 overflow-y-auto space-y-2">
                 {filteredAccessLogs.map(log => (
@@ -635,7 +726,17 @@ export default function OpcoesTab() {
                   }`}>
                     <div className="flex items-center justify-between">
                       <span className="font-semibold">
-                        {log.action === 'delete' ? 'Deletar' : 'Editar'}
+                        {log.action === 'login'
+                          ? 'Entrada em Vendas'
+                          : log.action === 'accessCaixa'
+                            ? 'Entrada em Caixa'
+                            : log.action === 'changeDate'
+                              ? 'Troca de data'
+                              : log.action === 'delete'
+                                ? 'Deletar'
+                                : log.action === 'edit'
+                                  ? 'Editar'
+                                  : log.action}
                       </span>
                       <span className={`font-bold ${
                         log.status === 'success' ? 'text-green-600' : 'text-red-600'
@@ -672,6 +773,65 @@ export default function OpcoesTab() {
         {expandedSections.timeline && (
           <div className="border-t border-border p-4">
             <TimelineView />
+          </div>
+        )}
+      </div>
+
+      {/* Histórico do Contador - Colapsável */}
+      <div className="bg-card rounded-2xl overflow-hidden border border-border">
+        <button
+          onClick={() => toggleSection('customSaldoHistory')}
+          className="w-full flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors"
+        >
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Histórico do Contador</h3>
+            <p className="text-xs text-muted-foreground">
+              Registra cada alteração do saldo personalizado com antes/depois, loja, mês, dias e categorias.
+            </p>
+          </div>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${
+              expandedSections.customSaldoHistory ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+        {expandedSections.customSaldoHistory && (
+          <div className="border-t border-border p-4">
+            {customSaldoHistoryEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma alteração do contador registrada ainda.</p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {customSaldoHistoryEntries.map((entry) => (
+                  <div key={entry.id} className="rounded-xl border border-border bg-secondary/30 p-3 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-bold text-foreground">
+                        {entry.storeId?.toUpperCase()} / {entry.monthKey} · {entry.action}
+                      </div>
+                      <div className="text-muted-foreground">{entry.updatedAt}</div>
+                    </div>
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      <div className="rounded-lg bg-background p-2">
+                        <div className="font-semibold text-muted-foreground">Antes</div>
+                        <div>Total: {formatCustomSaldoCurrency(entry.previousTotal)}</div>
+                        <div>Categorias: {formatCustomSaldoList(entry.previousSelectionLabels)}</div>
+                        <div>Dias: {formatCustomSaldoDaysByStore(entry.previousDaysByStore)}</div>
+                        {Object.keys(entry.previousDaysBySelection || {}).length > 0 && <div>Dias específicos: {formatCustomSaldoDaysBySelection(entry.previousDaysBySelection)}</div>}
+                      </div>
+                      <div className="rounded-lg bg-background p-2">
+                        <div className="font-semibold text-muted-foreground">Depois</div>
+                        <div>Total: {formatCustomSaldoCurrency(entry.total)}</div>
+                        <div>Categorias: {formatCustomSaldoList(entry.selectionLabels)}</div>
+                        <div>Dias: {formatCustomSaldoDaysByStore(entry.daysByStore)}</div>
+                        {Object.keys(entry.daysBySelection || {}).length > 0 && <div>Dias específicos: {formatCustomSaldoDaysBySelection(entry.daysBySelection)}</div>}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-muted-foreground">
+                      Usuário: {entry.actor || 'Administrador'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
