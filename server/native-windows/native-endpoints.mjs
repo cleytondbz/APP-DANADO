@@ -385,15 +385,21 @@ export function createNativeHandlers({ getData, replaceData, dataDir, dataFile, 
           .sort((a, b) => String(b.product.lastPurchaseDate || '').localeCompare(String(a.product.lastPurchaseDate || '')))[0] || null;
         const latest = latestEntry?.product || null;
         let photoFile = '';
-        const photo = String(req.body?.photoBase64 || '');
-        if (photo) {
+        const incomingPhotos = [
+          ...(Array.isArray(req.body?.photosBase64) ? req.body.photosBase64 : []),
+          ...(req.body?.photoBase64 ? [req.body.photoBase64] : []),
+        ].map(value => String(value || '')).filter(Boolean).slice(0, 10);
+        const newPhotoFiles = [];
+        for (let photoIndex = 0; photoIndex < incomingPhotos.length; photoIndex++) {
+          const photo = incomingPhotos[photoIndex];
           const bytes = Buffer.from(photo.replace(/^data:image\/\w+;base64,/, ''), 'base64');
           if (bytes.length > 5_000_000) return reply(res, 400, { success: false, message: 'Foto muito grande.' });
           fs.mkdirSync(photosDir, { recursive: true });
-          photoFile = `${code.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.jpg`;
+          photoFile = `${code.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}_${photoIndex}.jpg`;
           fs.writeFileSync(path.join(photosDir, photoFile), bytes);
+          newPhotoFiles.push(photoFile);
         }
-        const photos = [...existingPhotos, ...(photoFile ? [photoFile] : [])];
+        const photos = [...existingPhotos, ...newPhotoFiles];
         const record = {
           code, description: found?.description || 'Produto não encontrado',
           barcode: latest?.barcode || code,
