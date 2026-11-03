@@ -4,14 +4,26 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { createHash, randomBytes } from 'node:crypto';
+import { createNativeHandlers, recoverNativeStorage } from './server/native-windows/native-endpoints.mjs';
+import { isNativeRoute, registerNativeRoutes } from './server/native-windows/native-route-policy.mjs';
+import { createClippFiscalReader } from './server/native-windows/clipp-fiscal-readonly.mjs';
+import { createClippPriceService } from './server/native-windows/clipp-price-service.mjs';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const clippEnvPath = [
+  path.resolve(process.cwd(), '.env.clipp'),
+  path.resolve(__dirname, '.env.clipp'),
+  path.resolve(__dirname, '..', '.env.clipp'),
+].find((candidate) => fs.existsSync(candidate));
+if (clippEnvPath) dotenv.config({ path: clippEnvPath, override: false });
 
 const app = express();
 const DEBUG_SYNC = process.env.DEBUG_SYNC === '1';
+const NET_DIAG = process.env.NET_DIAG === '1';
 const SYNC_TOKEN = process.env.SYNC_TOKEN || '';
 const CLOUD_SYNC_URL = process.env.CLOUD_SYNC_URL || '';
 const CLOUD_SYNC_TOKEN = process.env.CLOUD_SYNC_TOKEN || '';
@@ -33,6 +45,12 @@ const LOGS_DIR = path.resolve(process.cwd(), 'data', 'logs');
 const SYNC_AUDIT_FILE = path.resolve(process.cwd(), 'data', 'sync-audit.log');
 const CAIXA_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'caixa-movements.log');
 const PURCHASE_MOVEMENTS_FILE = path.resolve(process.cwd(), 'data', 'purchase-movements.log');
+const MORNING_PANEL_START_HOUR = 19;
+const MORNING_PANEL_END_HOUR = 10;
+const AUTO_SALES_LOGIN_IPS = new Set(['192.168.0.13', '192.168.0.14']);
+const NATIVE_SESSION_SECRET = process.env.NATIVE_SESSION_SECRET
+  ? createHash('sha256').update(process.env.NATIVE_SESSION_SECRET).digest()
+  : randomBytes(32);
 
 const normalizeKey = (value: any) =>
   String(value ?? '')
@@ -168,6 +186,34 @@ const getLocalDateTimeString = (date = new Date()) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${millis}`;
 };
 
+const normalizeClientIp = (value: any) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const first = raw.split(',')[0].trim();
+  return first
+    .replace(/^::ffff:/, '')
+    .replace(/^::1$/, '127.0.0.1')
+    .replace(/^0:0:0:0:0:ffff:/, '');
+};
+
+const getClientIp = (req: Request) => {
+  return normalizeClientIp(
+    req.headers['x-real-ip'] ||
+    req.headers['x-forwarded-for'] ||
+    req.socket.remoteAddress ||
+    req.ip
+  );
+};
+
+const isHourInsideSpecialWindow = (hour: number) => {
+  if (MORNING_PANEL_START_HOUR < MORNING_PANEL_END_HOUR) {
+    return hour >= MORNING_PANEL_START_HOUR && hour < MORNING_PANEL_END_HOUR;
+  }
+  return hour >= MORNING_PANEL_START_HOUR || hour < MORNING_PANEL_END_HOUR;
+};
+
+const isFechamentoPreviousDayWindow = (hour: number) => hour < MORNING_PANEL_END_HOUR;
+
 const mergeStoreBranch = (
   currentValue: Record<string, any> = {},
   incomingValue: Record<string, any> = {},
@@ -207,16 +253,14 @@ const logDateFromPayload = (payload: Record<string, any>) => {
   };
 };
 
-const logPeriodFromPayload = (type: 'sync-audit' | 'caixa-movements' | 'purchase-movements', payload: Record<string, any>) => {
+type MonthlyLogType = 'sync-audit' | 'caixa-movements' | 'purchase-movements' | 'contador-movements';
+
+const logPeriodFromPayload = (type: MonthlyLogType, payload: Record<string, any>) => {
   const date = logDateFromPayload(payload);
-  if (type === 'purchase-movements') {
-    const half = Number(date.day) <= 15 ? '01-15' : '16-fim';
-    return `${date.year}-${date.month}-${half}`;
-  }
   return `${date.year}-${date.month}`;
 };
 
-const appendMonthlyLog = (type: 'sync-audit' | 'caixa-movements' | 'purchase-movements', payload: Record<string, any>) => {
+const appendMonthlyLog = (type: MonthlyLogType, payload: Record<string, any>) => {
   const periodKey = logPeriodFromPayload(type, payload);
   const folder = path.join(LOGS_DIR, type);
   if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true });
@@ -224,7 +268,7 @@ const appendMonthlyLog = (type: 'sync-audit' | 'caixa-movements' | 'purchase-mov
 };
 
 const appendReadablePeriodLog = (
-  type: 'purchase-movements',
+  type: 'purchase-movements' | 'contador-movements',
   payload: Record<string, any>,
   lines: string[],
 ) => {
@@ -304,6 +348,120 @@ const appendPurchaseMovementLog = (payload: Record<string, any>) => {
     }
   } catch (e) {
     console.error('[PurchaseMovements] Falha ao gravar log:', e);
+  }
+};
+
+const parseFechamentoSyncNumber = (value: unknown) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const text = String(value ?? '').trim();
+  if (!text) return 0;
+  const normalized = text.includes(',')
+    ? text.replace(/\./g, '').replace(',', '.')
+    : text;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const LANCAMENTOS_SYNC_MIN_DATE = '2026-06-01';
+
+const hasAuthoritativeFechamento = (day: any, mapping: any[]) => {
+  if (!day || typeof day !== 'object') return false;
+  if (String(day.nomeDigital || '').trim()) return true;
+  if (Array.isArray(day.sangrias) && day.sangrias.length > 0) return true;
+  if (Array.isArray(day.despesas) && day.despesas.length > 0) return true;
+  // Campos tecnicos como sangria/despesa podem existir com zero mesmo em um
+  // fechamento vazio. Eles sozinhos nao tornam o dia uma fonte confiavel.
+  return mapping.some((item: any) => {
+    const field = String(item?.fechamento_field || '');
+    if (!field || field === 'sangria' || field === 'despesa') return false;
+    const raw = day[field];
+    if (raw === undefined || raw === null || String(raw).trim() === '') return false;
+    return Math.abs(parseFechamentoSyncNumber(raw)) > 0.009;
+  });
+};
+
+const syncLancamentosFromFechamento = (
+  currentLancamentos: Record<string, any> = {},
+  fechamentoPayload: Record<string, any> = {},
+  settings: Record<string, any> = {},
+) => {
+  const next = { ...(currentLancamentos || {}) };
+  const changes: any[] = [];
+
+  Object.entries(fechamentoPayload || {}).forEach(([storeId, days]: [string, any]) => {
+    if (!days || typeof days !== 'object' || Array.isArray(days)) return;
+    const mapping = storeId === 'loja1'
+      ? (settings.fieldMappingLan1 || [])
+      : storeId === 'loja2'
+        ? (settings.fieldMappingLan2 || [])
+        : [];
+    if (!Array.isArray(mapping) || mapping.length === 0) return;
+
+    const storeLancamentos = { ...(next[storeId] || {}) };
+    Object.entries(days).forEach(([date, fechamentoDay]: [string, any]) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+      if (date < LANCAMENTOS_SYNC_MIN_DATE) return;
+      if (!hasAuthoritativeFechamento(fechamentoDay, mapping)) return;
+
+      const previous = storeLancamentos[date] && typeof storeLancamentos[date] === 'object'
+        ? storeLancamentos[date]
+        : { date, values: {}, manualFields: [] };
+      const manualFields = Array.isArray(previous.manualFields) ? previous.manualFields : [];
+      const values = { ...(previous.values || {}) };
+      const changedFields: any[] = [];
+
+      mapping.forEach((item: any) => {
+        const sourceField = String(item?.fechamento_field || '');
+        const targetField = String(item?.lancamento_field || '');
+        if (!sourceField || !targetField || manualFields.includes(targetField)) return;
+        const nextValue = parseFechamentoSyncNumber(fechamentoDay?.[sourceField]);
+        const previousValue = parseFechamentoSyncNumber(values[targetField]);
+        values[targetField] = nextValue;
+        if (Math.abs(previousValue - nextValue) > 0.009) {
+          changedFields.push({ field: targetField, before: previousValue, after: nextValue });
+        }
+      });
+
+      storeLancamentos[date] = { ...previous, date, values, manualFields, source: 'sync' };
+      if (changedFields.length > 0) changes.push({ storeId, date, fields: changedFields });
+    });
+    next[storeId] = storeLancamentos;
+  });
+
+  return { lancamentos: next, changes };
+};
+
+const appendContadorMovementLog = (payload: Record<string, any>) => {
+  try {
+    const ts = sanitizeLogText(payload?.ts || getLocalDateTimeString());
+    const before = payload?.before || {};
+    const after = payload?.after || {};
+    const formatDays = (daysByStore: any = {}) =>
+      Object.entries(daysByStore || {})
+        .map(([storeId, days]: [string, any]) => `${storeId}: ${Array.isArray(days) && days.length ? days.join(',') : 'nenhum'}`)
+        .join(' | ') || 'nenhum';
+    const beforeLabels = Array.isArray(payload?.previousSelectionLabels)
+      ? payload.previousSelectionLabels
+      : (before?.selection || []);
+    const afterLabels = Array.isArray(payload?.selectionLabels)
+      ? payload.selectionLabels
+      : (after?.selection || []);
+    const readable = [
+      `[${ts}] CONTADOR ATUALIZADO`,
+      `usuario: ${sanitizeLogText(payload?.actor || 'Nao identificado')}`,
+      `configuracao: ${sanitizeLogText(payload?.storeId)} ${sanitizeLogText(payload?.monthKey)}`,
+      `total: ${formatCurrencyLog(before?.total)} -> ${formatCurrencyLog(after?.total)}`,
+      `categorias antes: ${beforeLabels.length ? beforeLabels.join(', ') : 'nenhuma'}`,
+      `categorias depois: ${afterLabels.length ? afterLabels.join(', ') : 'nenhuma'}`,
+      `dias antes: ${formatDays(before?.daysByStore)}`,
+      `dias depois: ${formatDays(after?.daysByStore)}`,
+      `origem: ${sanitizeLogText(payload?.source || 'site')}`,
+      `ip: ${sanitizeLogText(payload?.clientIp || '-')}`,
+    ].join(' | ');
+    appendMonthlyLog('contador-movements', { ...payload, readable });
+    appendReadablePeriodLog('contador-movements', payload, [readable]);
+  } catch (e) {
+    console.error('[ContadorMovements] Falha ao gravar log:', e);
   }
 };
 
@@ -1064,8 +1222,8 @@ function appendProgramAudit(
 
   dataStore.settings = {
     ...(dataStore.settings || {}),
-    accessLogs: [...(dataStore.settings?.accessLogs || []), accessLog].slice(-300),
-    timeline: [...(dataStore.settings?.timeline || []), timeline].slice(-800),
+    accessLogs: [...(dataStore.settings?.accessLogs || []), accessLog].slice(-2000),
+    timeline: [...(dataStore.settings?.timeline || []), timeline].slice(-2000),
   };
 }
 
@@ -1166,8 +1324,8 @@ function appendProgramAuditEvents(events: any[] = []) {
 
   dataStore.settings = {
     ...(dataStore.settings || {}),
-    accessLogs: [...(dataStore.settings?.accessLogs || []), ...accessToAdd].slice(-300),
-    timeline: [...(dataStore.settings?.timeline || []), ...timelineToAdd].slice(-800),
+    accessLogs: [...(dataStore.settings?.accessLogs || []), ...accessToAdd].slice(-2000),
+    timeline: [...(dataStore.settings?.timeline || []), ...timelineToAdd].slice(-2000),
   };
 }
 
@@ -1275,6 +1433,9 @@ const resolvedDataFile = process.env.DATA_FILE || path.join(defaultDataDir, 'dat
 const DATA_FILE = path.resolve(resolvedDataFile);
 const DATA_DIR = path.dirname(DATA_FILE);
 const CLOUD_SYNC_QUEUE_FILE = path.join(path.dirname(DATA_FILE), 'cloud-sync-pending.json');
+const FISCAL_SUMMARY_DIR = path.join(DATA_DIR, 'resumo-fiscal');
+const FISCAL_SUMMARY_FILE = path.join(FISCAL_SUMMARY_DIR, 'resumo-6-meses.json');
+const SEFAZ_PENDING_DIR = path.join(process.env.LOCALAPPDATA || '', 'Danado SIM', 'Fiscal', 'SEFAZ');
 const DAILY_BACKUP_DIR = path.resolve(process.cwd(), 'backups-diarios');
 let lastDailyBackupDate = '';
 
@@ -1796,6 +1957,48 @@ app.use(cors({
   origin: true,
   credentials: true
 }));
+
+// Diagnostico temporario de rede. Nao registra corpo, cookies, tokens ou senhas.
+// Ajuda a identificar o computador e o ponto exato de uma interrupcao.
+app.use((req: Request, res: Response, next: any) => {
+  const diagnostic = {
+    startedAt: Date.now(),
+    socketBytesRead: req.socket.bytesRead,
+    logged: false,
+  };
+  (req as any).__netDiagnostic = diagnostic;
+
+  const writeDiagnostic = (event: string, extra = '') => {
+    if (!NET_DIAG) return;
+    if (diagnostic.logged) return;
+    diagnostic.logged = true;
+    const elapsedMs = Date.now() - diagnostic.startedAt;
+    const receivedBytes = Math.max(0, req.socket.bytesRead - diagnostic.socketBytesRead);
+    const declaredBytes = String(req.headers['content-length'] || 'desconhecido');
+    const userAgent = String(req.headers['user-agent'] || '').replace(/[\r\n]/g, ' ').slice(0, 180);
+    const referer = String(req.headers.referer || '').replace(/[\r\n]/g, ' ').slice(0, 180);
+    console.warn(
+      `[${getLocalDateTimeString()}] [NET-DIAG] evento=${event} ip=${getClientIp(req) || 'desconhecido'} `
+      + `metodo=${req.method} rota=${req.originalUrl || req.url} duracaoMs=${elapsedMs} `
+      + `bytesDeclarados=${declaredBytes} bytesSocket=${receivedBytes} status=${res.statusCode} `
+      + `referer=${JSON.stringify(referer)} navegador=${JSON.stringify(userAgent)}${extra ? ` ${extra}` : ''}`
+    );
+  };
+
+  req.once('aborted', () => writeDiagnostic('request-aborted'));
+  res.once('close', () => {
+    if (!res.writableEnded) writeDiagnostic('response-closed-before-finish');
+  });
+  res.once('finish', () => {
+    const elapsedMs = Date.now() - diagnostic.startedAt;
+    const syncRoute = (req.originalUrl || req.url).startsWith('/api/sync/');
+    if (res.statusCode >= 400 || (syncRoute && elapsedMs >= 3000)) {
+      writeDiagnostic(res.statusCode >= 400 ? 'http-error' : 'slow-sync');
+    }
+  });
+  next();
+});
+app.use('/api/backup/restore-full', express.json({ limit: '32mb' }));
 app.use(express.json({ limit: '10mb' }));
 
 const parseCookies = (cookieHeader: string | undefined) => {
@@ -1901,8 +2104,13 @@ app.post('/logout', (_req: Request, res: Response) => {
 app.use((req: Request, res: Response, next) => {
   const isApiRoute = req.path.startsWith('/api/');
   const isAuthRoute = req.path === '/login' || req.path === '/logout';
+  const isAuthenticatedNativeRoute = isNativeRoute(req.method, req.path);
   const providedSyncToken = String(req.headers['x-sync-token'] || '');
   const hasSyncTokenAuth = !!SYNC_TOKEN && providedSyncToken === SYNC_TOKEN;
+
+  // As rotas nativas possuem autenticação Bearer e autorização próprias.
+  // A lista é exata por método e caminho; nenhuma rota legada é liberada aqui.
+  if (isAuthenticatedNativeRoute) return next();
 
   // Proteção de leitura/escrita para APIs quando login está ativo:
   // aceita sessão web OU token de bypass do app.
@@ -1949,11 +2157,34 @@ let dataStore: Record<string, any> = {
   lancamentos: {},
 };
 
+// Recuperar primeiro qualquer transação nativa interrompida. O servidor não
+// começa a atender requisições se o diário não puder ser resolvido.
+const nativeRecovery = recoverNativeStorage({ dataDir: DATA_DIR, dataFile: DATA_FILE });
+if (nativeRecovery.result !== 'none') {
+  console.log(`[NativeStorage] Recuperação na inicialização: ${nativeRecovery.result}`);
+}
+
 // Carregar dados do arquivo na inicialização
-const loadedData = loadDataFromFile();
+const loadedData = nativeRecovery.data || loadDataFromFile();
 if (loadedData) {
   dataStore = loadedData;
   console.log('[Server] Dados carregados do arquivo');
+  const startupLancamentosSync = syncLancamentosFromFechamento(
+    dataStore.lancamentos || {},
+    dataStore.fechamento || {},
+    dataStore.settings || {},
+  );
+  dataStore.lancamentos = startupLancamentosSync.lancamentos;
+  if (startupLancamentosSync.changes.length > 0) {
+    appendSyncAudit({
+      ts: getLocalDateTimeString(),
+      event: 'fechamento_to_lancamentos_startup_repair',
+      source: 'server',
+      changedDays: startupLancamentosSync.changes.length,
+      changes: startupLancamentosSync.changes.slice(0, 200),
+    });
+    console.log(`[Sync] Fechamento -> Lancamentos: ${startupLancamentosSync.changes.length} dia(s) reparado(s) na inicializacao.`);
+  }
   saveDataToFile(dataStore);
   console.log('[Storage] Estrutura de dados separada carregada/atualizada');
 }
@@ -1961,11 +2192,243 @@ loadCloudSyncQueue();
 if (cloudSyncQueue) {
   armCloudPush(Math.max(500, cloudSyncQueue.nextAttemptAt - Date.now()));
 }
+
+const sharedFiscalReader = createClippFiscalReader();
+const nativeHandlers = createNativeHandlers({
+  getData: () => dataStore,
+  replaceData: (next: Record<string, any>) => { dataStore = next; },
+  dataDir: DATA_DIR,
+  dataFile: DATA_FILE,
+  backupDir: DAILY_BACKUP_DIR,
+  secret: NATIVE_SESSION_SECRET,
+  enabled: true,
+  afterCommit: () => scheduleCloudPush(),
+  fiscalReader: sharedFiscalReader,
+  priceService: createClippPriceService({
+    dataDir: DATA_DIR,
+    executable: process.env.CLIPP_ISQL_PATH || '',
+    user: process.env.CLIPP_PRICE_DB_USER || '',
+    password: process.env.CLIPP_PRICE_DB_PASSWORD || '',
+    stores: {
+      loja1: { database: process.env.CLIPP_DATABASE || '' },
+      loja2: { database: process.env.CLIPP_DATABASE_LOJA2 || '' },
+      loja3: { database: process.env.CLIPP_DATABASE_LOJA3 || '' },
+    },
+  }),
+});
+registerNativeRoutes(app, nativeHandlers);
+
+const fiscalSummaryRefreshMs = Math.max(30_000,
+  Number(process.env.FISCAL_SUMMARY_REFRESH_MS || 30_000));
+let fiscalSummaryRefreshing = false;
+
+function effectiveLaunchValues(storeId: string, dateKey: string) {
+  const launchValues = dataStore.lancamentos?.[storeId]?.[dateKey]?.values || {};
+  const [year, month] = dateKey.split('-').map(Number);
+  const monthData = (dataStore.stores?.[storeId]?.months || [])
+    .find((item: any) => Number(item?.year) === year && Number(item?.month) === month);
+  const storedValues = (monthData?.entries || [])
+    .find((item: any) => String(item?.date || '') === dateKey)?.values || {};
+  return { ...storedValues, ...launchValues };
+}
+
+function fiscalMoney(value: any) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const text = String(value ?? '').trim().replace(/R\$/gi, '').replace(/\s/g, '');
+  if (!text) return 0;
+  const normalized = text.includes(',') ? text.replace(/\./g, '').replace(',', '.') : text;
+  const parsed = Number(normalized.replace(/[^0-9+\-.]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function calculateConfiguredCash(storeId: string, monthKey: string) {
+  const config = dataStore.settings?.customSaldoByStoreMonth?.[storeId]?.[monthKey];
+  if (!config || typeof config !== 'object') return 0;
+  const selection = Array.isArray(config.selection) ? config.selection.map(String) : [];
+  if (!selection.length) return fiscalMoney(config.total);
+  const fallbackDays = Array.isArray(config.days) ? config.days.map(Number) : [];
+  let total = 0;
+  for (const key of selection) {
+    const [maybeStore, maybeCategory] = String(key).split(':', 2);
+    const sourceStore = maybeCategory ? maybeStore : storeId;
+    const category = maybeCategory || maybeStore;
+    const selectedDays = Array.isArray(config.daysBySelection?.[key])
+      ? config.daysBySelection[key]
+      : Array.isArray(config.daysByStore?.[sourceStore])
+        ? config.daysByStore[sourceStore] : fallbackDays;
+    for (const rawDay of selectedDays) {
+      const day = Number(rawDay);
+      if (!Number.isInteger(day) || day < 1 || day > 31) continue;
+      const values = effectiveLaunchValues(sourceStore, `${monthKey}-${pad2(day)}`);
+      total += fiscalMoney(values?.[category]);
+    }
+  }
+  return Math.round(total * 100) / 100;
+}
+
+function readFiscalSummaryFromDisk() {
+  try {
+    if (!fs.existsSync(FISCAL_SUMMARY_FILE)) return null;
+    const parsed = JSON.parse(fs.readFileSync(FISCAL_SUMMARY_FILE, 'utf8'));
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (error) {
+    console.error('[Fiscal/Resumo] Falha ao ler cache:', error);
+    return null;
+  }
+}
+
+function persistFiscalSummary(summary: any) {
+  fs.mkdirSync(FISCAL_SUMMARY_DIR, { recursive: true });
+  safeWriteJson(FISCAL_SUMMARY_FILE, summary);
+  dataStore.settings ||= {};
+  dataStore.settings.fiscalMobileSummary = summary;
+  saveDataToFile(dataStore);
+}
+
+function readSefazPendingDocuments() {
+  const rows: any[] = [];
+  for (const storeId of ['loja1', 'loja2', 'loja3']) {
+    try {
+      const file = path.join(SEFAZ_PENDING_DIR, storeId, 'pendentes.json');
+      if (!fs.existsSync(file)) continue;
+      const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const stored = state?.Documents ?? state?.documents ?? {};
+      const documents = Array.isArray(stored) ? stored : Object.values(stored);
+      for (const raw of documents as any[]) {
+        const accessKey = String(raw?.AccessKey ?? raw?.accessKey ?? '').replace(/\D/g, '');
+        const emissionDate = String(raw?.EmissionDate ?? raw?.emissionDate ?? '');
+        if (accessKey.length !== 44 || !emissionDate) continue;
+        rows.push({
+          storeId,
+          documentType: 'NF não cadastrada',
+          emissionDate,
+          recipient: String(raw?.Recipient ?? raw?.recipient ?? 'Empresa não informada'),
+          accessKey,
+          total: Number(raw?.Total ?? raw?.total ?? 0),
+          source: 'SEFAZ MDe direto',
+        });
+      }
+    } catch (error) {
+      console.error(`[Fiscal/Resumo] Cache SEFAZ de ${storeId} ignorado:`, error);
+    }
+  }
+  return rows;
+}
+
+async function refreshFiscalSummary(forceRefresh = false) {
+  if (fiscalSummaryRefreshing) return dataStore.settings?.fiscalMobileSummary || readFiscalSummaryFromDisk();
+  const sources = dataStore.settings?.clippSources;
+  if (!sharedFiscalReader.configured?.(sources))
+    return dataStore.settings?.fiscalMobileSummary || readFiscalSummaryFromDisk();
+  fiscalSummaryRefreshing = true;
+  try {
+    const result = await sharedFiscalReader.read({ months: 6, sources, forceRefresh });
+    const clippDocuments = Array.isArray(result?.documents) ? result.documents : [];
+    const knownFiscalKeys = new Set(clippDocuments
+      .map((row: any) => `${String(row?.storeId || '')}|${String(row?.accessKey || '').replace(/\D/g, '')}`));
+    const sefazDocuments = readSefazPendingDocuments()
+      .filter((row: any) => !knownFiscalKeys.has(`${row.storeId}|${row.accessKey}`));
+    const allDocuments = [...clippDocuments, ...sefazDocuments];
+    const documents = allDocuments
+      .filter((row: any) => ['NF de entrada', 'NF não cadastrada'].includes(String(row?.documentType || '')))
+      .map((row: any) => ({
+        storeId: String(row.storeId || ''),
+        type: String(row.documentType || ''),
+        date: String(row.emissionDate || '').slice(0, 10),
+        company: String(row.recipient || 'Empresa não informada'),
+        accessKey: String(row.accessKey || '').replace(/\D/g, ''),
+        value: Math.round(Number(row.total || 0) * 100) / 100,
+      }))
+      .filter((row: any) => /^loja[123]$/.test(row.storeId) && /^\d{4}-\d{2}-\d{2}$/.test(row.date))
+      .sort((a: any, b: any) => b.date.localeCompare(a.date));
+    const monthKey = getLocalDateString().slice(0, 7);
+    const systemByStore: Record<string, number> = {};
+    for (const storeId of ['loja1', 'loja2', 'loja3']) {
+      systemByStore[storeId] = Math.round(clippDocuments
+        .filter((row: any) => String(row.storeId || '') === storeId
+          && String(row.emissionDate || '').startsWith(monthKey)
+          && ['NF-e', 'NFC-e'].includes(String(row.documentType || ''))
+          && String(row.status || '') === 'Autorizada')
+        .reduce((sum: number, row: any) => sum + Number(row.total || 0), 0) * 100) / 100;
+    }
+    const summary = {
+      version: 1,
+      months: 6,
+      updatedAt: new Date().toISOString(),
+      documents,
+      systemMonth: monthKey,
+      systemByStore,
+    };
+    persistFiscalSummary(summary);
+    console.log(`[Fiscal/Resumo] Atualizado: ${documents.length} documento(s), seis meses.`);
+    return summary;
+  } catch (error) {
+    console.error('[Fiscal/Resumo] Não foi possível atualizar; cache anterior preservado:', error);
+    return dataStore.settings?.fiscalMobileSummary || readFiscalSummaryFromDisk();
+  } finally {
+    fiscalSummaryRefreshing = false;
+  }
+}
+
+app.get('/api/fiscal/resumo', (_req: Request, res: Response) => {
+  const summary = dataStore.settings?.fiscalMobileSummary || readFiscalSummaryFromDisk();
+  if (!summary) return res.status(503).json({ success: false, message: 'Resumo fiscal ainda não disponível.' });
+  return res.json({ success: true, data: summary });
+});
+
+app.get('/api/alcy/indicadores', (_req: Request, res: Response) => {
+  const summary = dataStore.settings?.fiscalMobileSummary || readFiscalSummaryFromDisk();
+  const monthKey = getLocalDateString().slice(0, 7);
+  if (!summary || summary.systemMonth !== monthKey || !summary.systemByStore) {
+    return res.status(503).json({ success: false, message: 'Indicadores do Sistema Alcy ainda não atualizados.' });
+  }
+  const systemByStore = summary.systemByStore;
+  const stores = ['loja1', 'loja2', 'loja3'].map((storeId) => {
+    const cash = calculateConfiguredCash(storeId, monthKey);
+    const system = Number(systemByStore?.[storeId] || 0);
+    const missingInvoices = Math.max(0, Math.round((cash - system) * 100) / 100);
+    return {
+      storeId,
+      value: missingInvoices,
+      missingInvoices,
+    };
+  });
+  return res.json({ success: true, data: { month: monthKey, updatedAt: summary?.updatedAt || null, stores } });
+});
 // ==================== APIs REST ====================
 
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: getLocalDateTimeString() });
+});
+
+app.get('/api/access/context', (req: Request, res: Response) => {
+  const now = new Date();
+  const defaultDate = new Date(now);
+  defaultDate.setDate(defaultDate.getDate() - 1);
+
+  const hour = now.getHours();
+  const clientIp = getClientIp(req);
+  const specialMorning = true;
+  const fechamentoPreviousDay = isFechamentoPreviousDayWindow(hour);
+
+  res.json({
+    success: true,
+    data: {
+      clientIp,
+      directSalesLogin: AUTO_SALES_LOGIN_IPS.has(clientIp),
+      specialMorning,
+      fechamentoPreviousDay,
+      serverDate: getLocalDateString(now),
+      serverTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+      defaultDate: fechamentoPreviousDay ? getLocalDateString(defaultDate) : getLocalDateString(now),
+      morningWindow: {
+        start: `${String(MORNING_PANEL_START_HOUR).padStart(2, '0')}:00`,
+        end: `${String(MORNING_PANEL_END_HOUR).padStart(2, '0')}:00`,
+      },
+    },
+    timestamp: getLocalDateTimeString(now),
+  });
 });
 
 // ==================== STORES ====================
@@ -2072,9 +2535,23 @@ app.delete('/api/debts/:id', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+const validateSalesPasswordForSettingsClear = (req: Request, res: Response) => {
+  const incomingPassword = String(req.body?.password || '').trim();
+  const salesPassword = String(dataStore.settings?.senhaVendas || '2512').trim();
+  if (!incomingPassword || incomingPassword !== salesPassword) {
+    res.status(401).json({
+      success: false,
+      message: 'Senha de vendas inválida.',
+    });
+    return false;
+  }
+  return true;
+};
+
 // Limpeza explícita do relatório de acessos (persistente em arquivo)
-app.post('/api/settings/clear-access-logs', (_req: Request, res: Response) => {
+app.post('/api/settings/clear-access-logs', (req: Request, res: Response) => {
   try {
+    if (!validateSalesPasswordForSettingsClear(req, res)) return;
     const currentSettings = dataStore.settings || {};
     dataStore.settings = {
       ...currentSettings,
@@ -2095,8 +2572,33 @@ app.post('/api/settings/clear-access-logs', (_req: Request, res: Response) => {
   }
 });
 
+// Limpeza explícita da timeline de alterações (persistente em arquivo)
+app.post('/api/settings/clear-timeline', (req: Request, res: Response) => {
+  try {
+    if (!validateSalesPasswordForSettingsClear(req, res)) return;
+    const currentSettings = dataStore.settings || {};
+    dataStore.settings = {
+      ...currentSettings,
+      timeline: [],
+    };
+    saveDataToFile(dataStore);
+    return res.json({
+      success: true,
+      message: 'Timeline limpa com sucesso.',
+      timestamp: getLocalDateTimeString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Falha ao limpar timeline.',
+      error: String(error?.message || error),
+    });
+  }
+});
+
 app.post('/api/settings/clear-occurrences-by-date', (req: Request, res: Response) => {
   try {
+    if (!validateSalesPasswordForSettingsClear(req, res)) return;
     const date = String(req.body?.date || '').slice(0, 10);
     const storeId = String(req.body?.storeId || '').trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -2149,10 +2651,23 @@ app.post('/api/settings/clear-occurrences-by-date', (req: Request, res: Response
 const mergeCustomSaldoByStoreMonth = (current: any = {}, incoming: any = {}) => {
   const merged: Record<string, any> = { ...(current || {}) };
   Object.entries(incoming || {}).forEach(([storeId, months]: [string, any]) => {
-    merged[storeId] = {
-      ...(merged[storeId] || {}),
-      ...(months || {}),
-    };
+    const mergedMonths: Record<string, any> = { ...(merged[storeId] || {}) };
+    Object.entries(months || {}).forEach(([monthKey, incomingConfig]: [string, any]) => {
+      const currentConfig = mergedMonths[monthKey];
+      const parseUpdatedAt = (value: any) => {
+        const raw = String(value?.updatedAt || '').trim();
+        if (!raw) return 0;
+        const parsed = Date.parse(raw.replace(' ', 'T'));
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+      const currentTime = parseUpdatedAt(currentConfig);
+      const incomingTime = parseUpdatedAt(incomingConfig);
+      // Uma aba antiga do site pode continuar sincronizando em segundo plano.
+      // Ela nunca deve restaurar dias/categorias anteriores sobre uma configuração nova.
+      if (!currentConfig || incomingTime >= currentTime || (incomingTime === 0 && currentTime === 0))
+        mergedMonths[monthKey] = incomingConfig;
+    });
+    merged[storeId] = mergedMonths;
   });
   return merged;
 };
@@ -2165,6 +2680,46 @@ const mergeCustomSaldoHistory = (current: any[] = [], incoming: any[] = []) => {
   return Array.from(byId.values())
     .sort((a: any, b: any) => Number(a?.timestamp || 0) - Number(b?.timestamp || 0))
     .slice(-500);
+};
+
+const logContadorChanges = (
+  currentSettings: any,
+  incomingSettings: any,
+  context: { source?: string; clientId?: string; machineName?: string; clientIp?: string; actor?: string },
+) => {
+  const incomingConfigs = incomingSettings?.customSaldoByStoreMonth;
+  if (!incomingConfigs || typeof incomingConfigs !== 'object') return;
+
+  const history = Array.isArray(incomingSettings?.customSaldoHistory)
+    ? incomingSettings.customSaldoHistory
+    : [];
+
+  Object.entries(incomingConfigs).forEach(([storeId, months]: [string, any]) => {
+    Object.entries(months || {}).forEach(([monthKey, after]: [string, any]) => {
+      const before = currentSettings?.customSaldoByStoreMonth?.[storeId]?.[monthKey];
+      if (JSON.stringify(before || null) === JSON.stringify(after || null)) return;
+
+      const matchingHistory = [...history]
+        .reverse()
+        .find((item: any) => item?.storeId === storeId && item?.monthKey === monthKey);
+      appendContadorMovementLog({
+        ts: getLocalDateTimeString(),
+        event: 'contador_config_updated',
+        source: sanitizeLogText(context.source || 'site'),
+        clientId: sanitizeLogText(context.clientId),
+        machineName: sanitizeLogText(context.machineName),
+        clientIp: sanitizeLogText(context.clientIp),
+        actor: sanitizeLogText(matchingHistory?.actor || context.actor || 'Nao identificado'),
+        action: sanitizeLogText(matchingHistory?.action || 'update'),
+        storeId: sanitizeLogText(storeId),
+        monthKey: sanitizeLogText(monthKey),
+        previousSelectionLabels: matchingHistory?.previousSelectionLabels || [],
+        selectionLabels: matchingHistory?.selectionLabels || [],
+        before: before || null,
+        after: after || null,
+      });
+    });
+  });
 };
 
 app.post('/api/sync/save', (req: Request, res: Response) => {
@@ -2291,27 +2846,58 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       if (has('customSaldoHistory') && Array.isArray(settings.customSaldoHistory)) {
         partialSettings.customSaldoHistory = settings.customSaldoHistory;
       }
+      if (has('customSaldoBackups') && Array.isArray(settings.customSaldoBackups)) {
+        partialSettings.customSaldoBackups = settings.customSaldoBackups;
+      }
       if (has('customSaldoSelection') && Array.isArray(settings.customSaldoSelection)) {
         partialSettings.customSaldoSelection = settings.customSaldoSelection;
       }
       if (has('customSaldoDays') && Array.isArray(settings.customSaldoDays)) {
         partialSettings.customSaldoDays = settings.customSaldoDays;
       }
-      if (has('purchaseEntries')) {
-        partialSettings.purchaseEntries = mergePurchaseEntries(
-          dataStore.settings?.purchaseEntries || {},
-          settings.purchaseEntries || {}
-        );
+      if (has('clippSources') && settings.clippSources && typeof settings.clippSources === 'object') {
+        partialSettings.clippSources = settings.clippSources;
       }
-      if (has('purchaseOptions')) {
-        const incomingPurchaseOptions = settings.purchaseOptions || {};
-        partialSettings.purchaseOptions = sanitizePurchaseOptionsForServer(
-          incomingPurchaseOptions,
-          dataStore.settings?.purchaseOptions,
-        );
+      if (has('historicalPurchaseXmlPath') && typeof settings.historicalPurchaseXmlPath === 'string') {
+        partialSettings.historicalPurchaseXmlPath = settings.historicalPurchaseXmlPath.trim();
+      }
+      if (has('purchaseEntries') || has('purchaseOptions')) {
+        appendPurchaseMovementLog({
+          ts: getLocalDateTimeString(),
+          event: 'general_sync_purchase_payload_rejected',
+          source,
+          clientId: sanitizeLogText(clientId),
+          machineName: sanitizeLogText(machineName),
+          clientIp: getClientIp(req),
+          reason: 'Compras so podem ser alteradas pelas rotas /api/compras.',
+          incomingEntriesSummary: has('purchaseEntries')
+            ? summarizePurchaseEntries(settings.purchaseEntries || {})
+            : undefined,
+          incomingOptionsSummary: has('purchaseOptions')
+            ? summarizePurchaseOptions(settings.purchaseOptions || {})
+            : undefined,
+        });
       }
 
       if (Object.keys(partialSettings).length > 0) {
+        if (partialSettings.customSaldoByStoreMonth) {
+          partialSettings.customSaldoByStoreMonth = mergeCustomSaldoByStoreMonth(
+            dataStore.settings?.customSaldoByStoreMonth || {},
+            partialSettings.customSaldoByStoreMonth
+          );
+        }
+        if (Array.isArray(partialSettings.customSaldoHistory)) {
+          partialSettings.customSaldoHistory = mergeCustomSaldoHistory(
+            dataStore.settings?.customSaldoHistory || [], partialSettings.customSaldoHistory
+          );
+        }
+        logContadorChanges(dataStore.settings || {}, partialSettings, {
+          source,
+          clientId,
+          machineName,
+          clientIp: getClientIp(req),
+          actor: actionUserName || userName || username || user || actorName || actor,
+        });
         dataStore.settings = {
           ...(dataStore.settings || {}),
           ...partialSettings,
@@ -2349,6 +2935,27 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
 
   if (settings) {
     const incomingSettings = { ...settings };
+    const generalSyncSentPurchaseEntries = Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseEntries');
+    const generalSyncSentPurchaseOptions = Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseOptions');
+    if (generalSyncSentPurchaseEntries || generalSyncSentPurchaseOptions) {
+      appendPurchaseMovementLog({
+        ts: getLocalDateTimeString(),
+        event: 'general_sync_purchase_payload_rejected',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        clientIp: getClientIp(req),
+        reason: 'Compras so podem ser alteradas pelas rotas /api/compras.',
+        incomingEntriesSummary: generalSyncSentPurchaseEntries
+          ? summarizePurchaseEntries(incomingSettings.purchaseEntries || {})
+          : undefined,
+        incomingOptionsSummary: generalSyncSentPurchaseOptions
+          ? summarizePurchaseOptions(incomingSettings.purchaseOptions || {})
+          : undefined,
+      });
+      delete (incomingSettings as any).purchaseEntries;
+      delete (incomingSettings as any).purchaseOptions;
+    }
     const programSentPurchaseEntries =
       source === 'program' && Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseEntries');
     const programSentPurchaseOptions =
@@ -2430,6 +3037,13 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
         seen.add(pass);
       }
     }
+    logContadorChanges(dataStore.settings || {}, incomingSettings, {
+      source,
+      clientId,
+      machineName,
+      clientIp: getClientIp(req),
+      actor: actionUserName || userName || username || user || actorName || actor,
+    });
     delete (incomingSettings as any).syncPreference;
     const isAuthenticatedCloudPush = hasSyncTokenAuth && !!cloudSyncId;
     const mergeRemoteLogs = (current: any[] = [], incoming: any[] = [], limit: number) => {
@@ -2451,13 +3065,13 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
           ...(dataStore.settings || {}),
           // O localhost é a fonte autoritativa das ocorrências. Substituir a
           // lista permite propagar também exclusões e limpezas para o Render.
-          accessLogs: incomingSettings.accessLogs.slice(-300),
+          accessLogs: incomingSettings.accessLogs.slice(-2000),
         };
       }
       if (Array.isArray(incomingSettings.timeline)) {
         dataStore.settings = {
           ...(dataStore.settings || {}),
-          timeline: incomingSettings.timeline.slice(-800),
+          timeline: incomingSettings.timeline.slice(-2000),
         };
       }
     }
@@ -2492,6 +3106,12 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       (incomingSettings as any).customSaldoHistory = mergeCustomSaldoHistory(
         dataStore.settings?.customSaldoHistory || [],
         (incomingSettings as any).customSaldoHistory
+      );
+    }
+    if (Array.isArray((incomingSettings as any).customSaldoBackups)) {
+      (incomingSettings as any).customSaldoBackups = mergeCustomSaldoHistory(
+        dataStore.settings?.customSaldoBackups || [],
+        (incomingSettings as any).customSaldoBackups
       );
     }
 
@@ -2598,6 +3218,24 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
   if (fechamento && fechamentoSourceAllowed) {
     dataStore.fechamento = mergeStoreBranch(dataStore.fechamento || {}, fechamento || {});
     mergedFechStores = Object.keys(fechamento || {});
+    const lancamentosSync = syncLancamentosFromFechamento(
+      dataStore.lancamentos || {},
+      fechamento || {},
+      dataStore.settings || {},
+    );
+    dataStore.lancamentos = lancamentosSync.lancamentos;
+    if (lancamentosSync.changes.length > 0) {
+      appendSyncAudit({
+        ts: getLocalDateTimeString(),
+        event: 'fechamento_to_lancamentos_applied',
+        source,
+        clientId: sanitizeLogText(clientId),
+        machineName: sanitizeLogText(machineName),
+        clientIp: getClientIp(req),
+        changedDays: lancamentosSync.changes.length,
+        changes: lancamentosSync.changes.slice(0, 200),
+      });
+    }
   }
 
   // Quando o programa já envia eventos explícitos, evita duplicar logs via diff.
@@ -2677,8 +3315,8 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
 
     dataStore.settings = {
       ...(dataStore.settings || {}),
-      accessLogs: [...(dataStore.settings?.accessLogs || []), ...finalAccess].slice(-300),
-      timeline: [...(dataStore.settings?.timeline || []), ...finalTimeline].slice(-800),
+      accessLogs: [...(dataStore.settings?.accessLogs || []), ...finalAccess].slice(-2000),
+      timeline: [...(dataStore.settings?.timeline || []), ...finalTimeline].slice(-2000),
     };
   }
 
@@ -2707,8 +3345,8 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
     });
   }
   
-  // Lancamentos ja chegam mapeados pelo frontend (Opcoes + Caixa).
-  // Persistir diretamente evita remapeamento incorreto entre lojas.
+  // Alteracoes manuais do site continuam autoritativas. Atualizacoes vindas
+  // do programa sao derivadas do Fechamento acima e preservam manualFields.
   if (lancamentos && source !== 'program') {
     dataStore.lancamentos = lancamentos;
   }
@@ -2867,11 +3505,55 @@ app.post('/api/compras/:year/:month', (req: Request, res: Response) => {
   const year = String(req.params.year || '');
   const month = pad2(req.params.month || '');
   const monthKey = `${year}-${month}`;
+  const source = sanitizeLogText(req.body?.source || 'site');
+  const clientId = sanitizeLogText(req.body?.clientId || '');
+  const machineName = sanitizeLogText(req.body?.machineName || '');
   const entries = Array.isArray(req.body?.entries)
     ? req.body.entries
     : Array.isArray(req.body?.purchaseEntries)
       ? req.body.purchaseEntries
       : [];
+  const currentEntries = Array.isArray(dataStore.settings?.purchaseEntries?.[monthKey])
+    ? dataStore.settings.purchaseEntries[monthKey]
+    : [];
+  const entriesDiff = diffPurchaseEntries(
+    { [monthKey]: currentEntries },
+    { [monthKey]: entries },
+  );
+  const hasPurchaseOptions = !!(req.body?.purchaseOptions || req.body?.options);
+  const currentOptions = sanitizePurchaseOptionsForServer(
+    dataStore.settings?.purchaseOptions || {},
+    dataStore.settings?.purchaseOptions,
+  );
+  const incomingOptions = hasPurchaseOptions
+    ? sanitizePurchaseOptionsForServer(
+        req.body.purchaseOptions || req.body.options,
+        dataStore.settings?.purchaseOptions,
+      )
+    : currentOptions;
+  const historyItems = hasPurchaseOptions
+    ? getNewPurchaseHistoryItems(currentOptions, incomingOptions)
+    : [];
+  const shouldLogMovement = entriesDiff.length > 0 || historyItems.length > 0;
+
+  if (shouldLogMovement) {
+    appendPurchaseMovementLog({
+      ts: getLocalDateTimeString(),
+      event: historyItems.length > 0 ? 'purchase_history_received' : 'purchase_entries_received',
+      source,
+      clientId,
+      machineName,
+      monthKey,
+      hasPurchaseEntries: true,
+      hasPurchaseOptions,
+      currentEntriesSummary: summarizePurchaseEntries({ [monthKey]: currentEntries }),
+      incomingEntriesSummary: summarizePurchaseEntries({ [monthKey]: entries }),
+      entriesDiff,
+      currentOptionsSummary: hasPurchaseOptions ? summarizePurchaseOptions(currentOptions) : undefined,
+      incomingOptionsSummary: hasPurchaseOptions ? summarizePurchaseOptions(incomingOptions) : undefined,
+      historyItems,
+    });
+  }
 
   dataStore.settings = {
     ...(dataStore.settings || {}),
@@ -2882,13 +3564,24 @@ app.post('/api/compras/:year/:month', (req: Request, res: Response) => {
   };
 
   if (req.body?.purchaseOptions || req.body?.options) {
-    dataStore.settings.purchaseOptions = sanitizePurchaseOptionsForServer(
-      req.body.purchaseOptions || req.body.options,
-      dataStore.settings?.purchaseOptions,
-    );
+    dataStore.settings.purchaseOptions = incomingOptions;
   }
 
   saveDataToFile(dataStore);
+  if (shouldLogMovement) {
+    appendPurchaseMovementLog({
+      ts: getLocalDateTimeString(),
+      event: historyItems.length > 0 ? 'purchase_history_applied' : 'purchase_entries_applied',
+      source,
+      clientId,
+      machineName,
+      monthKey,
+      savedEntriesSummary: summarizePurchaseEntries({ [monthKey]: entries }),
+      savedOptionsSummary: hasPurchaseOptions
+        ? summarizePurchaseOptions(dataStore.settings.purchaseOptions || {})
+        : undefined,
+    });
+  }
   res.json({
     success: true,
     monthKey,
@@ -3014,7 +3707,7 @@ app.post('/api/sync/annotation/add', (req: Request, res: Response) => {
     
     dataStore.caixa[storeId][date].annotations.push(newAnnotation);
     saveDataToFile(dataStore);
-    console.log('[Server] Anotação adicionada com sucesso:', newAnnotation);
+    if (DEBUG_SYNC) console.log('[Server] Anotação adicionada com sucesso:', newAnnotation);
     
     res.json({ success: true, data: newAnnotation });
   } catch (error) {
@@ -3117,7 +3810,7 @@ app.post('/api/sync/annotation/delete', (req: Request, res: Response) => {
 app.post('/api/sync/closing/save', (req: Request, res: Response) => {
   try {
     const { storeId, date, closing } = req.body;
-    console.log('[Server] Recebendo fechamento:', { storeId, date, closing });
+    if (DEBUG_SYNC) console.log('[Server] Recebendo fechamento:', { storeId, date });
     
     if (!dataStore.fechamento[storeId]) {
       dataStore.fechamento[storeId] = {};
@@ -3129,7 +3822,7 @@ app.post('/api/sync/closing/save', (req: Request, res: Response) => {
     };
     
     saveDataToFile(dataStore);
-    console.log('[Server] Fechamento salvo com sucesso');
+    if (DEBUG_SYNC) console.log('[Server] Fechamento salvo com sucesso');
     
     res.json({ success: true, data: dataStore.fechamento[storeId][date] });
   } catch (error) {
@@ -3189,7 +3882,7 @@ if (process.env.NODE_ENV === 'production') {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Financeiro DANADO</title>
+          <title>Danado SIM</title>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <script type="module" src="${viteUrl}/@vite/client"><\/script>
@@ -3212,9 +3905,19 @@ app.use((error: any, req: Request, res: Response, next: any) => {
     error?.code === 'ECONNABORTED' ||
     String(error?.message || '').toLowerCase() === 'request aborted';
   if (!aborted) return next(error);
-  console.warn(
-    `[${getLocalDateTimeString()}] [HTTP] Requisicao interrompida pelo cliente: ${req.method} ${req.originalUrl || req.url}`
-  );
+  const diagnostic = (req as any).__netDiagnostic;
+  if (NET_DIAG && !diagnostic?.logged) {
+    const elapsedMs = diagnostic ? Date.now() - diagnostic.startedAt : -1;
+    const receivedBytes = diagnostic
+      ? Math.max(0, req.socket.bytesRead - diagnostic.socketBytesRead) : -1;
+    console.warn(
+      `[${getLocalDateTimeString()}] [NET-DIAG] evento=body-parser-aborted `
+      + `ip=${getClientIp(req) || 'desconhecido'} metodo=${req.method} rota=${req.originalUrl || req.url} `
+      + `duracaoMs=${elapsedMs} bytesDeclarados=${String(req.headers['content-length'] || 'desconhecido')} `
+      + `bytesSocket=${receivedBytes} erro=${JSON.stringify(String(error?.message || error?.code || 'request_aborted'))}`
+    );
+    if (diagnostic) diagnostic.logged = true;
+  }
   if (!res.headersSent) res.status(400).json({ success: false, error: 'request_aborted' });
 });
 
@@ -3227,4 +3930,6 @@ app.listen(PORT, '0.0.0.0', () => {
   checkDailyBackupSchedule();
   setInterval(checkDailyBackupSchedule, 30_000);
   startCloudSyncKeepAlive();
+  setTimeout(() => void refreshFiscalSummary(true), 5_000);
+  setInterval(() => void refreshFiscalSummary(false), fiscalSummaryRefreshMs);
 });
