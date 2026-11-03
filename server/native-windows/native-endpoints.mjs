@@ -330,6 +330,7 @@ export function createNativeHandlers({ getData, replaceData, dataDir, dataFile, 
               record.description = found.description || record.description;
               record.barcode = latest?.barcode || record.barcode || record.code;
               record.productCode = latest?.productId ?? record.productCode ?? null;
+              record.salePrice = latest?.price ?? record.salePrice ?? null;
               record.systemStock = entries.reduce((sum, item) => sum + Number(item.product.stockQuantity || 0), 0);
               record.lastPurchaseDate = latest?.lastPurchaseDate || record.lastPurchaseDate || '';
               record.lastPurchaseCost = latest?.lastPurchaseCost ?? record.lastPurchaseCost ?? null;
@@ -375,6 +376,14 @@ export function createNativeHandlers({ getData, replaceData, dataDir, dataFile, 
           fs.writeFileSync(file, JSON.stringify(records, null, 2), 'utf8');
           return reply(res, 200, { success: true });
         }
+        if (req.body?.action === 'checked') {
+          if (!existing) return reply(res, 404, { success: false, message: 'Produto registrado não encontrado.' });
+          existing.checked = Boolean(req.body?.checked);
+          existing.checkedAt = existing.checked ? new Date().toISOString() : '';
+          fs.mkdirSync(dataDir, { recursive: true });
+          fs.writeFileSync(file, JSON.stringify(records, null, 2), 'utf8');
+          return reply(res, 200, { success: true, checked: existing.checked });
+        }
         if (!priceService?.configured?.()) return reply(res, 503, { success: false, message: 'Clipp ainda não configurado.' });
         const found = (await priceService.search([code]))[0];
         const productsWithStore = ['loja1', 'loja2', 'loja3']
@@ -404,6 +413,7 @@ export function createNativeHandlers({ getData, replaceData, dataDir, dataFile, 
           code, description: found?.description || 'Produto não encontrado',
           barcode: latest?.barcode || code,
           productCode: latest?.productId ?? null,
+          salePrice: latest?.price ?? null,
           actualStock: Number(req.body?.actualStock || 0),
           systemStock: products.reduce((sum, item) => sum + Number(item.stockQuantity || 0), 0),
           lastPurchaseDate: latest?.lastPurchaseDate || '', lastPurchaseCost: latest?.lastPurchaseCost ?? null,
