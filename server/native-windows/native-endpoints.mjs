@@ -315,33 +315,100 @@ export function createNativeHandlers({ getData, replaceData, dataDir, dataFile, 
       const photosDir = path.join(dataDir, 'clipp-product-photos');
       try {
         const records = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : [];
-        if (req.body?.action === 'list')
-          return reply(res, 200, { success: true, data: records.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))) });
+        if (req.body?.action === 'list') {
+          if (records.length && priceService?.configured?.()) {
+            const foundRows = await priceService.search(records.map(item => String(item.code || '')).filter(Boolean));
+            for (const record of records) {
+              const found = foundRows.find(item => String(item?.code || '') === String(record.code || ''));
+              if (!found) continue;
+              const entries = ['loja1', 'loja2', 'loja3']
+                .map(storeId => ({ storeId, product: found?.stores?.[storeId]?.product }))
+                .filter(item => item.product)
+                .sort((a, b) => String(b.product.lastPurchaseDate || '').localeCompare(String(a.product.lastPurchaseDate || '')));
+              const latestEntry = entries[0] || null;
+              const latest = latestEntry?.product || null;
+              record.description = found.description || record.description;
+              record.barcode = latest?.barcode || record.barcode || record.code;
+              record.productCode = latest?.productId ?? record.productCode ?? null;
+              record.systemStock = entries.reduce((sum, item) => sum + Number(item.product.stockQuantity || 0), 0);
+              record.lastPurchaseDate = latest?.lastPurchaseDate || record.lastPurchaseDate || '';
+              record.lastPurchaseCost = latest?.lastPurchaseCost ?? record.lastPurchaseCost ?? null;
+              record.lastPurchaseSupplier = latest?.lastPurchaseSupplier || record.lastPurchaseSupplier || '';
+              record.lastPurchaseStoreId = latestEntry?.storeId || record.lastPurchaseStoreId || '';
+              record.lastPurchaseStoreName = latestEntry?.storeId
+                ? `Loja ${latestEntry.storeId.replace('loja', '')}`
+                : (record.lastPurchaseStoreName || '');
+            }
+            fs.writeFileSync(file, JSON.stringify(records, null, 2), 'utf8');
+          }
+          return reply(res, 200, { success: true, data: records
+            .map(item => ({ ...item, photos: Array.from(new Set([
+              ...(Array.isArray(item.photos) ? item.photos : []),
+              ...(item.photoFile ? [item.photoFile] : []),
+            ].filter(Boolean))) }))
+            .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))) });
+        }
         const code = String(req.body?.code || '').trim();
         if (!code || code.length > 80) return reply(res, 400, { success: false, message: 'Código inválido.' });
+        const existingIndex = records.findIndex(item => item.code === code);
+        const existing = existingIndex >= 0 ? records[existingIndex] : null;
+        const existingPhotos = Array.from(new Set([
+          ...(Array.isArray(existing?.photos) ? existing.photos : []),
+          ...(existing?.photoFile ? [existing.photoFile] : []),
+        ].filter(Boolean)));
+        if (req.body?.action === 'photo') {
+          const requested = path.basename(String(req.body?.photoFile || ''));
+          if (!existing || !existingPhotos.includes(requested))
+            return reply(res, 404, { success: false, message: 'Foto não encontrada.' });
+          const photoPath = path.join(photosDir, requested);
+          if (!fs.existsSync(photoPath)) return reply(res, 404, { success: false, message: 'Arquivo da foto não encontrado.' });
+          return reply(res, 200, { success: true, photoBase64: fs.readFileSync(photoPath).toString('base64') });
+        }
+        if (req.body?.action === 'delete') {
+          if (!existing) return reply(res, 404, { success: false, message: 'Produto registrado não encontrado.' });
+          for (const photoName of existingPhotos) {
+            const photoPath = path.join(photosDir, path.basename(photoName));
+            if (fs.existsSync(photoPath)) fs.unlinkSync(photoPath);
+          }
+          records.splice(existingIndex, 1);
+          fs.mkdirSync(dataDir, { recursive: true });
+          fs.writeFileSync(file, JSON.stringify(records, null, 2), 'utf8');
+          return reply(res, 200, { success: true });
+        }
         if (!priceService?.configured?.()) return reply(res, 503, { success: false, message: 'Clipp ainda não configurado.' });
         const found = (await priceService.search([code]))[0];
-        const products = ['loja1', 'loja2', 'loja3'].map(id => found?.stores?.[id]?.product).filter(Boolean);
-        const latest = products.sort((a, b) => String(b.lastPurchaseDate || '').localeCompare(String(a.lastPurchaseDate || '')))[0] || null;
+        const productsWithStore = ['loja1', 'loja2', 'loja3']
+          .map(storeId => ({ storeId, product: found?.stores?.[storeId]?.product }))
+          .filter(item => item.product);
+        const products = productsWithStore.map(item => item.product);
+        const latestEntry = productsWithStore
+          .sort((a, b) => String(b.product.lastPurchaseDate || '').localeCompare(String(a.product.lastPurchaseDate || '')))[0] || null;
+        const latest = latestEntry?.product || null;
         let photoFile = '';
         const photo = String(req.body?.photoBase64 || '');
         if (photo) {
           const bytes = Buffer.from(photo.replace(/^data:image\/\w+;base64,/, ''), 'base64');
           if (bytes.length > 5_000_000) return reply(res, 400, { success: false, message: 'Foto muito grande.' });
           fs.mkdirSync(photosDir, { recursive: true });
-          photoFile = `${code.replace(/[^a-zA-Z0-9_-]/g, '_')}.jpg`;
+          photoFile = `${code.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.jpg`;
           fs.writeFileSync(path.join(photosDir, photoFile), bytes);
         }
+        const photos = [...existingPhotos, ...(photoFile ? [photoFile] : [])];
         const record = {
           code, description: found?.description || 'Produto não encontrado',
+          barcode: latest?.barcode || code,
+          productCode: latest?.productId ?? null,
           actualStock: Number(req.body?.actualStock || 0),
           systemStock: products.reduce((sum, item) => sum + Number(item.stockQuantity || 0), 0),
           lastPurchaseDate: latest?.lastPurchaseDate || '', lastPurchaseCost: latest?.lastPurchaseCost ?? null,
-          lastPurchaseSupplier: latest?.lastPurchaseSupplier || '', photoFile,
+          lastPurchaseSupplier: latest?.lastPurchaseSupplier || '',
+          lastPurchaseStoreId: latestEntry?.storeId || '',
+          lastPurchaseStoreName: latestEntry?.storeId ? `Loja ${latestEntry.storeId.replace('loja', '')}` : '',
+          photoFile: photoFile || existing?.photoFile || '', photos,
           updatedAt: new Date().toISOString(), updatedBy: `Android ${clientIp}`,
         };
         const index = records.findIndex(item => item.code === code);
-        if (index >= 0) records[index] = { ...records[index], ...record, photoFile: photoFile || records[index].photoFile || '' };
+        if (index >= 0) records[index] = { ...records[index], ...record };
         else records.push(record);
         fs.mkdirSync(dataDir, { recursive: true });
         fs.writeFileSync(file, JSON.stringify(records, null, 2), 'utf8');
