@@ -367,7 +367,7 @@ export default function FechamentoCompactoTab() {
                 <X className="mr-1 h-4 w-4" />
                 Ocultar
               </Button>
-              {todayLogs.length > 0 && (
+              {todayLogs.length > 0 && !accessContext?.readOnly && (
                 <Button variant="outline" size="sm" className="h-8 text-xs" onClick={limparOcorrenciasDoDia}>
                   Limpar dia
                 </Button>

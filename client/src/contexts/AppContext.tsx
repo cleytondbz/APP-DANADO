@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 interface AppContextType {
   accessContext: {
+    readOnly?: boolean;
     clientIp: string;
     directSalesLogin: boolean;
     specialMorning: boolean;
@@ -331,6 +332,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const { loadFromServer, saveToServer, checkServerHealth, serverUrl } = useSyncServer();
   const [accessContext, setAccessContext] = useState<AppContextType['accessContext']>(null);
+  const [accessContextResolved, setAccessContextResolved] = useState(false);
   
   // Estado para dados de Caixa e Fechamento (sincronizados com servidor)
   // Estrutura: { loja1: { data: {...} }, loja2: { data: {...} } }
@@ -367,6 +369,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.warn('[AppContext] Falha ao carregar contexto de acesso:', error);
         if (!cancelled) setAccessContext(null);
+      } finally {
+        if (!cancelled) setAccessContextResolved(true);
       }
     };
 
@@ -547,6 +551,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Sincronizar com servidor quando dados mudam
   useEffect(() => {
+    // Aguarda o servidor informar se esta interface e o espelho online.
+    // No Render nunca fazemos autosave: ele e somente leitura e recebe dados
+    // exclusivamente do Node local autenticado pelo token de sincronizacao.
+    if (!accessContextResolved || accessContext?.readOnly) return;
     if (!isLoading && hasInitialized && hasLoadedFromServer && !isPullingServerData) {
       const syncData = async () => {
         if (Date.now() < suppressServerPushUntilRef.current) return;
@@ -610,16 +618,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const timer = setTimeout(syncData, 650);
       return () => clearTimeout(timer);
     }
-  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, isLoading, hasInitialized, hasLoadedFromServer, isOnline, isPullingServerData, saveRetryTick]);
+  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, isLoading, hasInitialized, hasLoadedFromServer, isOnline, isPullingServerData, saveRetryTick, accessContextResolved, accessContext?.readOnly]);
 
   // Marca quando houve edicao local para proteger contra pull prematuro
   useEffect(() => {
+    if (!accessContextResolved || accessContext?.readOnly) return;
     if (!hasInitialized || !hasLoadedFromServer || isPullingServerData) return;
     if (Date.now() < suppressServerPushUntilRef.current) return;
     lastLocalChangeRef.current = Date.now();
     saveSequenceRef.current += 1;
     pendingServerSaveRef.current = true;
-  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, hasInitialized, hasLoadedFromServer, isPullingServerData]);
+  }, [settings, stores, debts, saldoDia, caixaData, fechamentoData, lancamentosData, hasInitialized, hasLoadedFromServer, isPullingServerData, accessContextResolved, accessContext?.readOnly]);
 
   useEffect(() => {
     const warnUnsavedChanges = (event: BeforeUnloadEvent) => {

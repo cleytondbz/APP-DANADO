@@ -41,15 +41,18 @@ const STORE_THEME: Record<StoreId, { label: string; color: string; soft: string;
 };
 
 export default function MainLayout() {
-  const { tab, setTab, setScreen, currentStore, setCurrentStore, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useApp();
+  const { accessContext, tab, setTab, setScreen, currentStore, setCurrentStore, selectedMonth, selectedYear, setSelectedMonth, setSelectedYear } = useApp();
   const [purchaseSearch, setPurchaseSearch] = useState('');
   const [purchaseServerStatus, setPurchaseServerStatus] = useState<'idle' | 'saving' | 'offline' | 'online'>('idle');
   const readOnlySalesUser = typeof window !== 'undefined' ? localStorage.getItem('fd_sales_readonly_user') : null;
   const isAndroidAppMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('app') === 'android';
+  const cloudReadOnly = accessContext?.readOnly === true;
   const availableTabs = readOnlySalesUser
     ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'lancamentos')
     : isAndroidAppMode
     ? tabs.filter((t) => t.id === 'dashboard' || t.id === 'fechamentoCompacto')
+    : cloudReadOnly
+    ? tabs.filter((t) => t.id !== 'opcoes')
     : tabs;
   const canUseLoja3 = tab === 'dashboard' || tab === 'lancamentos';
   const visibleStores: StoreId[] = canUseLoja3 ? ['loja1', 'loja2', 'loja3'] : ['loja1', 'loja2'];
@@ -61,8 +64,12 @@ export default function MainLayout() {
     }
     if (isAndroidAppMode && tab !== 'dashboard' && tab !== 'fechamentoCompacto') {
       setTab('dashboard');
+      return;
     }
-  }, [isAndroidAppMode, readOnlySalesUser, tab, setTab]);
+    if (cloudReadOnly && (tab === 'caixa' || tab === 'opcoes')) {
+      setTab('dashboard');
+    }
+  }, [cloudReadOnly, isAndroidAppMode, readOnlySalesUser, tab, setTab]);
 
   useEffect(() => {
     if (!canUseLoja3 && currentStore === 'loja3') {
@@ -114,7 +121,7 @@ export default function MainLayout() {
           <ArrowLeft className={`w-4 h-4 ${tab === 'compras' && purchaseServerStatus !== 'idle' ? 'text-white' : 'text-primary'}`} />
         </button>
         <div className="flex-1 flex items-center justify-center gap-3">
-          {!isAndroidAppMode && tab === 'compras' && (
+          {!isAndroidAppMode && !cloudReadOnly && tab === 'compras' && (
             <Button
               type="button"
               size="sm"
@@ -125,7 +132,7 @@ export default function MainLayout() {
               Adicionar
             </Button>
           )}
-          {!isAndroidAppMode && tab === 'compras' && purchaseServerStatus === 'offline' && (
+          {!isAndroidAppMode && !cloudReadOnly && tab === 'compras' && purchaseServerStatus === 'offline' && (
             <div className="animate-pulse rounded-lg border-2 border-white bg-red-800 px-4 py-1 text-xl font-black tracking-wide text-white shadow-lg">
               NÃO SALVO
             </div>
@@ -184,7 +191,7 @@ export default function MainLayout() {
             </button>
           </div>
         </div>
-        {!isAndroidAppMode && !readOnlySalesUser && (
+        {!isAndroidAppMode && !readOnlySalesUser && !cloudReadOnly && (
           <button
             onClick={() => setTab('caixa')}
             className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-extrabold text-accent-foreground shadow-sm transition-colors hover:bg-accent/80"
@@ -202,11 +209,11 @@ export default function MainLayout() {
             <AnimatePresence mode="wait">
               <motion.div key={tab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
                 {tab === 'dashboard' && <DashboardTab />}
-                {!isAndroidAppMode && tab === 'lancamentos' && <LancamentosTab readOnly={!!readOnlySalesUser} />}
+                {!isAndroidAppMode && tab === 'lancamentos' && <LancamentosTab readOnly={!!readOnlySalesUser || cloudReadOnly} />}
                 {tab === 'fechamentoCompacto' && <FechamentoCompactoTab />}
-                {!isAndroidAppMode && !readOnlySalesUser && tab === 'compras' && <ComprasTab />}
+                {!isAndroidAppMode && !readOnlySalesUser && tab === 'compras' && <ComprasTab readOnly={cloudReadOnly} />}
                 {!isAndroidAppMode && !readOnlySalesUser && tab === 'caixa' && <CaixaTab />}
-                {!isAndroidAppMode && !readOnlySalesUser && tab === 'opcoes' && <OpcoesTab />}
+                {!isAndroidAppMode && !readOnlySalesUser && !cloudReadOnly && tab === 'opcoes' && <OpcoesTab />}
               </motion.div>
             </AnimatePresence>
           </Suspense>

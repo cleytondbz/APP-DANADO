@@ -213,7 +213,7 @@ const difTypeColors: Record<'D' | 'I' | 'F', string> = {
   F: 'bg-emerald-600 text-white',
 };
 
-export default function ComprasTab() {
+export default function ComprasTab({ readOnly = false }: { readOnly?: boolean }) {
   const { settings, setSettings, selectedYear, selectedMonth } = useApp();
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -1701,6 +1701,11 @@ export default function ComprasTab() {
 
   return (
     <div className="space-y-4 pb-24">
+      {readOnly && (
+        <div className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-800">
+          Consulta online: use os filtros normalmente. Inclusoes e alteracoes sao feitas somente no computador local.
+        </div>
+      )}
       {paidCelebrationMessage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/10 pointer-events-none">
           <div className="animate-in fade-in zoom-in-95 duration-200 rounded-3xl border-4 border-green-500 bg-white px-10 py-8 text-center shadow-2xl">
@@ -1764,7 +1769,7 @@ export default function ComprasTab() {
       <Card className="p-4 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold">Compras</h3>
-          <Button
+          {!readOnly && <Button
             type="button"
             size="sm"
             variant="outline"
@@ -1772,7 +1777,7 @@ export default function ComprasTab() {
             onClick={() => setShowQuickPurchaseForm((value) => !value)}
           >
             {showQuickPurchaseForm || editingId ? 'Ocultar opções' : 'Expandir opções'}
-          </Button>
+          </Button>}
         </div>
 
         {(showQuickPurchaseForm || !!editingId) && (
@@ -2151,12 +2156,12 @@ export default function ComprasTab() {
                   {group.items.map((entry) => (
                     <tr
                       key={entry.id}
-                      className={`border-t border-border cursor-pointer transition-colors ${
+                      className={`border-t border-border ${readOnly ? '' : 'cursor-pointer'} transition-colors ${
                         isEntryOverdue(entry)
                           ? 'bg-red-200 hover:bg-red-300 dark:bg-red-900/55 dark:hover:bg-red-900/70'
                           : 'hover:bg-secondary/30'
                       }`}
-                      onClick={() => openRowEdit(entry)}
+                      onClick={() => { if (!readOnly) openRowEdit(entry); }}
                     >
                       <td className="px-3 py-2 whitespace-nowrap">{formatDateBr(entry.dueDate)}</td>
                       <td className="px-3 py-2 font-semibold">{entry.group}</td>
@@ -2177,7 +2182,7 @@ export default function ComprasTab() {
                           {!entry.paidDate && entry.boletoConciliado && (
                             <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_22px_rgba(245,158,11,0.45)]" />
                           )}
-                          {!entry.paidDate && (
+                          {!readOnly && !entry.paidDate && (
                             <button
                               type="button"
                               title={entry.boletoConciliado ? 'Boleto comigo / conciliado' : 'Marcar boleto comigo / conciliado'}
@@ -2197,7 +2202,7 @@ export default function ComprasTab() {
                               {formatDateBr(entry.paidDate)}
                             </span>
                           )}
-                          {!entry.paidDate && (
+                          {!readOnly && !entry.paidDate && (
                             <Button
                               size="icon"
                               className="relative z-10 h-7 w-7 bg-green-600 text-white hover:bg-green-700"
@@ -2225,7 +2230,7 @@ export default function ComprasTab() {
                               {entry.difType}
                             </span>
                           )}
-                          <Button
+                          {!readOnly && <Button
                             size="icon"
                             variant="outline"
                             onClick={(e) => {
@@ -2234,8 +2239,8 @@ export default function ComprasTab() {
                             }}
                           >
                             <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
+                          </Button>}
+                          {!readOnly && <Button
                             size="icon"
                             variant="outline"
                             onClick={(e) => {
@@ -2244,7 +2249,7 @@ export default function ComprasTab() {
                             }}
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                          </Button>}
                         </div>
                       </td>
                     </tr>

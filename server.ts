@@ -2415,6 +2415,10 @@ app.get('/api/access/context', (req: Request, res: Response) => {
   res.json({
     success: true,
     data: {
+      // No Render, SYNC_TOKEN identifica o servidor que recebe o espelho do
+      // computador local. O navegador e o aplicativo apenas consultam dados;
+      // somente o Node local, portando esse token, pode atualizar o espelho.
+      readOnly: Boolean(SYNC_TOKEN),
       clientIp,
       directSalesLogin: AUTO_SALES_LOGIN_IPS.has(clientIp),
       specialMorning,
