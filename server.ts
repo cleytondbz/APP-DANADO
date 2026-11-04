@@ -1748,7 +1748,13 @@ const createCloudSyncId = () =>
 const buildCloudSyncPayload = (cloudSyncId: string) => ({
   cloudSyncId,
   source: 'site',
-  settings: dataStore.settings || {},
+  settings: {
+    ...(dataStore.settings || {}),
+    // As rotas e a tela de Compras usam os arquivos separados por ano.
+    // Ler esses arquivos no momento do envio evita propagar uma copia antiga
+    // mantida em memoria quando dados foram restaurados com o Node aberto.
+    purchaseEntries: readPurchaseEntries(),
+  },
   stores: dataStore.stores || {},
   debts: dataStore.debts || [],
   saldoDia: dataStore.saldoDia || 0,
