@@ -2939,9 +2939,14 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
 
   if (settings) {
     const incomingSettings = { ...settings };
+    // O Render e somente leitura para navegador e aplicativo, mas o Node local
+    // e a fonte autoritativa do espelho. Compras presentes no pacote autenticado
+    // de nuvem precisam acompanhar o restante dos dados; os demais clientes
+    // continuam obrigados a usar as rotas parciais /api/compras.
+    const isAuthenticatedCloudPush = hasSyncTokenAuth && !!cloudSyncId;
     const generalSyncSentPurchaseEntries = Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseEntries');
     const generalSyncSentPurchaseOptions = Object.prototype.hasOwnProperty.call(incomingSettings, 'purchaseOptions');
-    if (generalSyncSentPurchaseEntries || generalSyncSentPurchaseOptions) {
+    if (!isAuthenticatedCloudPush && (generalSyncSentPurchaseEntries || generalSyncSentPurchaseOptions)) {
       appendPurchaseMovementLog({
         ts: getLocalDateTimeString(),
         event: 'general_sync_purchase_payload_rejected',
@@ -3049,7 +3054,6 @@ app.post('/api/sync/save', (req: Request, res: Response) => {
       actor: actionUserName || userName || username || user || actorName || actor,
     });
     delete (incomingSettings as any).syncPreference;
-    const isAuthenticatedCloudPush = hasSyncTokenAuth && !!cloudSyncId;
     const mergeRemoteLogs = (current: any[] = [], incoming: any[] = [], limit: number) => {
       const merged = new Map<string, any>();
       [...current, ...incoming].forEach((item: any) => {
